@@ -32,7 +32,7 @@ class Page extends Model
     protected static function booted()
     {
         static::saving(function ($page) {
-            $newHash = hash('sha256', json_encode($page->config));
+            $newHash = hash('sha256', json_encode($page->config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
             if ($page->hash !== $newHash) {
                 $page->hash = $newHash;
                 $page->version = ($page->version ?? 0) + 1;
