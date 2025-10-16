@@ -18,8 +18,8 @@ class UiRegistrySeeder extends Seeder
     {
         $flags = [
             [
-                'key' => 'ui.modal_v2',
-                'name' => 'Modal V2 System',
+                'key' => 'ui.modal_',
+                'name' => 'Modal  System',
                 'description' => 'Enable new modal navigation and state management',
                 'is_enabled' => true,
                 'environment' => null,
@@ -112,7 +112,7 @@ class UiRegistrySeeder extends Seeder
                 'slug' => 'page.agent.table.modal',
                 'description' => 'Agent management page with table and modal',
                 'version' => '1.0.0',
-                'metadata' => ['module' => 'agent-management', 'route' => '/v2/pages/page.agent.table.modal'],
+                'metadata' => ['module' => 'agent-management', 'route' => 'pages/page.agent.table.modal'],
                 'is_active' => true,
                 'published_at' => now(),
             ],

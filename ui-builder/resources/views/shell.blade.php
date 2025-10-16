@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UI Builder v2 - {{ $pageKey }}</title>
+    <title>UI Builder - {{ $pageKey }}</title>
     @vite(['resources/css/app.css'])
 </head>
 <body>
-    <div id="v2-root" 
+    <div id="root"
          data-page-key="{{ $pageKey }}"
          data-is-authenticated="{{ $isAuthenticated ? 'true' : 'false' }}"
          data-has-users="{{ $hasUsers ? 'true' : 'false' }}"
@@ -16,6 +16,6 @@
          @endif
     ></div>
     
-    @vite('resources/js/v2/main.tsx')
+    @vite('resources/js/main.tsx')
 </body>
 </html>

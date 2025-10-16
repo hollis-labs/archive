@@ -6,7 +6,7 @@ return [
     | UI Builder Configuration
     |--------------------------------------------------------------------------
     |
-    | Configuration for the v2 UI Builder system
+    | Configuration for the  UI Builder system
     |
     */
 

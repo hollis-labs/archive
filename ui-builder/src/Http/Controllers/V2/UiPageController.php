@@ -1,6 +1,6 @@
 <?php
 
-namespace HollisLabs\UiBuilder\Http\Controllers\V2;
+namespace HollisLabs\UiBuilder\Http\Controllers;
 
 use Illuminate\Routing\Controller;
 use HollisLabs\UiBuilder\Models\Page;

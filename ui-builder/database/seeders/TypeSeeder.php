@@ -6,11 +6,11 @@ use App\Models\FeType;
 use App\Models\FeTypeField;
 use Illuminate\Database\Seeder;
 
-class V2TypeSeeder extends Seeder
+class TypeSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->command->info('Seeding v2 UI Types (Agent and Model)...');
+        $this->command->info('Seeding  UI Types (Agent and Model)...');
 
         // Create Agent type
         $agentType = FeType::updateOrCreate(
@@ -99,6 +99,6 @@ class V2TypeSeeder extends Seeder
         $this->command->info("✓ Created Agent type with " . count($agentFields) . " fields");
         $this->command->info("✓ Created Model type with " . count($modelFields) . " fields");
         $this->command->info('');
-        $this->command->info('Types are now available for the v2 UI system');
+        $this->command->info('Types are now available for the  UI system');
     }
 }

@@ -1,15 +1,15 @@
 <?php
 
-namespace HollisLabs\UiBuilder\Http\Controllers\V2;
+namespace HollisLabs\UiBuilder\Http\Controllers;
 
 use Illuminate\Routing\Controller;
 use Illuminate\Contracts\View\View;
 
-class V2ShellController extends Controller
+class ShellController extends Controller
 {
     public function show(string $key): View
     {
-        return view('ui-builder::v2.shell', [
+        return view('ui-builder::shell', [
             'pageKey' => $key,
             'isAuthenticated' => auth()->check(),
             'hasUsers' => \App\Models\User::exists(),

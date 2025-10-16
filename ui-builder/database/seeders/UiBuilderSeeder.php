@@ -6,11 +6,11 @@ use HollisLabs\UiBuilder\Models\Page;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 
-class V2UiBuilderSeeder extends Seeder
+class UiBuilderSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->command->info('Seeding UI Builder v2 demo pages...');
+        $this->command->info('Seeding UI Builder  demo pages...');
 
         $pages = [
             'page.agent.table.modal',
@@ -57,7 +57,7 @@ class V2UiBuilderSeeder extends Seeder
         $this->command->line('');
         $this->command->info('Demo pages available at:');
         foreach ($pages as $pageKey) {
-            $this->command->line("  → /v2/pages/{$pageKey}");
+            $this->command->line("  → pages/{$pageKey}");
         }
     }
 }
