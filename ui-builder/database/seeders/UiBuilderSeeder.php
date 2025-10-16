@@ -18,7 +18,7 @@ class UiBuilderSeeder extends Seeder
         ];
 
         foreach ($pages as $pageKey) {
-            $configPath = storage_path("ui-builder/pages/{$pageKey}.json");
+            $configPath = storage_path("/ui-builder/pages/{$pageKey}.json");
             
             if (! File::exists($configPath)) {
                 $this->command->warn("Config file not found: {$configPath}");
