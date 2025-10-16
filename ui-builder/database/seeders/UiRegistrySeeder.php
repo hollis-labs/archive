@@ -1,9 +1,9 @@
 <?php
 
-namespace Modules\UiBuilder\database\seeders;
+namespace HollisLabs\UiBuilder\database\seeders;
 
-use Modules\UiBuilder\Models\Registry;
-use Modules\UiBuilder\Models\FeatureFlag;
+use HollisLabs\UiBuilder\Models\Registry;
+use HollisLabs\UiBuilder\Models\FeatureFlag;
 use Illuminate\Database\Seeder;
 
 class UiRegistrySeeder extends Seeder

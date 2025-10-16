@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\UiBuilder\Http\Controllers\V2;
+namespace HollisLabs\UiBuilder\Http\Controllers\V2;
 
 use Illuminate\Routing\Controller;
 use Illuminate\Contracts\View\View;

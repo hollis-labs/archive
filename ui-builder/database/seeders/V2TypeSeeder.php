@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\UiBuilder\database\seeders;
+namespace HollisLabs\UiBuilder\database\seeders;
 
 use App\Models\FeType;
 use App\Models\FeTypeField;

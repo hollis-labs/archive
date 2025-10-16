@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\UiBuilder;
+namespace HollisLabs\UiBuilder;
 
 use Illuminate\Support\ServiceProvider;
 

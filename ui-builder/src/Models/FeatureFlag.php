@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\UiBuilder\Models;
+namespace HollisLabs\UiBuilder\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;

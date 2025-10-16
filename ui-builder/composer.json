@@ -18,14 +18,14 @@
     },
     "autoload": {
         "psr-4": {
-            "Modules\\UiBuilder\\": "src/",
-            "Modules\\UiBuilder\\Database\\Seeders\\": "database/seeders/"
+            "HollisLabs\\UiBuilder\\": "src/",
+            "HollisLabs\\UiBuilder\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Modules\\UiBuilder\\UiBuilderServiceProvider"
+                "HollisLabs\\UiBuilder\\UiBuilderServiceProvider"
             ]
         }
     },

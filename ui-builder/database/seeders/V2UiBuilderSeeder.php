@@ -1,8 +1,8 @@
 <?php
 
-namespace Modules\UiBuilder\database\seeders;
+namespace HollisLabs\UiBuilder\database\seeders;
 
-use Modules\UiBuilder\Models\Page;
+use HollisLabs\UiBuilder\Models\Page;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 
