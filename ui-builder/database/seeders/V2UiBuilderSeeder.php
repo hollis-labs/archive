@@ -2,7 +2,7 @@
 
 namespace Modules\UiBuilder\database\seeders;
 
-use Modules\UiBuilder\app\Models\Page;
+use Modules\UiBuilder\Models\Page;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 

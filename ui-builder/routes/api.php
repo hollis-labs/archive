@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\UiBuilder\app\Http\Controllers\DataSourceController;
-use Modules\UiBuilder\app\Http\Controllers\V2\UiPageController;
+use Modules\UiBuilder\Http\Controllers\DataSourceController;
+use Modules\UiBuilder\Http\Controllers\V2\UiPageController;
 
 Route::prefix('api')->middleware('api')->group(function () {
     // V2 UI DataSource routes (standard REST)

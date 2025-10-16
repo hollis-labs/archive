@@ -1,9 +1,9 @@
 <?php
 
-namespace Modules\UiBuilder\app\Http\Controllers\V2;
+namespace Modules\UiBuilder\Http\Controllers\V2;
 
 use Illuminate\Routing\Controller;
-use Modules\UiBuilder\app\Models\Page;
+use Modules\UiBuilder\Models\Page;
 use Illuminate\Http\JsonResponse;
 
 class UiPageController extends Controller

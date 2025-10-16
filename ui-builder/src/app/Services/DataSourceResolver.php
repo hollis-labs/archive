@@ -1,8 +1,8 @@
 <?php
 
-namespace Modules\UiBuilder\app\Services;
+namespace Modules\UiBuilder\Services;
 
-use Modules\UiBuilder\app\Models\Datasource;
+use Modules\UiBuilder\Models\Datasource;
 use Illuminate\Support\Facades\Cache;
 
 class DataSourceResolver

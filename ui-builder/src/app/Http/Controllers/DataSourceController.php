@@ -1,9 +1,9 @@
 <?php
 
-namespace Modules\UiBuilder\app\Http\Controllers;
+namespace Modules\UiBuilder\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Modules\UiBuilder\app\Services\DataSourceResolver;
+use Modules\UiBuilder\Services\DataSourceResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

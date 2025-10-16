@@ -2,8 +2,8 @@
 
 namespace Modules\UiBuilder\database\seeders;
 
-use Modules\UiBuilder\app\Models\Registry;
-use Modules\UiBuilder\app\Models\FeatureFlag;
+use Modules\UiBuilder\Models\Registry;
+use Modules\UiBuilder\Models\FeatureFlag;
 use Illuminate\Database\Seeder;
 
 class UiRegistrySeeder extends Seeder

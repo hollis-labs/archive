@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\UiBuilder\app\Http\Controllers\V2\V2ShellController;
+use Modules\UiBuilder\Http\Controllers\V2\V2ShellController;
 
 Route::middleware(['web'])->group(function () {
     Route::prefix('v2')->group(function () {

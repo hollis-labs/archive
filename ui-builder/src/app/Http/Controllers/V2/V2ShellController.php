@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\UiBuilder\app\Http\Controllers\V2;
+namespace Modules\UiBuilder\Http\Controllers\V2;
 
 use Illuminate\Routing\Controller;
 use Illuminate\Contracts\View\View;
