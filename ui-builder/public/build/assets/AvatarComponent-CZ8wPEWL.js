@@ -1,1 +1,0 @@
-import{j as a,A as m,c as i,a as x,b as h}from"./BadgeComponent-805VkITg.js";function A({config:t}){const{props:r={}}=t,{src:s,alt:c,fallback:l,size:e="md",className:n}=r,o={sm:"h-8 w-8",md:"h-10 w-10",lg:"h-12 w-12",xl:"h-16 w-16"};return a.jsxs(m,{className:i(o[e],n),children:[s&&a.jsx(x,{src:s,alt:c||"Avatar"}),a.jsx(h,{children:l||"?"})]})}export{A as AvatarComponent};

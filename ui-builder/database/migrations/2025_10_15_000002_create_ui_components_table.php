@@ -15,9 +15,9 @@ return new class extends Migration
             $table->string('kind')->nullable();
             $table->json('config')->nullable();
             $table->string('variant')->nullable();
-            $table->json('schema_json')->nullable();
-            $table->json('defaults_json')->nullable();
-            $table->json('capabilities_json')->nullable();
+            $table->json('schema')->nullable();
+            $table->json('defaults')->nullable();
+            $table->json('capabilities')->nullable();
             $table->string('hash', 64)->index();
             $table->unsignedInteger('version')->default(1);
             $table->timestamps();

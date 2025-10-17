@@ -32,7 +32,7 @@ const sizeClass: Record<NonNullable<BadgeProps["size"]>, string> = {
   lg: "text-sm px-3 py-1",
 };
 
-export default function BadgeComponent(props: BadgeProps) {
+export function BadgeComponent(props: BadgeProps) {
   const {
     text,
     variant = "default",

@@ -5,7 +5,11 @@ import { Badge } from '@/components/ui/badge'
 import type { ComponentConfig } from '../types'
 
 interface DetailComponentProps {
-  config: ComponentConfig
+  config: ComponentConfig & { 
+    dataSource?: string
+    url?: string
+    fields?: Array<{ key: string; label: string; type?: 'date' | 'badge' | 'text' }>
+  }
   data?: any
 }
 

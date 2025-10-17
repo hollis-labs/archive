@@ -28,7 +28,7 @@ return [
 
     'datasource' => [
         // Default resolver to use
-        'default_resolver' => \Modules\UiBuilder\Services\GenericDataSourceResolver::class,
+        'default_resolver' => HollisLabs\UiBuilder\Http\Controllers\DataSourceController::class,
         
         // Whether to use wrapped responses
         'use_wrapped_responses' => true,

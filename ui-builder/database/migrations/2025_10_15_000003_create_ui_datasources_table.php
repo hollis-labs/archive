@@ -12,9 +12,9 @@ return new class extends Migration
             $table->id();
             $table->string('alias')->unique();
             $table->string('model_class')->nullable();
-            $table->json('default_params_json')->nullable();
-            $table->json('capabilities_json')->nullable();
-            $table->json('schema_json')->nullable();
+            $table->json('default_params')->nullable();
+            $table->json('capabilities')->nullable();
+            $table->json('schema')->nullable();
             $table->string('handler')->nullable();
             $table->timestamps();
             

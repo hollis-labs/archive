@@ -11,9 +11,12 @@ export interface PageData {
 
 export interface ShellPageProps {
   pageKey: string
+  isAuthenticated?: boolean
+  hasUsers?: boolean
+  user?: any
 }
 
-export function ShellPage({ pageKey }: ShellPageProps) {
+export function ShellPage({ pageKey, isAuthenticated: _isAuthenticated, hasUsers: _hasUsers, user: _user }: ShellPageProps) {
   const [pageData, setPageData] = useState<PageData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -27,11 +30,13 @@ export function ShellPage({ pageKey }: ShellPageProps) {
       setLoading(true)
       setError(null)
 
+      
+      // TODO: THIS IS NOT USED - CONFIRM AND REMOVE
       // Convert the key to a URL-safe format
       // Replaces :: with / for nested routes
-      const urlKey = pageKey.replace(/::/g, '/')
+      // const urlKey = pageKey.replace(/::/g, '/')
 
-      // TODO: Replace with your actual API endpoint
+    
       // This should return the page configuration from your database
       // Expected response format:
       // { config: PageConfig, featureFlags: Record<string, any> }
@@ -76,7 +81,8 @@ export function ShellPage({ pageKey }: ShellPageProps) {
   }
 
   const rootComponent: ComponentConfig = {
-    component: 'page',
+    id: 'root',
+    type: 'page',
     props: {
       children: pageData.config.components
     }
