@@ -1,4 +1,4 @@
-import { componentRegistry } from '@/componentsComponentRegistry'
+import { componentRegistry } from '@/components/ComponentRegistry'
 
 interface ComponentRendererProps {
   config: any

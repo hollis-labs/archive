@@ -1,9 +1,9 @@
-import { componentRegistry } from '@/componentsComponentRegistry'
-import { RowsLayout } from '@/componentslayouts/RowsLayout'
-import { ColumnsLayout } from '@/componentslayouts/ColumnsLayout'
-import { DataTableComponent } from '@/componentsadvanced/DataTableComponent'
-import { SearchBarComponent } from '@/componentscomposites/SearchBarComponent'
-import { ButtonIconComponent } from '@/componentsprimitives/ButtonIconComponent'
+import { componentRegistry } from '@/components/ComponentRegistry'
+import { RowsLayout } from '@/components/layouts/RowsLayout'
+import { ColumnsLayout } from '@/components/layouts/ColumnsLayout'
+import { DataTableComponent } from '@/components/advanced/DataTableComponent'
+import { SearchBarComponent } from '@/components/composites/SearchBarComponent'
+import { ButtonIconComponent } from '@/components/primitives/ButtonIconComponent'
 
 export function registerCoreComponents() {
   componentRegistry.register('rows', RowsLayout as any)

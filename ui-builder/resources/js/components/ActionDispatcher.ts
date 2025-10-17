@@ -62,7 +62,7 @@ export class ActionDispatcher {
     }
 
     try {
-      const response = await fetch('/apiui/action', {
+      const response = await fetch('/api/ui/action', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -93,7 +93,7 @@ export class ActionDispatcher {
     }
 
     try {
-      const response = await fetch('/apiui/action', {
+      const response = await fetch('/api/ui/action', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

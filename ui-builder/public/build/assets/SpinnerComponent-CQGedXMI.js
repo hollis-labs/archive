@@ -1,0 +1,1 @@
+import{j as t,c as e}from"./BadgeComponent-805VkITg.js";import{L as m}from"./loading-spinner-EVC-P3Bc.js";function i({config:n}){const{props:s={}}=n,{size:o="md",className:r}=s;return t.jsx(m,{size:o,className:e(r)})}export{i as SpinnerComponent};

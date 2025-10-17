@@ -1,4 +1,3 @@
-```tsx
 import * as React from "react";
 import { createElement } from "react";
 import * as Icons from "lucide-react";
