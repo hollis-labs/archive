@@ -1,8 +1,11 @@
 {
   "name": "@hollis-labs/ui-builder",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Database-driven UI configuration system for building dynamic interfaces without code changes",
   "type": "module",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "main": "dist/ui-builder.js",
   "module": "dist/ui-builder.js",
   "types": "dist/index.d.ts",
