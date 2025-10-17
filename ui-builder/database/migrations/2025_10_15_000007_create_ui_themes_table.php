@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('key')->unique();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->json('tokens_json')->nullable();
+            $table->json('tokens')->nullable();
             $table->string('parent_key')->nullable();
             $table->boolean('is_default')->default(false);
             $table->boolean('enabled')->default(true);

@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('key')->unique();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->json('manifest_json')->nullable();
+            $table->json('manifest')->nullable();
             $table->string('icon')->nullable();
             $table->boolean('enabled')->default(true);
             $table->unsignedInteger('priority')->default(100);

@@ -20,6 +20,22 @@ export interface ActionConfig {
   submitMethod?: string;
   submitLabel?: string;
   refreshTarget?: string;
+  params?: Record<string, any>;
+  route?: string;
+}
+
+export interface ActionRequest {
+  type: string;
+  command?: string;
+  route?: string;
+  params?: Record<string, any>;
+}
+
+export interface ActionResult {
+  success: boolean;
+  message?: string;
+  redirect?: string;
+  data?: any;
 }
 
 export interface ComponentConfig extends BaseComponentConfig {}
@@ -826,5 +842,23 @@ export interface PageConfig {
     enabled: boolean;
     module_key: string;
     timestamp: string;
+  };
+}
+
+export interface DataSourceQuery {
+  dataSource: string;
+  filters?: Record<string, any>;
+  search?: string;
+  sort?: { field: string; direction: 'asc' | 'desc' };
+  pagination?: { page: number; perPage: number };
+}
+
+export interface DataSourceResult<T = any> {
+  data: T[];
+  meta?: {
+    total?: number;
+    page?: number;
+    perPage?: number;
+    lastPage?: number;
   };
 }

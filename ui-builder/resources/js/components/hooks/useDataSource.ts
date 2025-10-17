@@ -60,7 +60,7 @@ export function useDataSource<T = any>(options: UseDataSourceOptions): UseDataSo
       }
       
       const result: DataSourceResult<T> = await apiGet(
-        `/apiui/datasources/${query.dataSource}?${params.toString()}`
+        `/api/ui/datasources/${query.dataSource}?${params.toString()}`
       )
       
       setData(result.data)

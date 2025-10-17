@@ -22,7 +22,7 @@ export function usePageConfig(key: string): UsePageConfigResult {
       setError(null)
 
       try {
-        const response = await fetch(`/apiui/pages/${key}`)
+        const response = await fetch(`/api/ui/pages/${key}`)
 
         if (!response.ok) {
           throw new Error(`Failed to fetch page config: ${response.statusText}`)

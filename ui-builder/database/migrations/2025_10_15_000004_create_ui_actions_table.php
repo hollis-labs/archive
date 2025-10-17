@@ -13,8 +13,8 @@ return new class extends Migration
             $table->string('key')->unique();
             $table->string('type');
             $table->string('handler')->nullable();
-            $table->json('payload_schema_json')->nullable();
-            $table->json('policy_json')->nullable();
+            $table->json('payload_schema')->nullable();
+            $table->json('policy')->nullable();
             $table->timestamps();
             
             $table->index('type');

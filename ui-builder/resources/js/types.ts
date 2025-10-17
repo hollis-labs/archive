@@ -1,0 +1,1 @@
+export type { PageConfig, ComponentConfig } from './components/types'

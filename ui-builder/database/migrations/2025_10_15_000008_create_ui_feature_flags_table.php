@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->boolean('enabled')->default(false);
-            $table->json('conditions_json')->nullable();
+            $table->json('conditions')->nullable();
             $table->timestamps();
             
             $table->index('key');

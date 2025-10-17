@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client'
-import { ShellPage } from '.ShellPage'
+import { ShellPage } from './ShellPage'
 import { registerCoreComponents } from './registerCoreComponents'
 import {
   registerPrimitiveComponents,
@@ -8,10 +8,10 @@ import {
   registerCompositeComponents,
   registerAdvancedComponents,
   registerFormComponents,
-} from '@/componentsComponentRegistry'
-import { commandHandler } from '@/componentsCommandHandler'
+} from '@/components/ComponentRegistry'
+import { commandHandler } from '@/components/CommandHandler'
 
-const rootElement = document.getElementById('-root')
+const rootElement = document.getElementById('root')
 if (!rootElement) {
   throw new Error('Root element not found')
 }

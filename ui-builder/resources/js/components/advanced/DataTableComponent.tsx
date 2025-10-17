@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { apiPost, apiGet } from '@/lib/api';
 import {
   useReactTable,
   getCoreRowModel,
@@ -157,7 +156,7 @@ export function DataTableComponent({ config }: { config: DataTableConfig }) {
         params.append('search', searchTerm);
       }
       
-      fetch(`/apiui/datasources/${dataSource}?${params}`)
+      fetch(`/api/ui/datasources/${dataSource}?${params}`)
         .then(res => res.json())
         .then(result => {
           setFetchedData(result.data || []);
@@ -353,7 +352,7 @@ export function DataTableComponent({ config }: { config: DataTableConfig }) {
         setFormModalOpen(false);
         // Refresh table data if refreshTarget specified
         if (formModalConfig.refreshTarget && dataSource) {
-          const result = await fetch(`/apiui/datasources/${dataSource}`);
+          const result = await fetch(`/api/ui/datasources/${dataSource}`);
           const refreshedData = await result.json();
           setFetchedData(refreshedData.data || []);
         }

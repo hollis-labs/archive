@@ -1,6 +1,6 @@
-import type { ResultConfig } from './types'
-
 type SlotUpdateCallback = (data: any) => void
+
+type ResultConfig = { target: string }
 
 export class SlotBinder {
   private static instance: SlotBinder
