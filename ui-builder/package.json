@@ -12,7 +12,15 @@
       "require": "./dist/ui-builder.cjs"
     }
   },
-  "files": ["dist", "resources", "src", "config", "routes", "database", "composer.json"],
+  "files": [
+    "dist",
+    "resources",
+    "src",
+    "config",
+    "routes",
+    "database",
+    "composer.json"
+  ],
   "scripts": {
     "build": "vite build -c vite.lib.config.ts",
     "dev": "vite build -c vite.lib.config.ts --watch"
@@ -22,9 +30,10 @@
     "react-dom": ">=19"
   },
   "devDependencies": {
-    "vite": "^6",
+    "@types/react": "^19.2.2",
     "@vitejs/plugin-react": "^4",
-    "vite-plugin-dts": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite": "^6",
+    "vite-plugin-dts": "^4"
   }
 }

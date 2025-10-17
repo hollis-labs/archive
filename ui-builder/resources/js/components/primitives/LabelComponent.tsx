@@ -2,6 +2,8 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { LabelConfig } from '../types';
 
+
+
 export function LabelComponent({ config }: { config: LabelConfig }) {
   const { props } = config;
   const { text, htmlFor, required = false, className } = props;
