@@ -1,1 +1,0 @@
-import{j as t,c as e}from"./badge-C2dm5UrN.js";import{L as m}from"./loading-spinner-qRIpRIB0.js";function i({config:n}){const{props:s={}}=n,{size:o="md",className:r}=s;return t.jsx(m,{size:o,className:e(r)})}export{i as SpinnerComponent};
