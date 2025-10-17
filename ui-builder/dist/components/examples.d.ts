@@ -1,0 +1,15 @@
+import { ButtonConfig, InputConfig, LabelConfig, BadgeConfig, AvatarConfig, SkeletonConfig, SpinnerConfig, SeparatorConfig, KbdConfig, TypographyConfig } from './types';
+export declare const exampleButton: ButtonConfig;
+export declare const exampleIconButton: ButtonConfig;
+export declare const exampleInput: InputConfig;
+export declare const exampleLabel: LabelConfig;
+export declare const exampleBadge: BadgeConfig;
+export declare const exampleBadgeDestructive: BadgeConfig;
+export declare const exampleAvatar: AvatarConfig;
+export declare const exampleSkeleton: SkeletonConfig;
+export declare const exampleSpinner: SpinnerConfig;
+export declare const exampleSeparator: SeparatorConfig;
+export declare const exampleKbd: KbdConfig;
+export declare const exampleTypographyH1: TypographyConfig;
+export declare const exampleTypographyP: TypographyConfig;
+export declare const exampleTypographyMuted: TypographyConfig;

@@ -1,0 +1,52 @@
+import { j as E, I as g, c as x } from "./badge-DBvLZUPk.js";
+function N({ config: u }) {
+  const { props: m = {}, actions: e } = u, {
+    placeholder: i,
+    value: c,
+    defaultValue: r,
+    disabled: p = !1,
+    readonly: v = !1,
+    required: s = !1,
+    type: f = "text",
+    name: a,
+    className: w
+  } = m, h = (t) => {
+    if (e != null && e.change) {
+      const { type: n, event: l, command: o, payload: d } = e.change;
+      n === "emit" && l ? window.dispatchEvent(new CustomEvent(l, {
+        detail: { ...d, value: t.target.value, name: a }
+      })) : n === "command" && o && window.dispatchEvent(new CustomEvent("command:execute", {
+        detail: { command: o, payload: { ...d, value: t.target.value, name: a } }
+      }));
+    }
+  }, y = (t) => {
+    if (e != null && e.blur) {
+      const { type: n, event: l, command: o, payload: d } = e.blur;
+      n === "emit" && l ? window.dispatchEvent(new CustomEvent(l, {
+        detail: { ...d, value: t.target.value, name: a }
+      })) : n === "command" && o && window.dispatchEvent(new CustomEvent("command:execute", {
+        detail: { command: o, payload: { ...d, value: t.target.value, name: a } }
+      }));
+    }
+  };
+  return /* @__PURE__ */ E.jsx(
+    g,
+    {
+      type: f,
+      placeholder: i,
+      value: c,
+      defaultValue: r,
+      disabled: p,
+      readOnly: v,
+      required: s,
+      name: a,
+      onChange: h,
+      onBlur: y,
+      className: x(w),
+      "aria-required": s
+    }
+  );
+}
+export {
+  N as InputComponent
+};

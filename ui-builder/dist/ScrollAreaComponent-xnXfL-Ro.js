@@ -1,0 +1,552 @@
+import { r as s, x as y, t as ie, j as u, w as de, P as L, z as O, y as C, W as P, Y as ue, G as he, c as U, V as fe, O as be } from "./badge-DBvLZUPk.js";
+function Se(e, o) {
+  return s.useReducer((r, n) => o[r][n] ?? r, e);
+}
+var V = "ScrollArea", [q] = de(V), [pe, v] = q(V), G = s.forwardRef(
+  (e, o) => {
+    const {
+      __scopeScrollArea: r,
+      type: n = "hover",
+      dir: t,
+      scrollHideDelay: l = 600,
+      ...c
+    } = e, [a, i] = s.useState(null), [f, d] = s.useState(null), [b, h] = s.useState(null), [S, m] = s.useState(null), [A, X] = s.useState(null), [x, _] = s.useState(0), [M, j] = s.useState(0), [D, T] = s.useState(!1), [N, W] = s.useState(!1), p = y(o, (R) => i(R)), w = ie(t);
+    return /* @__PURE__ */ u.jsx(
+      pe,
+      {
+        scope: r,
+        type: n,
+        dir: w,
+        scrollHideDelay: l,
+        scrollArea: a,
+        viewport: f,
+        onViewportChange: d,
+        content: b,
+        onContentChange: h,
+        scrollbarX: S,
+        onScrollbarXChange: m,
+        scrollbarXEnabled: D,
+        onScrollbarXEnabledChange: T,
+        scrollbarY: A,
+        onScrollbarYChange: X,
+        scrollbarYEnabled: N,
+        onScrollbarYEnabledChange: W,
+        onCornerWidthChange: _,
+        onCornerHeightChange: j,
+        children: /* @__PURE__ */ u.jsx(
+          L.div,
+          {
+            dir: w,
+            ...c,
+            ref: p,
+            style: {
+              position: "relative",
+              // Pass corner sizes as CSS vars to reduce re-renders of context consumers
+              "--radix-scroll-area-corner-width": x + "px",
+              "--radix-scroll-area-corner-height": M + "px",
+              ...e.style
+            }
+          }
+        )
+      }
+    );
+  }
+);
+G.displayName = V;
+var J = "ScrollAreaViewport", K = s.forwardRef(
+  (e, o) => {
+    const { __scopeScrollArea: r, children: n, nonce: t, ...l } = e, c = v(J, r), a = s.useRef(null), i = y(o, a, c.onViewportChange);
+    return /* @__PURE__ */ u.jsxs(u.Fragment, { children: [
+      /* @__PURE__ */ u.jsx(
+        "style",
+        {
+          dangerouslySetInnerHTML: {
+            __html: "[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}"
+          },
+          nonce: t
+        }
+      ),
+      /* @__PURE__ */ u.jsx(
+        L.div,
+        {
+          "data-radix-scroll-area-viewport": "",
+          ...l,
+          ref: i,
+          style: {
+            /**
+             * We don't support `visible` because the intention is to have at least one scrollbar
+             * if this component is used and `visible` will behave like `auto` in that case
+             * https://developer.mozilla.org/en-US/docs/Web/CSS/overflow#description
+             *
+             * We don't handle `auto` because the intention is for the native implementation
+             * to be hidden if using this component. We just want to ensure the node is scrollable
+             * so could have used either `scroll` or `auto` here. We picked `scroll` to prevent
+             * the browser from having to work out whether to render native scrollbars or not,
+             * we tell it to with the intention of hiding them in CSS.
+             */
+            overflowX: c.scrollbarXEnabled ? "scroll" : "hidden",
+            overflowY: c.scrollbarYEnabled ? "scroll" : "hidden",
+            ...e.style
+          },
+          children: /* @__PURE__ */ u.jsx("div", { ref: c.onContentChange, style: { minWidth: "100%", display: "table" }, children: n })
+        }
+      )
+    ] });
+  }
+);
+K.displayName = J;
+var g = "ScrollAreaScrollbar", B = s.forwardRef(
+  (e, o) => {
+    const { forceMount: r, ...n } = e, t = v(g, e.__scopeScrollArea), { onScrollbarXEnabledChange: l, onScrollbarYEnabledChange: c } = t, a = e.orientation === "horizontal";
+    return s.useEffect(() => (a ? l(!0) : c(!0), () => {
+      a ? l(!1) : c(!1);
+    }), [a, l, c]), t.type === "hover" ? /* @__PURE__ */ u.jsx(me, { ...n, ref: o, forceMount: r }) : t.type === "scroll" ? /* @__PURE__ */ u.jsx(ve, { ...n, ref: o, forceMount: r }) : t.type === "auto" ? /* @__PURE__ */ u.jsx(Q, { ...n, ref: o, forceMount: r }) : t.type === "always" ? /* @__PURE__ */ u.jsx(k, { ...n, ref: o }) : null;
+  }
+);
+B.displayName = g;
+var me = s.forwardRef((e, o) => {
+  const { forceMount: r, ...n } = e, t = v(g, e.__scopeScrollArea), [l, c] = s.useState(!1);
+  return s.useEffect(() => {
+    const a = t.scrollArea;
+    let i = 0;
+    if (a) {
+      const f = () => {
+        window.clearTimeout(i), c(!0);
+      }, d = () => {
+        i = window.setTimeout(() => c(!1), t.scrollHideDelay);
+      };
+      return a.addEventListener("pointerenter", f), a.addEventListener("pointerleave", d), () => {
+        window.clearTimeout(i), a.removeEventListener("pointerenter", f), a.removeEventListener("pointerleave", d);
+      };
+    }
+  }, [t.scrollArea, t.scrollHideDelay]), /* @__PURE__ */ u.jsx(O, { present: r || l, children: /* @__PURE__ */ u.jsx(
+    Q,
+    {
+      "data-state": l ? "visible" : "hidden",
+      ...n,
+      ref: o
+    }
+  ) });
+}), ve = s.forwardRef((e, o) => {
+  const { forceMount: r, ...n } = e, t = v(g, e.__scopeScrollArea), l = e.orientation === "horizontal", c = Y(() => i("SCROLL_END"), 100), [a, i] = Se("hidden", {
+    hidden: {
+      SCROLL: "scrolling"
+    },
+    scrolling: {
+      SCROLL_END: "idle",
+      POINTER_ENTER: "interacting"
+    },
+    interacting: {
+      SCROLL: "interacting",
+      POINTER_LEAVE: "idle"
+    },
+    idle: {
+      HIDE: "hidden",
+      SCROLL: "scrolling",
+      POINTER_ENTER: "interacting"
+    }
+  });
+  return s.useEffect(() => {
+    if (a === "idle") {
+      const f = window.setTimeout(() => i("HIDE"), t.scrollHideDelay);
+      return () => window.clearTimeout(f);
+    }
+  }, [a, t.scrollHideDelay, i]), s.useEffect(() => {
+    const f = t.viewport, d = l ? "scrollLeft" : "scrollTop";
+    if (f) {
+      let b = f[d];
+      const h = () => {
+        const S = f[d];
+        b !== S && (i("SCROLL"), c()), b = S;
+      };
+      return f.addEventListener("scroll", h), () => f.removeEventListener("scroll", h);
+    }
+  }, [t.viewport, l, i, c]), /* @__PURE__ */ u.jsx(O, { present: r || a !== "hidden", children: /* @__PURE__ */ u.jsx(
+    k,
+    {
+      "data-state": a === "hidden" ? "hidden" : "visible",
+      ...n,
+      ref: o,
+      onPointerEnter: C(e.onPointerEnter, () => i("POINTER_ENTER")),
+      onPointerLeave: C(e.onPointerLeave, () => i("POINTER_LEAVE"))
+    }
+  ) });
+}), Q = s.forwardRef((e, o) => {
+  const r = v(g, e.__scopeScrollArea), { forceMount: n, ...t } = e, [l, c] = s.useState(!1), a = e.orientation === "horizontal", i = Y(() => {
+    if (r.viewport) {
+      const f = r.viewport.offsetWidth < r.viewport.scrollWidth, d = r.viewport.offsetHeight < r.viewport.scrollHeight;
+      c(a ? f : d);
+    }
+  }, 10);
+  return E(r.viewport, i), E(r.content, i), /* @__PURE__ */ u.jsx(O, { present: n || l, children: /* @__PURE__ */ u.jsx(
+    k,
+    {
+      "data-state": l ? "visible" : "hidden",
+      ...t,
+      ref: o
+    }
+  ) });
+}), k = s.forwardRef((e, o) => {
+  const { orientation: r = "vertical", ...n } = e, t = v(g, e.__scopeScrollArea), l = s.useRef(null), c = s.useRef(0), [a, i] = s.useState({
+    content: 0,
+    viewport: 0,
+    scrollbar: { size: 0, paddingStart: 0, paddingEnd: 0 }
+  }), f = te(a.viewport, a.content), d = {
+    ...n,
+    sizes: a,
+    onSizesChange: i,
+    hasThumb: f > 0 && f < 1,
+    onThumbChange: (h) => l.current = h,
+    onThumbPointerUp: () => c.current = 0,
+    onThumbPointerDown: (h) => c.current = h
+  };
+  function b(h, S) {
+    return Re(h, c.current, a, S);
+  }
+  return r === "horizontal" ? /* @__PURE__ */ u.jsx(
+    we,
+    {
+      ...d,
+      ref: o,
+      onThumbPositionChange: () => {
+        if (t.viewport && l.current) {
+          const h = t.viewport.scrollLeft, S = $(h, a, t.dir);
+          l.current.style.transform = `translate3d(${S}px, 0, 0)`;
+        }
+      },
+      onWheelScroll: (h) => {
+        t.viewport && (t.viewport.scrollLeft = h);
+      },
+      onDragScroll: (h) => {
+        t.viewport && (t.viewport.scrollLeft = b(h, t.dir));
+      }
+    }
+  ) : r === "vertical" ? /* @__PURE__ */ u.jsx(
+    ge,
+    {
+      ...d,
+      ref: o,
+      onThumbPositionChange: () => {
+        if (t.viewport && l.current) {
+          const h = t.viewport.scrollTop, S = $(h, a);
+          l.current.style.transform = `translate3d(0, ${S}px, 0)`;
+        }
+      },
+      onWheelScroll: (h) => {
+        t.viewport && (t.viewport.scrollTop = h);
+      },
+      onDragScroll: (h) => {
+        t.viewport && (t.viewport.scrollTop = b(h));
+      }
+    }
+  ) : null;
+}), we = s.forwardRef((e, o) => {
+  const { sizes: r, onSizesChange: n, ...t } = e, l = v(g, e.__scopeScrollArea), [c, a] = s.useState(), i = s.useRef(null), f = y(o, i, l.onScrollbarXChange);
+  return s.useEffect(() => {
+    i.current && a(getComputedStyle(i.current));
+  }, [i]), /* @__PURE__ */ u.jsx(
+    ee,
+    {
+      "data-orientation": "horizontal",
+      ...t,
+      ref: f,
+      sizes: r,
+      style: {
+        bottom: 0,
+        left: l.dir === "rtl" ? "var(--radix-scroll-area-corner-width)" : 0,
+        right: l.dir === "ltr" ? "var(--radix-scroll-area-corner-width)" : 0,
+        "--radix-scroll-area-thumb-width": I(r) + "px",
+        ...e.style
+      },
+      onThumbPointerDown: (d) => e.onThumbPointerDown(d.x),
+      onDragScroll: (d) => e.onDragScroll(d.x),
+      onWheelScroll: (d, b) => {
+        if (l.viewport) {
+          const h = l.viewport.scrollLeft + d.deltaX;
+          e.onWheelScroll(h), le(h, b) && d.preventDefault();
+        }
+      },
+      onResize: () => {
+        i.current && l.viewport && c && n({
+          content: l.viewport.scrollWidth,
+          viewport: l.viewport.offsetWidth,
+          scrollbar: {
+            size: i.current.clientWidth,
+            paddingStart: z(c.paddingLeft),
+            paddingEnd: z(c.paddingRight)
+          }
+        });
+      }
+    }
+  );
+}), ge = s.forwardRef((e, o) => {
+  const { sizes: r, onSizesChange: n, ...t } = e, l = v(g, e.__scopeScrollArea), [c, a] = s.useState(), i = s.useRef(null), f = y(o, i, l.onScrollbarYChange);
+  return s.useEffect(() => {
+    i.current && a(getComputedStyle(i.current));
+  }, [i]), /* @__PURE__ */ u.jsx(
+    ee,
+    {
+      "data-orientation": "vertical",
+      ...t,
+      ref: f,
+      sizes: r,
+      style: {
+        top: 0,
+        right: l.dir === "ltr" ? 0 : void 0,
+        left: l.dir === "rtl" ? 0 : void 0,
+        bottom: "var(--radix-scroll-area-corner-height)",
+        "--radix-scroll-area-thumb-height": I(r) + "px",
+        ...e.style
+      },
+      onThumbPointerDown: (d) => e.onThumbPointerDown(d.y),
+      onDragScroll: (d) => e.onDragScroll(d.y),
+      onWheelScroll: (d, b) => {
+        if (l.viewport) {
+          const h = l.viewport.scrollTop + d.deltaY;
+          e.onWheelScroll(h), le(h, b) && d.preventDefault();
+        }
+      },
+      onResize: () => {
+        i.current && l.viewport && c && n({
+          content: l.viewport.scrollHeight,
+          viewport: l.viewport.offsetHeight,
+          scrollbar: {
+            size: i.current.clientHeight,
+            paddingStart: z(c.paddingTop),
+            paddingEnd: z(c.paddingBottom)
+          }
+        });
+      }
+    }
+  );
+}), [xe, Z] = q(g), ee = s.forwardRef((e, o) => {
+  const {
+    __scopeScrollArea: r,
+    sizes: n,
+    hasThumb: t,
+    onThumbChange: l,
+    onThumbPointerUp: c,
+    onThumbPointerDown: a,
+    onThumbPositionChange: i,
+    onDragScroll: f,
+    onWheelScroll: d,
+    onResize: b,
+    ...h
+  } = e, S = v(g, r), [m, A] = s.useState(null), X = y(o, (p) => A(p)), x = s.useRef(null), _ = s.useRef(""), M = S.viewport, j = n.content - n.viewport, D = P(d), T = P(i), N = Y(b, 10);
+  function W(p) {
+    if (x.current) {
+      const w = p.clientX - x.current.left, R = p.clientY - x.current.top;
+      f({ x: w, y: R });
+    }
+  }
+  return s.useEffect(() => {
+    const p = (w) => {
+      const R = w.target;
+      (m == null ? void 0 : m.contains(R)) && D(w, j);
+    };
+    return document.addEventListener("wheel", p, { passive: !1 }), () => document.removeEventListener("wheel", p, { passive: !1 });
+  }, [M, m, j, D]), s.useEffect(T, [n, T]), E(m, N), E(S.content, N), /* @__PURE__ */ u.jsx(
+    xe,
+    {
+      scope: r,
+      scrollbar: m,
+      hasThumb: t,
+      onThumbChange: P(l),
+      onThumbPointerUp: P(c),
+      onThumbPositionChange: T,
+      onThumbPointerDown: P(a),
+      children: /* @__PURE__ */ u.jsx(
+        L.div,
+        {
+          ...h,
+          ref: X,
+          style: { position: "absolute", ...h.style },
+          onPointerDown: C(e.onPointerDown, (p) => {
+            p.button === 0 && (p.target.setPointerCapture(p.pointerId), x.current = m.getBoundingClientRect(), _.current = document.body.style.webkitUserSelect, document.body.style.webkitUserSelect = "none", S.viewport && (S.viewport.style.scrollBehavior = "auto"), W(p));
+          }),
+          onPointerMove: C(e.onPointerMove, W),
+          onPointerUp: C(e.onPointerUp, (p) => {
+            const w = p.target;
+            w.hasPointerCapture(p.pointerId) && w.releasePointerCapture(p.pointerId), document.body.style.webkitUserSelect = _.current, S.viewport && (S.viewport.style.scrollBehavior = ""), x.current = null;
+          })
+        }
+      )
+    }
+  );
+}), H = "ScrollAreaThumb", re = s.forwardRef(
+  (e, o) => {
+    const { forceMount: r, ...n } = e, t = Z(H, e.__scopeScrollArea);
+    return /* @__PURE__ */ u.jsx(O, { present: r || t.hasThumb, children: /* @__PURE__ */ u.jsx(Pe, { ref: o, ...n }) });
+  }
+), Pe = s.forwardRef(
+  (e, o) => {
+    const { __scopeScrollArea: r, style: n, ...t } = e, l = v(H, r), c = Z(H, r), { onThumbPositionChange: a } = c, i = y(
+      o,
+      (b) => c.onThumbChange(b)
+    ), f = s.useRef(void 0), d = Y(() => {
+      f.current && (f.current(), f.current = void 0);
+    }, 100);
+    return s.useEffect(() => {
+      const b = l.viewport;
+      if (b) {
+        const h = () => {
+          if (d(), !f.current) {
+            const S = Ee(b, a);
+            f.current = S, a();
+          }
+        };
+        return a(), b.addEventListener("scroll", h), () => b.removeEventListener("scroll", h);
+      }
+    }, [l.viewport, d, a]), /* @__PURE__ */ u.jsx(
+      L.div,
+      {
+        "data-state": c.hasThumb ? "visible" : "hidden",
+        ...t,
+        ref: i,
+        style: {
+          width: "var(--radix-scroll-area-thumb-width)",
+          height: "var(--radix-scroll-area-thumb-height)",
+          ...n
+        },
+        onPointerDownCapture: C(e.onPointerDownCapture, (b) => {
+          const S = b.target.getBoundingClientRect(), m = b.clientX - S.left, A = b.clientY - S.top;
+          c.onThumbPointerDown({ x: m, y: A });
+        }),
+        onPointerUp: C(e.onPointerUp, c.onThumbPointerUp)
+      }
+    );
+  }
+);
+re.displayName = H;
+var F = "ScrollAreaCorner", oe = s.forwardRef(
+  (e, o) => {
+    const r = v(F, e.__scopeScrollArea), n = !!(r.scrollbarX && r.scrollbarY);
+    return r.type !== "scroll" && n ? /* @__PURE__ */ u.jsx(Ce, { ...e, ref: o }) : null;
+  }
+);
+oe.displayName = F;
+var Ce = s.forwardRef((e, o) => {
+  const { __scopeScrollArea: r, ...n } = e, t = v(F, r), [l, c] = s.useState(0), [a, i] = s.useState(0), f = !!(l && a);
+  return E(t.scrollbarX, () => {
+    var b;
+    const d = ((b = t.scrollbarX) == null ? void 0 : b.offsetHeight) || 0;
+    t.onCornerHeightChange(d), i(d);
+  }), E(t.scrollbarY, () => {
+    var b;
+    const d = ((b = t.scrollbarY) == null ? void 0 : b.offsetWidth) || 0;
+    t.onCornerWidthChange(d), c(d);
+  }), f ? /* @__PURE__ */ u.jsx(
+    L.div,
+    {
+      ...n,
+      ref: o,
+      style: {
+        width: l,
+        height: a,
+        position: "absolute",
+        right: t.dir === "ltr" ? 0 : void 0,
+        left: t.dir === "rtl" ? 0 : void 0,
+        bottom: 0,
+        ...e.style
+      }
+    }
+  ) : null;
+});
+function z(e) {
+  return e ? parseInt(e, 10) : 0;
+}
+function te(e, o) {
+  const r = e / o;
+  return isNaN(r) ? 0 : r;
+}
+function I(e) {
+  const o = te(e.viewport, e.content), r = e.scrollbar.paddingStart + e.scrollbar.paddingEnd, n = (e.scrollbar.size - r) * o;
+  return Math.max(n, 18);
+}
+function Re(e, o, r, n = "ltr") {
+  const t = I(r), l = t / 2, c = o || l, a = t - c, i = r.scrollbar.paddingStart + c, f = r.scrollbar.size - r.scrollbar.paddingEnd - a, d = r.content - r.viewport, b = n === "ltr" ? [0, d] : [d * -1, 0];
+  return ne([i, f], b)(e);
+}
+function $(e, o, r = "ltr") {
+  const n = I(o), t = o.scrollbar.paddingStart + o.scrollbar.paddingEnd, l = o.scrollbar.size - t, c = o.content - o.viewport, a = l - n, i = r === "ltr" ? [0, c] : [c * -1, 0], f = he(e, i);
+  return ne([0, c], [0, a])(f);
+}
+function ne(e, o) {
+  return (r) => {
+    if (e[0] === e[1] || o[0] === o[1]) return o[0];
+    const n = (o[1] - o[0]) / (e[1] - e[0]);
+    return o[0] + n * (r - e[0]);
+  };
+}
+function le(e, o) {
+  return e > 0 && e < o;
+}
+var Ee = (e, o = () => {
+}) => {
+  let r = { left: e.scrollLeft, top: e.scrollTop }, n = 0;
+  return (function t() {
+    const l = { left: e.scrollLeft, top: e.scrollTop }, c = r.left !== l.left, a = r.top !== l.top;
+    (c || a) && o(), r = l, n = window.requestAnimationFrame(t);
+  })(), () => window.cancelAnimationFrame(n);
+};
+function Y(e, o) {
+  const r = P(e), n = s.useRef(0);
+  return s.useEffect(() => () => window.clearTimeout(n.current), []), s.useCallback(() => {
+    window.clearTimeout(n.current), n.current = window.setTimeout(r, o);
+  }, [r, o]);
+}
+function E(e, o) {
+  const r = P(o);
+  ue(() => {
+    let n = 0;
+    if (e) {
+      const t = new ResizeObserver(() => {
+        cancelAnimationFrame(n), n = window.requestAnimationFrame(r);
+      });
+      return t.observe(e), () => {
+        window.cancelAnimationFrame(n), t.unobserve(e);
+      };
+    }
+  }, [e, r]);
+}
+var se = G, ye = K, Ae = oe;
+const ce = s.forwardRef(({ className: e, children: o, ...r }, n) => /* @__PURE__ */ u.jsxs(
+  se,
+  {
+    ref: n,
+    className: U("relative overflow-hidden", e),
+    ...r,
+    children: [
+      /* @__PURE__ */ u.jsx(ye, { className: "h-full w-full rounded-[inherit]", children: o }),
+      /* @__PURE__ */ u.jsx(ae, {}),
+      /* @__PURE__ */ u.jsx(Ae, {})
+    ]
+  }
+));
+ce.displayName = se.displayName;
+const ae = s.forwardRef(({ className: e, orientation: o = "vertical", ...r }, n) => /* @__PURE__ */ u.jsx(
+  B,
+  {
+    ref: n,
+    orientation: o,
+    className: U(
+      "flex touch-none select-none transition-colors",
+      o === "vertical" && "h-full w-2.5 border-l border-l-transparent p-[1px]",
+      o === "horizontal" && "h-2.5 flex-col border-t border-t-transparent p-[1px]",
+      e
+    ),
+    ...r,
+    children: /* @__PURE__ */ u.jsx(re, { className: "relative flex-1 rounded-full bg-border" })
+  }
+));
+ae.displayName = B.displayName;
+function _e({ config: e }) {
+  const { props: o = {}, children: r = [] } = e, { height: n = "400px", maxHeight: t, className: l } = o, c = {
+    height: n,
+    ...t && { maxHeight: t }
+  };
+  return /* @__PURE__ */ u.jsx(ce, { className: U(l), style: c, children: /* @__PURE__ */ u.jsx("div", { className: "p-4", children: r.map((a) => /* @__PURE__ */ u.jsx(fe.Fragment, { children: be(a) }, a.id)) }) });
+}
+export {
+  _e as ScrollAreaComponent
+};
