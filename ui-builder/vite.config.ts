@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import laravel from 'laravel-vite-plugin'
 import react from '@vitejs/plugin-react'
+import dts from 'vite-plugin-dts'
+import path from 'path'
 
 export default defineConfig({
     plugins: [
@@ -15,11 +17,29 @@ export default defineConfig({
         react({
             jsxRuntime: 'automatic',
         }),
+        dts({
+            entryRoot: 'resources/js',  
+            outDir: 'dist', 
+        }),
     ],
+
+    build: {
+        cssCodeSplit: true,        
+        lib: {
+          entry: path.resolve(__dirname, 'resources/js/index.ts'), 
+          name: 'UiBuilder',
+          fileName: 'ui-builder',
+          formats: ['es', 'cjs'],
+        },
+        outDir: 'dist',
+        emptyOutDir: true,        
+      },
+
     resolve: {
         alias: {
             '@': '/resources/js',
         },
+        dedupe: ['react', 'react-dom'],
     },
     optimizeDeps: {
         include: ['react', 'react-dom'],
@@ -39,4 +59,5 @@ export default defineConfig({
     },
     // Clear module cache on restart to prevent stale HMR state
     clearScreen: false,
+    
 })
