@@ -12,8 +12,15 @@ class UiPageController extends Controller
     {
         $page = Page::where('key', $key)->firstOrFail();
 
-        // Return the page config directly
+        // Get the page config
         $config = $page->config ?? [];
+        
+        // Validate that layout exists
+        if (!isset($config['layout'])) {
+            return response()->json([
+                'error' => 'Invalid page configuration: missing layout'
+            ], 422);
+        }
         
         // Add metadata to the config
         $config['_meta'] = [
@@ -25,6 +32,10 @@ class UiPageController extends Controller
             'timestamp' => $page->updated_at->toIso8601String(),
         ];
 
-        return response()->json($config);
+        // Return in the format expected by ShellPage
+        return response()->json([
+            'config' => $config,
+            'featureFlags' => $page->feature_flags ?? []
+        ]);
     }
 }
