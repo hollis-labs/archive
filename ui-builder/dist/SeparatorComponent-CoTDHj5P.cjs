@@ -1,1 +1,0 @@
-"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const e=require("./badge-BqZwQa2z.cjs"),s=require("./separator-CxluCiEx.cjs");function c({config:t}){const{props:o={}}=t,{orientation:r="horizontal",decorative:a=!0,className:n}=o;return e.jsxRuntimeExports.jsx(s.Separator,{orientation:r,decorative:a,className:e.cn(n)})}exports.SeparatorComponent=c;

@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { InputConfig } from '../types';
 
+
 export function InputComponent({ config }: { config: InputConfig }) {
   const { props = {}, actions } = config;
   const {

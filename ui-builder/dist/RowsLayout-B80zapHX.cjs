@@ -1,0 +1,1 @@
+"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const t=require("./index-VxlsHThE.cjs");function o({children:e}){return t.jsxRuntimeExports.jsx("div",{className:"flex flex-col gap-4",children:e})}exports.RowsLayout=o;
