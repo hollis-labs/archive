@@ -33,5 +33,10 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
   },
-  resolve: { dedupe: ['react', 'react-dom'] },
+  resolve: { 
+    dedupe: ['react', 'react-dom'],
+    alias: {
+      '@': path.resolve(__dirname, 'resources/js'),
+    },
+  },
 })

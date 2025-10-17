@@ -1,4 +1,4 @@
-import { PageConfig } from '../../../../../../resources/js/types';
+import { PageConfig } from './types';
 export interface PageData {
     config: PageConfig;
     featureFlags: Record<string, any>;

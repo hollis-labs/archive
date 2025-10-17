@@ -1,1 +1,0 @@
-"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const t=require("./badge-BqZwQa2z.cjs");function o({children:e}){return t.jsxRuntimeExports.jsx("div",{className:"flex flex-row gap-4",children:e})}exports.ColumnsLayout=o;

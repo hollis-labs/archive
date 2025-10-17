@@ -1,1 +1,0 @@
-"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const n=require("./badge-BqZwQa2z.cjs"),s=require("./loading-spinner-CDtoiqGO.cjs");function i({config:e}){const{props:o={}}=e,{size:r="md",className:t}=o;return n.jsxRuntimeExports.jsx(s.LoadingSpinner,{size:r,className:n.cn(t)})}exports.SpinnerComponent=i;
