@@ -64,4 +64,53 @@ class DataSourceController extends Controller
             ], 400);
         }
     }
+
+    public function show(string $alias, mixed $id): JsonResponse
+    {
+        try {
+            $result = $this->resolver->show($alias, $id);
+
+            if (!$result) {
+                return response()->json([
+                    'error' => 'Record not found',
+                ], 404);
+            }
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 404);
+        }
+    }
+
+    public function update(Request $request, string $alias, mixed $id): JsonResponse
+    {
+        try {
+            $data = $request->all();
+            $result = $this->resolver->update($alias, $id, $data);
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    public function destroy(string $alias, mixed $id): JsonResponse
+    {
+        try {
+            $this->resolver->delete($alias, $id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Record deleted successfully',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
 }
