@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use HollisLabs\UiBuilder\Http\Controllers\DataSourceController;
+use HollisLabs\UiBuilder\Http\Controllers\TypesController;
 use HollisLabs\UiBuilder\Http\Controllers\UiPageController;
 
 Route::prefix('api')->middleware('api')->group(function () {
@@ -15,5 +16,9 @@ Route::prefix('api')->middleware('api')->group(function () {
     // UI Page API routes
     Route::prefix('/ui')->group(function () {
         Route::get('/pages/{key}', [UiPageController::class, 'show']);
+        
+        // Types API routes (detail modals, etc.)
+        Route::get('/types/{alias}/query', [TypesController::class, 'query']);
+        Route::get('/types/{alias}/{id}', [TypesController::class, 'show']);
     });
 });

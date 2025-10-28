@@ -17,6 +17,11 @@ class Datasource extends Model
         'default_params_json',
         'capabilities_json',
         'schema_json',
+        'fields_json',
+        'relations_json',
+        'config_json',
+        'metadata_json',
+        'enabled',
     ];
 
     protected $casts = [
@@ -24,6 +29,11 @@ class Datasource extends Model
         'default_params_json' => 'array',
         'capabilities_json' => 'array',
         'schema_json' => 'array',
+        'fields_json' => 'array',
+        'relations_json' => 'array',
+        'config_json' => 'array',
+        'metadata_json' => 'array',
+        'enabled' => 'boolean',
     ];
 
     public function scopeByAlias($query, string $alias)

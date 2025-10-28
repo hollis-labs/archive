@@ -22,6 +22,12 @@ class UiBuilderServiceProvider extends ServiceProvider
         
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'ui-builder');
         
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \HollisLabs\UiBuilder\Console\Commands\ExportUiPages::class,
+            ]);
+        }
+        
         $this->publishes([
             __DIR__ . '/../config/ui-builder.php' => config_path('ui-builder.php'),
         ], 'ui-builder-config');
