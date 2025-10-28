@@ -125,6 +125,9 @@ class DataSourceResolver
                 'default_sort' => $datasource->default_params_json['default_sort'] ?? ['updated_at', 'desc'],
                 'capabilities' => $datasource->capabilities_json ?? [],
                 'transform' => $datasource->schema_json['transform'] ?? [],
+                'primary_key' => $datasource->config_json['primary_key'] ?? 'id',
+                'fields' => $datasource->fields_json ?? [],
+                'relations' => $datasource->relations_json ?? [],
             ];
         });
     }
@@ -136,6 +139,25 @@ class DataSourceResolver
         return $config['capabilities'];
     }
 
+    public function show(string $alias, mixed $id): ?array
+    {
+        $config = $this->getConfig($alias);
+        $modelClass = $config['model'];
+        $primaryKey = $config['primary_key'] ?? 'id';
+
+        $instance = $modelClass::where($primaryKey, $id)->first();
+
+        if (!$instance) {
+            return null;
+        }
+
+        if (!empty($config['with'])) {
+            $instance->load($config['with']);
+        }
+
+        return $this->transformItem($instance, $config['transform']);
+    }
+
     public function create(string $alias, array $data): array
     {
         $config = $this->getConfig($alias);
@@ -144,6 +166,39 @@ class DataSourceResolver
         $instance = $modelClass::create($data);
 
         return $this->transformItem($instance, $config['transform']);
+    }
+
+    public function update(string $alias, mixed $id, array $data): ?array
+    {
+        $config = $this->getConfig($alias);
+        $modelClass = $config['model'];
+        $primaryKey = $config['primary_key'] ?? 'id';
+
+        $instance = $modelClass::where($primaryKey, $id)->first();
+
+        if (!$instance) {
+            return null;
+        }
+
+        $instance->update($data);
+        $instance->refresh();
+
+        return $this->transformItem($instance, $config['transform']);
+    }
+
+    public function delete(string $alias, mixed $id): bool
+    {
+        $config = $this->getConfig($alias);
+        $modelClass = $config['model'];
+        $primaryKey = $config['primary_key'] ?? 'id';
+
+        $instance = $modelClass::where($primaryKey, $id)->first();
+
+        if (!$instance) {
+            return false;
+        }
+
+        return $instance->delete();
     }
 
     public function clearCache(string $alias): void
