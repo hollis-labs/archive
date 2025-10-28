@@ -16,6 +16,6 @@
          @endif
     ></div>
     
-    @vite('resources/js/main.tsx')
+    @vite('resources/js/app.tsx')
 </body>
 </html>
