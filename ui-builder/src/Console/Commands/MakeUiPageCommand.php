@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Console\Commands;
+namespace HollisLabs\UiBuilder\Console\Commands;
 
-use Modules\UiBuilder\app\Models\Page;
+use HollisLabs\UiBuilder\Models\Page;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;

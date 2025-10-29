@@ -1,6 +1,6 @@
 <?php
 
-namespace HollisLabs\UiBuilde\Console\Commands;
+namespace HollisLabs\UiBuilder\Console\Commands;
 
 use Illuminate\Console\Command;
 use HollisLabs\UiBuilder\Models\Page;

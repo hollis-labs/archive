@@ -2,7 +2,7 @@
 
 namespace HollisLabs\UiBuilder\Console\Commands;
 
-use Modules\UiBuilder\app\Models\Datasource;
+use HollisLabs\UiBuilder\Models\Datasource;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
