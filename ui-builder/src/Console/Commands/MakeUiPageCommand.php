@@ -71,8 +71,12 @@ class MakeUiPageCommand extends Command
         $this->info("✓ Inserted into database: {$pageKey} (v{$page->version})");
         $this->info("✓ Hash: {$page->hash}");
         $this->newLine();
+        
+        $routePrefix = config('ui-builder.routes.prefix', 'ui');
+        $pagePrefix = config('ui-builder.routes.page_prefix', 'pages');
+        
         $this->info("Access your page at:");
-        $this->line("  → /v2/pages/{$pageKey}");
+        $this->line("  → /{$routePrefix}/{$pagePrefix}/{$pageKey}");
         
         return 0;
     }

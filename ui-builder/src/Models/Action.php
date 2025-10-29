@@ -9,17 +9,23 @@ class Action extends Model
     protected $table = 'fe_ui_actions';
 
     protected $fillable = [
+        'key',
         'type',
+        'label',
         'handler_class',
         'config',
-        'payload_schema_json',
-        'policy_json',
+        'params',
+        'payload_schema',
+        'policy',
+        'enabled',
     ];
 
     protected $casts = [
         'config' => 'array',
-        'payload_schema_json' => 'array',
-        'policy_json' => 'array',
+        'params' => 'array',
+        'payload_schema' => 'array',
+        'policy' => 'array',
+        'enabled' => 'boolean',
     ];
 
     public function scopeByType($query, string $type)

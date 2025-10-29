@@ -1,6 +1,5 @@
 import { createRoot } from 'react-dom/client'
 import { ShellPage } from './ShellPage'
-import { registerComponents } from './components/registerComponents'
 import { Toaster } from 'sonner'
 
 declare global {
@@ -13,8 +12,6 @@ declare global {
     }
   }
 }
-
-registerComponents()
 
 document.addEventListener('DOMContentLoaded', () => {
   const boot = window.__BOOT__

@@ -292,6 +292,18 @@ export function registerFormComponents() {
   import('./forms/ItemComponent').then(({ ItemComponent }) => {
     registry.register('item', ItemComponent as ComponentRenderer);
   });
+
+  import('./primitives/TableComponent').then(({ TableComponent }) => {
+    registry.register('table', TableComponent as ComponentRenderer);
+  });
+
+  import('./primitives/SearchBarComponent').then(({ SearchBarComponent }) => {
+    registry.register('search.bar', SearchBarComponent as ComponentRenderer);
+  });
+
+  import('./primitives/DetailComponent').then(({ DetailComponent }) => {
+    registry.register('detail', DetailComponent as ComponentRenderer);
+  });
 }
 
 export function renderComponent(config: ComponentConfig): React.ReactElement | null {

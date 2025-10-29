@@ -3,8 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Plus, Edit, Trash, Eye, Settings, Search, X } from 'lucide-react'
 import type { ComponentConfig } from '../types'
 import { useAction } from '../hooks/useAction'
-import { FormModal } from '../modals/FormModal'
-import { slotBinder } from '../SlotBinder'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 interface ButtonIconComponentProps {
   config: ComponentConfig
@@ -45,20 +44,16 @@ export function ButtonIconComponent({ config }: ButtonIconComponentProps) {
       </Button>
 
       {clickAction?.type === 'modal' && clickAction.modal === 'form' && (
-        <FormModal
-          title={clickAction.title || 'Form'}
-          fields={clickAction.fields || []}
-          submitUrl={clickAction.submitUrl || ''}
-          submitMethod={clickAction.submitMethod}
-          submitLabel={clickAction.submitLabel}
-          open={modalOpen}
-          onOpenChange={setModalOpen}
-          onSuccess={() => {
-            if (clickAction.refreshTarget) {
-              slotBinder.update(clickAction.refreshTarget, { refresh: true })
-            }
-          }}
-        />
+        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{clickAction.title || 'Form'}</DialogTitle>
+            </DialogHeader>
+            <div className="text-sm text-muted-foreground">
+              Form implementation needed. Use FormComponent with modal container.
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   )

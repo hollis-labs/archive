@@ -44,4 +44,12 @@ return [
             'command' => 'Execute command',
         ],
     ],
+
+    'routes' => [
+        // API route prefix
+        'prefix' => env('UI_BUILDER_ROUTE_PREFIX', 'ui'),
+        
+        // Page route prefix (after API prefix)
+        'page_prefix' => env('UI_BUILDER_PAGE_PREFIX', 'pages'),
+    ],
 ];

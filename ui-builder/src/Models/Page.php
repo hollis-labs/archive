@@ -10,9 +10,9 @@ class Page extends Model
 
     protected $fillable = [
         'key',
+        'title',
         'config',
-        'route',
-        'meta_json',
+        'layout',
         'module_key',
         'guards_json',
         'enabled',
@@ -22,7 +22,7 @@ class Page extends Model
 
     protected $casts = [
         'config' => 'array',
-        'meta_json' => 'array',
+        'layout' => 'array',
         'guards_json' => 'array',
         'enabled' => 'boolean',
         'version' => 'integer',

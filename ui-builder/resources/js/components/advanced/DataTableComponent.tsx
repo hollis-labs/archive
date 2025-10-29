@@ -35,6 +35,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ComponentConfig, ActionConfig } from '../types';
+import { useAction } from '../hooks/useAction';
 
 interface DataTableColumnConfig {
   key: string;
@@ -70,27 +71,6 @@ interface DataTableConfig extends ComponentConfig {
     emptyText?: string;
     className?: string;
   };
-}
-
-function executeAction(action: ActionConfig, data?: any) {
-  const { type, command, url, event: eventName, payload, params } = action as any;
-  // Merge params, payload, and data
-  const finalPayload = { ...params, ...payload, ...data };
-
-  if (type === 'command' && command) {
-    console.log('Executing command:', command, 'with payload:', finalPayload);
-    window.dispatchEvent(new CustomEvent('command:execute', { detail: { command, payload: finalPayload } }));
-  } else if (type === 'navigate' && url) {
-    window.location.href = url;
-  } else if (type === 'emit' && eventName) {
-    window.dispatchEvent(new CustomEvent(eventName, { detail: finalPayload }));
-  } else if (type === 'http' && url) {
-    fetch(url, {
-      method: action.method || 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(finalPayload),
-    }).catch(console.error);
-  }
 }
 
 function renderCellValue(value: any, render: DataTableColumnConfig['render']) {
@@ -146,6 +126,7 @@ export function DataTableComponent({ config }: { config: DataTableConfig }) {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [detailModalData, setDetailModalData] = useState<any>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const { execute: executeAction } = useAction();
 
   // Fetch data from dataSource if provided
   useEffect(() => {

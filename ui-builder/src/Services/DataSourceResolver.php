@@ -119,15 +119,15 @@ class DataSourceResolver
             $datasource = Datasource::where('alias', $alias)->firstOrFail();
 
             return [
-                'model' => $datasource->handler ?? $datasource->model_class,
-                'with' => $datasource->default_params_json['with'] ?? [],
-                'scopes' => $datasource->default_params_json['scopes'] ?? [],
-                'default_sort' => $datasource->default_params_json['default_sort'] ?? ['updated_at', 'desc'],
-                'capabilities' => $datasource->capabilities_json ?? [],
-                'transform' => $datasource->schema_json['transform'] ?? [],
-                'primary_key' => $datasource->config_json['primary_key'] ?? 'id',
-                'fields' => $datasource->fields_json ?? [],
-                'relations' => $datasource->relations_json ?? [],
+                'model' => $datasource->model_class,
+                'with' => $datasource->default_params['with'] ?? [],
+                'scopes' => $datasource->default_params['scopes'] ?? [],
+                'default_sort' => $datasource->default_params['default_sort'] ?? ['updated_at', 'desc'],
+                'capabilities' => $datasource->capabilities ?? [],
+                'transform' => $datasource->schema['transform'] ?? [],
+                'primary_key' => $datasource->config['primary_key'] ?? 'id',
+                'fields' => $datasource->fields ?? [],
+                'relations' => $datasource->relations ?? [],
             ];
         });
     }

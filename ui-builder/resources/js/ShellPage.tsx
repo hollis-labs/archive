@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react'
 import { ComponentRenderer } from './ComponentRenderer'
 import type { PageConfig } from '@/types'
-import { FeatureFlagProvider } from '@/contexts/FeatureFlagContext'
-import type { ComponentConfig } from '@/components/types'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
 export interface PageData {
   config: PageConfig
-  featureFlags: Record<string, any>
 }
 
 export interface ShellPageProps {
@@ -102,11 +99,7 @@ export function ShellPage({ pageKey, isAuthenticated: _isAuthenticated, hasUsers
 
   console.log('ShellPage: Rendering layout:', pageData.config.layout)
   
-  const content = (
-    <FeatureFlagProvider flags={pageData.featureFlags}>
-      <ComponentRenderer config={pageData.config.layout} />
-    </FeatureFlagProvider>
-  )
+  const content = <ComponentRenderer config={pageData.config.layout} />
 
   const overlay = pageData.config.overlay || 'page'
 

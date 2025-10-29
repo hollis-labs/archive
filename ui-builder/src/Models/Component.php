@@ -12,20 +12,20 @@ class Component extends Model
         'key',
         'type',
         'kind',
-        'config',
         'variant',
-        'schema_json',
-        'defaults_json',
-        'capabilities_json',
+        'schema',
+        'defaults',
+        'capabilities',
         'hash',
         'version',
+        'enabled',
     ];
 
     protected $casts = [
-        'config' => 'array',
-        'schema_json' => 'array',
-        'defaults_json' => 'array',
-        'capabilities_json' => 'array',
+        'schema' => 'array',
+        'defaults' => 'array',
+        'capabilities' => 'array',
+        'enabled' => 'boolean',
         'version' => 'integer',
     ];
 
