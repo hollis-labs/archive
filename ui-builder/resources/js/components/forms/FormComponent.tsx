@@ -68,13 +68,29 @@ export function FormComponent({ config }: { config: FormConfig }) {
           const result = await response.json();
           console.log('FormComponent: Response status:', response.status);
           console.log('FormComponent: Response data:', result);
-          if (!response.ok && result.errors) {
-            console.error('FormComponent: Validation errors:', result.errors);
+          
+          if (response.ok) {
+            // Success
+            alert(`✓ ${result.message || 'Form submitted successfully!'}`);
+            formElement.reset();
+            window.dispatchEvent(new CustomEvent('form:success', { detail: result }));
+          } else {
+            // Error
+            if (result.errors) {
+              console.error('FormComponent: Validation errors:', result.errors);
+              const errorList = Object.entries(result.errors)
+                .map(([field, msgs]: [string, any]) => `• ${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+                .join('\n');
+              alert(`Validation Errors:\n\n${errorList}`);
+            } else {
+              alert(`Error: ${result.error || result.message || 'Submission failed'}`);
+            }
           }
           return result;
         })
         .catch(err => {
           console.error('FormComponent: Request failed:', err);
+          alert(`Network Error: ${err.message}`);
         });
       }
     }
