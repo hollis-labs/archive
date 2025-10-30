@@ -39,8 +39,8 @@ export const FieldCapabilityTableComponent: React.FC<FieldCapabilityTableProps> 
 
     const findAndAttach = () => {
       // Try multiple selectors to find the model_class field
-      selectElement = document.querySelector('select[name="#model_class"]') as HTMLSelectElement;
-      
+      selectElement = document.querySelector('select[name="model_class"]') as HTMLSelectElement;
+
       console.log('FieldCapabilityTable: Found select:', selectElement);
       console.log('FieldCapabilityTable: Select value:', selectElement?.value);
 
