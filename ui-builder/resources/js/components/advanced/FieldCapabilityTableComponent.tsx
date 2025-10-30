@@ -35,79 +35,75 @@ export const FieldCapabilityTableComponent: React.FC<FieldCapabilityTableProps> 
 
   // Listen to the model_class select field changes
   useEffect(() => {
-    let selectElement: HTMLSelectElement | null = null;
+    console.log('FieldCapabilityTable: useEffect mounting');
+    
+    const selectElement = document.querySelector('select[name="model_class"]') as HTMLSelectElement;
 
-    const findAndAttach = () => {
-      // Try multiple selectors to find the model_class field
-      selectElement = document.querySelector('select[name="model_class"]') as HTMLSelectElement;
+    console.log('FieldCapabilityTable: Found select:', selectElement);
+    console.log('FieldCapabilityTable: Select value:', selectElement?.value);
 
-      console.log('FieldCapabilityTable: Found select:', selectElement);
-      console.log('FieldCapabilityTable: Select value:', selectElement?.value);
-
-      if (selectElement) {
-        // Use MutationObserver to watch the hidden select for changes
-        const observer = new MutationObserver(() => {
-          if (selectElement && selectElement.value) {
-            console.log('FieldCapabilityTable: MutationObserver detected change:', selectElement.value);
-            setModelClass(selectElement.value);
-          }
-        });
-
-        observer.observe(selectElement, {
-          attributes: true,
-          childList: true,
-          subtree: true,
-        });
-
-        // Listen to change events
-        const handleChange = () => {
-          console.log('FieldCapabilityTable: Change event, value:', selectElement?.value);
-          if (selectElement?.value) {
-            setModelClass(selectElement.value);
-          }
-        };
-
-        selectElement.addEventListener('change', handleChange);
-
-        // Set initial value
-        if (selectElement.value) {
-          console.log('FieldCapabilityTable: Initial value:', selectElement.value);
-          setModelClass(selectElement.value);
+    if (!selectElement) {
+      console.warn('FieldCapabilityTable: Select not found, will retry');
+      // Try again after a delay
+      const retryTimeout = setTimeout(() => {
+        const retrySelect = document.querySelector('select[name="model_class"]') as HTMLSelectElement;
+        if (retrySelect && retrySelect.value) {
+          console.log('FieldCapabilityTable: Found on retry, value:', retrySelect.value);
+          setModelClass(retrySelect.value);
         }
+      }, 1000);
+      return () => clearTimeout(retryTimeout);
+    }
 
-        // Poll as fallback
-        const pollInterval = setInterval(() => {
-          if (selectElement && selectElement.value && selectElement.value !== modelClass) {
-            console.log('FieldCapabilityTable: Poll detected change:', selectElement.value);
-            setModelClass(selectElement.value);
-          }
-        }, 1000);
+    // Set initial value immediately
+    if (selectElement.value) {
+      console.log('FieldCapabilityTable: Setting initial value:', selectElement.value);
+      setModelClass(selectElement.value);
+    }
 
-        return () => {
-          observer.disconnect();
-          selectElement?.removeEventListener('change', handleChange);
-          clearInterval(pollInterval);
-        };
-      } else {
-        console.warn('FieldCapabilityTable: Select not found');
+    // Use MutationObserver to watch for changes
+    const observer = new MutationObserver(() => {
+      if (selectElement.value) {
+        console.log('FieldCapabilityTable: MutationObserver detected change:', selectElement.value);
+        setModelClass(selectElement.value);
+      }
+    });
+
+    observer.observe(selectElement, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+    });
+
+    // Listen to change events
+    const handleChange = () => {
+      console.log('FieldCapabilityTable: Change event fired, value:', selectElement.value);
+      if (selectElement.value) {
+        setModelClass(selectElement.value);
       }
     };
 
-    // Try immediately
-    const cleanup = findAndAttach();
+    selectElement.addEventListener('change', handleChange);
 
-    // Also try after a short delay in case the form isn't rendered yet
-    const timeout = setTimeout(() => {
-      if (!selectElement) {
-        findAndAttach();
+    // Poll as aggressive fallback - check every 500ms
+    console.log('FieldCapabilityTable: Starting polling interval');
+    const pollInterval = setInterval(() => {
+      const currentValue = selectElement.value;
+      console.log('FieldCapabilityTable: Polling... current value:', currentValue, 'state:', modelClass);
+      if (currentValue && currentValue !== modelClass) {
+        console.log('FieldCapabilityTable: Poll detected change:', currentValue);
+        setModelClass(currentValue);
       }
     }, 500);
 
+    // Cleanup
     return () => {
-      cleanup?.();
-      clearTimeout(timeout);
+      console.log('FieldCapabilityTable: Cleaning up');
+      observer.disconnect();
+      selectElement.removeEventListener('change', handleChange);
+      clearInterval(pollInterval);
     };
-  }, []);
+  }, [modelClass]);
 
   useEffect(() => {
     if (!modelClass) {
