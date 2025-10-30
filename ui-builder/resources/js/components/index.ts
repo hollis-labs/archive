@@ -22,3 +22,4 @@ export { DataTableComponent } from './advanced/DataTableComponent';
 export { ChartComponent } from './advanced/ChartComponent';
 export { CarouselComponent } from './advanced/CarouselComponent';
 export { SonnerComponent } from './advanced/SonnerComponent';
+export { FieldCapabilityTableComponent } from './advanced/FieldCapabilityTableComponent';

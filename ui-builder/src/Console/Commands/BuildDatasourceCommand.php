@@ -19,10 +19,10 @@ use function Laravel\Prompts\table;
 
 /**
  * BuildDatasourceCommand
- * 
+ *
  * Interactive CLI tool for building datasources using Laravel Prompts.
  * Creates datasource configurations for connecting UI components to data.
- * 
+ *
  * Usage:
  *   php artisan ui:build-datasource
  */
@@ -44,7 +44,7 @@ class BuildDatasourceCommand extends Command
 
         // Step 1: Basic Information
         $this->info('📋 Step 1: Basic Information');
-        
+
         $alias = text(
             label: 'Datasource Alias',
             placeholder: 'Sprint',
@@ -55,7 +55,7 @@ class BuildDatasourceCommand extends Command
         // Check if datasource already exists
         if (Datasource::where('alias', $alias)->exists()) {
             error("Datasource with alias '{$alias}' already exists!");
-            
+
             if (!confirm('Overwrite existing datasource?', false)) {
                 return 1;
             }
@@ -65,14 +65,14 @@ class BuildDatasourceCommand extends Command
 
         // Step 2: Model Selection
         $this->info('🏗️  Step 2: Model Configuration');
-        
+
         $modelClass = $this->selectModel();
 
         $this->newLine();
 
         // Step 3: Basic Operations
         $this->info('⚡ Step 3: Basic Operations');
-        
+
         $basicOperations = multiselect(
             label: 'What basic operations should this datasource support?',
             options: [
@@ -88,7 +88,7 @@ class BuildDatasourceCommand extends Command
 
         // Step 4: Relations Configuration (needed for Step 5)
         $this->info('🔗 Step 4: Relations Configuration');
-        
+
         $relations = null;
         if (confirm('Configure model relations?', false)) {
             $relations = $this->configureRelations($modelClass);
@@ -98,7 +98,7 @@ class BuildDatasourceCommand extends Command
 
         // Step 5: Default Parameters
         $this->info('⚙️  Step 5: Default Parameters');
-        
+
         if (confirm('Configure default query parameters?', true)) {
             $defaultParams = $this->configureDefaultParams($basicOperations, $modelClass, $relations);
         } else {
@@ -108,11 +108,11 @@ class BuildDatasourceCommand extends Command
         $this->newLine();
 
         // Step 6: Schema Configuration
-        $this->info('📐 Step 5: Schema Configuration');
-        
+        $this->info('📐 Step 6: Schema Configuration');
+
         $schema = null;
         $fields = null;
-        
+
         $generateMode = select(
             label: 'How would you like to configure schema and fields?',
             options: [
@@ -128,14 +128,14 @@ class BuildDatasourceCommand extends Command
             $result = $this->interactiveFieldSelection($modelClass);
             $schema = $result['schema'];
             $fields = $result['fields'];
-            
+
             if ($schema && $fields) {
                 info("✓ Configured schema with " . count($fields) . " fields");
             }
         } elseif ($generateMode === 'auto') {
             $schema = $this->generateSchemaFromModel($modelClass);
             $fields = $this->generateFieldsFromModel($modelClass);
-            
+
             if ($schema && $fields) {
                 info("✓ Auto-generated schema with " . count($fields) . " fields");
             }
@@ -145,15 +145,15 @@ class BuildDatasourceCommand extends Command
                 placeholder: '{"transform": {"id": "id", "name": "name"}}',
                 hint: 'Define field transform mappings'
             );
-            
+
             $schema = $schemaJson ? json_decode($schemaJson, true) : null;
-            
+
             $fieldsJson = textarea(
                 label: 'Fields (JSON array)',
                 placeholder: '[{"name":"id","type":"integer","label":"ID","searchable":false,"sortable":true}]',
                 hint: 'Define field definitions'
             );
-            
+
             $fields = $fieldsJson ? json_decode($fieldsJson, true) : null;
         }
 
@@ -161,7 +161,7 @@ class BuildDatasourceCommand extends Command
 
         // Step 7: Additional Configuration
         $this->info('🔧 Step 7: Additional Configuration');
-        
+
         $config = null;
         $metadata = null;
 
@@ -189,13 +189,13 @@ class BuildDatasourceCommand extends Command
 
         // Step 8: Review & Save
         $this->info('👀 Step 8: Review & Save');
-        
+
         // Build capabilities from fields (field-level capabilities)
         $capabilities = $this->buildCapabilitiesFromFields($fields, $basicOperations);
-        
+
         // Set default handler to DataSourceResolver
         $handler = 'HollisLabs\\UiBuilder\\Services\\DataSourceResolver';
-        
+
         $data = [
             'alias' => $alias,
             'model_class' => $modelClass,
@@ -225,7 +225,7 @@ class BuildDatasourceCommand extends Command
             $capCount += count($capabilities['sortable'] ?? []);
             $capCount += count(array_filter($capabilities, fn($v) => is_bool($v)));
         }
-        
+
         $this->table(
             ['Property', 'Value'],
             [
@@ -251,7 +251,7 @@ class BuildDatasourceCommand extends Command
                 ['alias' => $alias],
                 array_filter($data, fn($v) => $v !== null)
             );
-            
+
             $this->info("✓ Datasource saved successfully!");
             $this->line("  Alias: {$datasource->alias}");
             $this->line("  Model: " . ($datasource->model_class ?? '(none)'));
@@ -259,7 +259,7 @@ class BuildDatasourceCommand extends Command
             $this->line("  Capabilities: {$capCount} rules");
             $this->line("  Fields: " . count($fields ?? []));
             $this->line("  Relations: " . count($relations ?? []));
-            
+
             return 0;
         } catch (\Exception $e) {
             error("Failed to save datasource: {$e->getMessage()}");
@@ -271,13 +271,13 @@ class BuildDatasourceCommand extends Command
     {
         if (empty($this->availableModels)) {
             warning('No models found in app/Models directory.');
-            
+
             $manual = text(
                 label: 'Model Class (manual entry)',
                 placeholder: 'App\\Models\\Sprint',
                 hint: 'Full class name with namespace'
             );
-            
+
             return $manual ?: null;
         }
 
@@ -318,7 +318,7 @@ class BuildDatasourceCommand extends Command
             default: '15',
             hint: 'Number of records per page'
         );
-        
+
         if ($perPage) {
             $params['per_page'] = (int) $perPage;
         }
@@ -329,14 +329,14 @@ class BuildDatasourceCommand extends Command
             placeholder: 'created_at',
             hint: 'Field to sort by default'
         );
-        
+
         if ($sortField) {
             $sortOrder = select(
                 label: 'Sort order',
                 options: ['asc' => 'Ascending', 'desc' => 'Descending'],
                 default: 'desc'
             );
-            
+
             $params['default_sort'] = [$sortField, $sortOrder];
         }
 
@@ -355,13 +355,13 @@ class BuildDatasourceCommand extends Command
                 $relationType = $relationConfig['type'] ?? 'Unknown';
                 $relationOptions[$relationName] = "{$relationName} ({$relationType})";
             }
-            
+
             $selectedRelations = multiselect(
                 label: 'Select relations to eager load',
                 options: $relationOptions,
                 hint: 'These will be loaded automatically with every query'
             );
-            
+
             if (!empty($selectedRelations)) {
                 $params['with'] = $selectedRelations;
                 info("✓ Will eager load: " . implode(', ', $selectedRelations));
@@ -381,18 +381,18 @@ class BuildDatasourceCommand extends Command
         try {
             $model = new $modelClass;
             $table = $model->getTable();
-            
+
             info("Analyzing model: {$modelClass}");
             info("Table: {$table}");
-            
+
             // Get table columns with types
             $columns = \Schema::getColumns($table);
-            
+
             // Build transform map for schema (maps field name to database column)
             $transform = [];
             foreach ($columns as $column) {
                 $colName = $column['name'];
-                
+
                 // Handle datetime fields specially with format
                 if (in_array($column['type_name'], ['timestamp', 'date', 'datetime'])) {
                     $transform[$colName] = [
@@ -403,20 +403,20 @@ class BuildDatasourceCommand extends Command
                     $transform[$colName] = $colName;
                 }
             }
-            
+
             $schema = [
                 'transform' => $transform
             ];
 
             info("✓ Schema generated with " . count($transform) . " field mappings");
-            
+
             return $schema;
         } catch (\Exception $e) {
             warning("Could not analyze model: {$e->getMessage()}");
             return null;
         }
     }
-    
+
     protected function generateFieldsFromModel(?string $modelClass): ?array
     {
         if (!$modelClass || !class_exists($modelClass)) {
@@ -427,12 +427,12 @@ class BuildDatasourceCommand extends Command
             $model = new $modelClass;
             $table = $model->getTable();
             $columns = \Schema::getColumns($table);
-            
+
             $fields = [];
             foreach ($columns as $column) {
                 $colName = $column['name'];
                 $type = $this->mapColumnType($column['type_name']);
-                
+
                 $fields[] = [
                     'name' => $colName,
                     'type' => $type,
@@ -442,16 +442,16 @@ class BuildDatasourceCommand extends Command
                     'filterable' => in_array($type, ['string', 'integer', 'boolean']),
                 ];
             }
-            
+
             info("✓ Generated " . count($fields) . " field definitions");
-            
+
             return $fields;
         } catch (\Exception $e) {
             warning("Could not generate fields: {$e->getMessage()}");
             return null;
         }
     }
-    
+
     protected function mapColumnType(string $dbType): string
     {
         return match(true) {
@@ -476,21 +476,21 @@ class BuildDatasourceCommand extends Command
             $model = new $modelClass;
             $table = $model->getTable();
             $columns = \Schema::getColumns($table);
-            
+
             info("Found " . count($columns) . " columns in table: {$table}");
             $this->newLine();
-            
+
             // Build options for multiselect with all selected by default
             $columnOptions = [];
             $defaultSelected = [];
-            
+
             foreach ($columns as $column) {
                 $colName = $column['name'];
                 $colType = $column['type_name'];
                 $columnOptions[$colName] = "{$colName} ({$colType})";
                 $defaultSelected[] = $colName;
             }
-            
+
             // Let user select which fields to include
             $selectedFields = multiselect(
                 label: 'Select fields to include',
@@ -499,32 +499,32 @@ class BuildDatasourceCommand extends Command
                 hint: 'Uncheck fields you want to exclude. All are selected by default.',
                 required: true
             );
-            
+
             if (empty($selectedFields)) {
                 warning('No fields selected.');
                 return ['schema' => null, 'fields' => null];
             }
-            
+
             $this->newLine();
             info("Configuring " . count($selectedFields) . " selected fields...");
             $this->newLine();
-            
+
             // Build schema and fields for selected columns
             $schema = ['transform' => []];
             $fields = [];
-            
+
             // Ask if user wants to customize field properties or use defaults
             $customizeProperties = confirm(
                 'Customize field properties (searchable, sortable, etc.)?',
                 false
             );
-            
+
             foreach ($selectedFields as $colName) {
                 // Find the column info
                 $columnInfo = collect($columns)->firstWhere('name', $colName);
                 $colType = $columnInfo['type_name'];
                 $mappedType = $this->mapColumnType($colType);
-                
+
                 // Build schema transform
                 if (in_array($colType, ['timestamp', 'date', 'datetime'])) {
                     $schema['transform'][$colName] = [
@@ -534,7 +534,7 @@ class BuildDatasourceCommand extends Command
                 } else {
                     $schema['transform'][$colName] = $colName;
                 }
-                
+
                 // Build field definition with smart defaults
                 $fieldDef = [
                     'name' => $colName,
@@ -544,51 +544,51 @@ class BuildDatasourceCommand extends Command
                     'sortable' => !in_array($mappedType, ['text', 'json']),
                     'filterable' => in_array($mappedType, ['string', 'integer', 'boolean', 'datetime']),
                 ];
-                
+
                 // Allow customization if requested
                 if ($customizeProperties) {
                     $this->line("Field: {$colName} ({$mappedType})");
-                    
+
                     $customLabel = text(
                         label: '  Label',
                         default: $fieldDef['label'],
                         hint: 'Display label for this field'
                     );
-                    
+
                     if ($customLabel) {
                         $fieldDef['label'] = $customLabel;
                     }
-                    
+
                     $fieldDef['searchable'] = confirm(
                         '  Searchable?',
                         $fieldDef['searchable']
                     );
-                    
+
                     $fieldDef['sortable'] = confirm(
                         '  Sortable?',
                         $fieldDef['sortable']
                     );
-                    
+
                     $fieldDef['filterable'] = confirm(
                         '  Filterable?',
                         $fieldDef['filterable']
                     );
-                    
+
                     $this->newLine();
                 }
-                
+
                 $fields[] = $fieldDef;
             }
-            
+
             if (!$customizeProperties) {
                 info("✓ Using smart defaults for field properties");
             }
-            
+
             return [
                 'schema' => $schema,
                 'fields' => $fields
             ];
-            
+
         } catch (\Exception $e) {
             error("Could not analyze model: {$e->getMessage()}");
             return ['schema' => null, 'fields' => null];
@@ -735,32 +735,32 @@ class BuildDatasourceCommand extends Command
 
         try {
             $model = new $modelClass;
-            
+
             // Get all public methods that might be relationships
             $reflection = new \ReflectionClass($model);
             $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
-            
+
             $potentialRelations = [];
-            
+
             foreach ($methods as $method) {
                 // Skip inherited methods from Model, HasAttributes, etc.
                 if ($method->class !== $modelClass) {
                     continue;
                 }
-                
+
                 // Skip magic methods and common non-relation methods
                 $methodName = $method->getName();
-                if (str_starts_with($methodName, '__') || 
+                if (str_starts_with($methodName, '__') ||
                     in_array($methodName, ['boot', 'booted', 'getTable', 'getFillable', 'getCasts'])) {
                     continue;
                 }
-                
+
                 // Check if method returns a relationship
                 try {
                     $returnType = $method->getReturnType();
                     if ($returnType) {
                         $returnTypeName = $returnType->getName();
-                        
+
                         // Check if return type is a relationship
                         $relationshipTypes = [
                             'Illuminate\\Database\\Eloquent\\Relations\\HasOne',
@@ -772,7 +772,7 @@ class BuildDatasourceCommand extends Command
                             'Illuminate\\Database\\Eloquent\\Relations\\MorphMany',
                             'Illuminate\\Database\\Eloquent\\Relations\\MorphToMany',
                         ];
-                        
+
                         foreach ($relationshipTypes as $relationType) {
                             if ($returnTypeName === $relationType || is_subclass_of($returnTypeName, $relationType)) {
                                 // Extract just the relation type name
@@ -787,15 +787,15 @@ class BuildDatasourceCommand extends Command
                     continue;
                 }
             }
-            
+
             if (empty($potentialRelations)) {
                 info('No relations detected in model (methods need return type hints).');
-                
+
                 // Fallback to manual entry
                 if (confirm('Add relations manually?', false)) {
                     return $this->manualRelationsEntry();
                 }
-                
+
                 return null;
             }
 
@@ -824,21 +824,21 @@ class BuildDatasourceCommand extends Command
 
                 if ($customizeDetails) {
                     $this->line("Relation: {$relationName}");
-                    
+
                     $relatedModel = text(
                         label: '  Related model (optional)',
                         placeholder: 'App\\Models\\User',
                         hint: 'Full class name of related model'
                     );
-                    
+
                     $relations[$relationName] = [
                         'type' => $relationType,
                     ];
-                    
+
                     if ($relatedModel) {
                         $relations[$relationName]['related'] = $relatedModel;
                     }
-                    
+
                     $this->newLine();
                 } else {
                     $relations[$relationName] = [
@@ -855,11 +855,11 @@ class BuildDatasourceCommand extends Command
 
         } catch (\Exception $e) {
             warning("Could not detect relations: {$e->getMessage()}");
-            
+
             if (confirm('Add relations manually?', false)) {
                 return $this->manualRelationsEntry();
             }
-            
+
             return null;
         }
     }
@@ -871,23 +871,23 @@ class BuildDatasourceCommand extends Command
             placeholder: '{"user": {"type": "BelongsTo"}, "tasks": {"type": "HasMany"}}',
             hint: 'Define model relationships'
         );
-        
+
         return $relationsJson ? json_decode($relationsJson, true) : null;
     }
 
     protected function loadAvailableModels(): void
     {
         $modelsPath = app_path('Models');
-        
+
         if (!File::isDirectory($modelsPath)) {
             return;
         }
 
         $files = File::files($modelsPath);
-        
+
         foreach ($files as $file) {
             $className = 'App\\Models\\' . $file->getFilenameWithoutExtension();
-            
+
             if (class_exists($className)) {
                 $this->availableModels[$className] = $file->getFilenameWithoutExtension();
             }

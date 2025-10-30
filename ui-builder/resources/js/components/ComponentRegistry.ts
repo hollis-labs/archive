@@ -254,6 +254,10 @@ export function registerAdvancedComponents() {
   import('./advanced/SonnerComponent').then(({ SonnerComponent }) => {
     registry.register('sonner', SonnerComponent as ComponentRenderer);
   });
+
+  import('./advanced/FieldCapabilityTableComponent').then(({ FieldCapabilityTableComponent }) => {
+    registry.register('field-capability-table', FieldCapabilityTableComponent as ComponentRenderer);
+  });
 }
 
 export function registerFormComponents() {

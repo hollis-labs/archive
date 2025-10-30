@@ -7,6 +7,8 @@ use HollisLabs\UiBuilder\Http\Controllers\UiPageController;
 Route::prefix('api')->middleware('api')->group(function () {
     // UI DataSource routes (standard REST)
     Route::prefix('/ui/datasources')->group(function () {
+        Route::post('builder', [DataSourceController::class, 'createFromBuilder']);
+        Route::post('builder/fields', [DataSourceController::class, 'getModelFields']);
         Route::get('{alias}', [DataSourceController::class, 'query']);
         Route::post('{alias}', [DataSourceController::class, 'store']);
         Route::get('{alias}/capabilities', [DataSourceController::class, 'capabilities']);

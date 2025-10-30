@@ -203,6 +203,17 @@ class BuildPageCommand extends Command
             'button' => $this->buildButton(),
             'form' => $this->buildForm(),
             'card' => $this->buildCard(),
+            'input' => $this->buildInput(),
+            'select' => $this->buildSelect(),
+            'textarea' => $this->buildTextarea(),
+            'checkbox' => $this->buildCheckbox(),
+            'switch' => $this->buildSwitch(),
+            'badge' => $this->buildBadge(),
+            'alert' => $this->buildAlert(),
+            'separator' => $this->buildSeparator(),
+            'accordion' => $this->buildAccordion(),
+            'tabs' => $this->buildTabs(),
+            'done', '---' => null,
             default => $this->buildGenericComponent($type),
         };
     }
@@ -350,6 +361,32 @@ class BuildPageCommand extends Command
             $builder->icon($icon);
         }
 
+        // Add onClick action
+        if (confirm('Add onClick action?', false)) {
+            $actionType = select(
+                'Action type',
+                [
+                    'navigate' => 'Navigate to page',
+                    'modal' => 'Open modal',
+                    'http' => 'HTTP request',
+                    'emit' => 'Emit event',
+                    'command' => 'Execute command',
+                ]
+            );
+            
+            $action = match($actionType) {
+                'navigate' => $this->buildNavigateAction(),
+                'modal' => $this->buildModalAction(),
+                'http' => $this->buildHttpAction(),
+                'emit' => $this->buildEmitAction(),
+                'command' => $this->buildCommandAction(),
+            };
+            
+            if ($action) {
+                $builder->onClick($action);
+            }
+        }
+
         return $builder;
     }
 
@@ -361,27 +398,306 @@ class BuildPageCommand extends Command
 
     protected function buildCard(): ComponentBuilder
     {
-        info('Card builder coming soon...');
-        return null;
+        $id = text('Component ID', placeholder: 'card-1', required: true);
+        $builder = ComponentBuilder::make($id, 'card');
+        
+        if (confirm('Add title?', true)) {
+            $title = text('Card title', required: true);
+            $builder->prop('title', $title);
+        }
+        
+        if (confirm('Add description?', false)) {
+            $description = text('Card description');
+            $builder->prop('description', $description);
+        }
+        
+        return $builder;
+    }
+    
+    protected function buildInput(): ComponentBuilder
+    {
+        $id = text('Component ID', placeholder: 'input-email', required: true);
+        $builder = ComponentBuilder::make($id, 'input');
+        
+        $inputType = select(
+            'Input type',
+            ['text' => 'Text', 'email' => 'Email', 'password' => 'Password', 'number' => 'Number', 'date' => 'Date']
+        );
+        $builder->prop('type', $inputType);
+        
+        $placeholder = text('Placeholder', placeholder: 'Enter value...');
+        if ($placeholder) {
+            $builder->prop('placeholder', $placeholder);
+        }
+        
+        if (confirm('Required?', false)) {
+            $builder->prop('required', true);
+        }
+        
+        return $builder;
+    }
+    
+    protected function buildSelect(): ComponentBuilder
+    {
+        $id = text('Component ID', placeholder: 'select-status', required: true);
+        $builder = ComponentBuilder::make($id, 'select');
+        
+        $placeholder = text('Placeholder', default: 'Select option...');
+        $builder->prop('placeholder', $placeholder);
+        
+        info('Add options (comma-separated)');
+        $optionsInput = text('Options', placeholder: 'Active,Inactive,Pending', required: true);
+        
+        $options = array_map('trim', explode(',', $optionsInput));
+        $formattedOptions = array_map(fn($opt) => ['value' => strtolower($opt), 'label' => $opt], $options);
+        $builder->prop('options', $formattedOptions);
+        
+        return $builder;
+    }
+    
+    protected function buildTextarea(): ComponentBuilder
+    {
+        $id = text('Component ID', placeholder: 'textarea-notes', required: true);
+        $builder = ComponentBuilder::make($id, 'textarea');
+        
+        $placeholder = text('Placeholder', placeholder: 'Enter notes...');
+        if ($placeholder) {
+            $builder->prop('placeholder', $placeholder);
+        }
+        
+        $rows = text('Number of rows', default: '4');
+        $builder->prop('rows', (int)$rows);
+        
+        return $builder;
+    }
+    
+    protected function buildCheckbox(): ComponentBuilder
+    {
+        $id = text('Component ID', placeholder: 'checkbox-agree', required: true);
+        $builder = ComponentBuilder::make($id, 'checkbox');
+        
+        $label = text('Label', required: true);
+        $builder->prop('label', $label);
+        
+        if (confirm('Checked by default?', false)) {
+            $builder->prop('checked', true);
+        }
+        
+        return $builder;
+    }
+    
+    protected function buildSwitch(): ComponentBuilder
+    {
+        $id = text('Component ID', placeholder: 'switch-enabled', required: true);
+        $builder = ComponentBuilder::make($id, 'switch');
+        
+        $label = text('Label', required: true);
+        $builder->prop('label', $label);
+        
+        if (confirm('Enabled by default?', false)) {
+            $builder->prop('checked', true);
+        }
+        
+        return $builder;
+    }
+    
+    protected function buildBadge(): ComponentBuilder
+    {
+        $id = text('Component ID', placeholder: 'badge-status', required: true);
+        $builder = ComponentBuilder::make($id, 'badge');
+        
+        $text = text('Badge text', required: true);
+        $builder->prop('text', $text);
+        
+        $variant = select(
+            'Variant',
+            ['default' => 'Default', 'secondary' => 'Secondary', 'destructive' => 'Destructive', 'outline' => 'Outline']
+        );
+        $builder->prop('variant', $variant);
+        
+        return $builder;
+    }
+    
+    protected function buildAlert(): ComponentBuilder
+    {
+        $id = text('Component ID', placeholder: 'alert-info', required: true);
+        $builder = ComponentBuilder::make($id, 'alert');
+        
+        $title = text('Alert title');
+        if ($title) {
+            $builder->prop('title', $title);
+        }
+        
+        $description = text('Alert description', required: true);
+        $builder->prop('description', $description);
+        
+        $variant = select(
+            'Variant',
+            ['default' => 'Default', 'destructive' => 'Destructive']
+        );
+        $builder->prop('variant', $variant);
+        
+        return $builder;
+    }
+    
+    protected function buildSeparator(): ComponentBuilder
+    {
+        $id = text('Component ID', placeholder: 'separator-1', required: true);
+        $builder = ComponentBuilder::make($id, 'separator');
+        
+        $orientation = select(
+            'Orientation',
+            ['horizontal' => 'Horizontal', 'vertical' => 'Vertical'],
+            default: 'horizontal'
+        );
+        $builder->prop('orientation', $orientation);
+        
+        return $builder;
     }
 
     protected function buildGenericComponent(string $type): ComponentBuilder
     {
-        $id = text('Component ID', required: true);
+        $id = text(
+            label: 'Component ID',
+            placeholder: "{$type}-1",
+            required: true,
+            hint: 'Unique identifier for this component'
+        );
         
-        return ComponentBuilder::make($id, $type);
+        $builder = ComponentBuilder::make($id, $type);
+        
+        // Get component definition from database for smart defaults
+        $componentDef = \DB::table('ui_components')
+            ->where('type', $type)
+            ->first();
+        
+        if (!$componentDef) {
+            info("Note: No component definition found for '{$type}'. Using basic configuration.");
+        }
+        
+        // Offer to configure common props
+        if (confirm('Configure component properties?', false)) {
+            $this->configureCommonProps($builder, $type);
+        }
+        
+        return $builder;
+    }
+    
+    protected function configureCommonProps(ComponentBuilder $builder, string $type): void
+    {
+        // Common props that many components use
+        $commonProps = [
+            'label' => ['button', 'input', 'select', 'checkbox', 'switch', 'field'],
+            'placeholder' => ['input', 'textarea', 'select', 'combobox'],
+            'variant' => ['button', 'badge', 'alert', 'card'],
+            'size' => ['button', 'input', 'avatar', 'badge', 'spinner'],
+            'disabled' => ['button', 'input', 'select', 'checkbox', 'switch'],
+            'required' => ['input', 'select', 'textarea', 'checkbox'],
+        ];
+        
+        // Check which props apply to this type
+        $applicableProps = [];
+        foreach ($commonProps as $prop => $types) {
+            if (in_array($type, $types)) {
+                $applicableProps[] = $prop;
+            }
+        }
+        
+        if (empty($applicableProps)) {
+            info("No common properties available for type '{$type}'");
+            return;
+        }
+        
+        $selectedProps = multiselect(
+            label: 'Select properties to configure',
+            options: array_combine($applicableProps, array_map('ucfirst', $applicableProps)),
+            hint: 'Choose which properties to set'
+        );
+        
+        foreach ($selectedProps as $prop) {
+            $value = match($prop) {
+                'label', 'placeholder' => text(
+                    label: ucfirst($prop),
+                    placeholder: "Enter {$prop}"
+                ),
+                'variant' => select(
+                    label: 'Variant',
+                    options: $this->getVariantOptions($type)
+                ),
+                'size' => select(
+                    label: 'Size',
+                    options: ['sm' => 'Small', 'md' => 'Medium', 'lg' => 'Large']
+                ),
+                'disabled', 'required' => confirm(
+                    ucfirst($prop) . '?',
+                    false
+                ),
+                default => text(
+                    label: ucfirst($prop),
+                    placeholder: "Enter {$prop}"
+                ),
+            };
+            
+            if ($value !== null && $value !== '') {
+                $builder->prop($prop, $value);
+            }
+        }
+    }
+    
+    protected function getVariantOptions(string $type): array
+    {
+        return match($type) {
+            'button' => [
+                'default' => 'Default',
+                'destructive' => 'Destructive',
+                'outline' => 'Outline',
+                'secondary' => 'Secondary',
+                'ghost' => 'Ghost',
+                'link' => 'Link',
+            ],
+            'badge' => [
+                'default' => 'Default',
+                'secondary' => 'Secondary',
+                'destructive' => 'Destructive',
+                'outline' => 'Outline',
+            ],
+            'alert' => [
+                'default' => 'Default',
+                'destructive' => 'Destructive',
+            ],
+            default => [
+                'default' => 'Default',
+            ],
+        };
     }
 
     protected function getComponentOptions(): array
     {
-        return [
-            'data-table' => 'Data Table',
+        // Prioritize commonly used components at the top
+        $priorityComponents = [
+            'data-table' => $this->componentRegistry['data-table'] ?? 'Data Table',
             'search.bar' => 'Search Bar',
-            'button' => 'Button',
-            'form' => 'Form (coming soon)',
-            'card' => 'Card (coming soon)',
-            'done' => '✓ Done adding components',
+            'button' => $this->componentRegistry['button'] ?? 'Button',
+            'form' => $this->componentRegistry['form'] ?? 'Form',
+            'card' => $this->componentRegistry['card'] ?? 'Card',
+            'input' => $this->componentRegistry['input'] ?? 'Input',
         ];
+        
+        // Add separator
+        $separator = ['---' => '───────────────────'];
+        
+        // Add all other components
+        $otherComponents = [];
+        foreach ($this->componentRegistry as $type => $label) {
+            if (!isset($priorityComponents[$type])) {
+                $otherComponents[$type] = $label;
+            }
+        }
+        
+        // Add done option
+        $done = ['done' => '✓ Done adding components'];
+        
+        return array_merge($priorityComponents, $separator, $otherComponents, $done);
     }
 
     protected function loadAvailableDataSources(): void
@@ -393,17 +709,22 @@ class BuildPageCommand extends Command
 
     protected function loadComponentRegistry(): void
     {
-        // TODO: Load from ui_components table when component registry is populated
-        $this->componentRegistry = [
-            'data-table',
-            'search.bar',
-            'button',
-            'form',
-            'card',
-            'input',
-            'select',
-            'badge',
-        ];
+        // Load components from database
+        $components = \DB::table('ui_components')
+            ->select('key', 'type', 'kind')
+            ->orderBy('kind')
+            ->orderBy('type')
+            ->get();
+        
+        // Filter out layout types that aren't components
+        $layoutTypes = ['rows', 'columns', 'grid'];
+        
+        $this->componentRegistry = $components
+            ->filter(fn($comp) => !in_array($comp->type, $layoutTypes))
+            ->mapWithKeys(function ($comp) {
+                $label = ucwords(str_replace(['.', '-', '_'], ' ', $comp->type));
+                return [$comp->type => "{$label} ({$comp->kind})"];
+            })->toArray();
     }
 
     protected function configureDataTableColumns(string $dataSourceAlias): array
@@ -690,5 +1011,183 @@ class BuildPageCommand extends Command
         }
         
         return [];
+    }
+
+    protected function buildAccordion(): ComponentBuilder
+    {
+        $id = text('Component ID', placeholder: 'accordion-faq', required: true);
+        $builder = ComponentBuilder::make($id, 'accordion');
+        
+        $type = select(
+            'Accordion type',
+            ['single' => 'Single (one open at a time)', 'multiple' => 'Multiple (many open)'],
+            default: 'single'
+        );
+        $builder->prop('type', $type);
+        
+        if ($type === 'single') {
+            $collapsible = confirm('Collapsible (allow all closed)?', true);
+            $builder->prop('collapsible', $collapsible);
+        }
+        
+        // Add items
+        $items = [];
+        $itemCount = 1;
+        
+        while (confirm($itemCount === 1 ? 'Add accordion item?' : 'Add another item?', $itemCount === 1)) {
+            $itemValue = text("Item {$itemCount} value", default: "item-{$itemCount}", required: true);
+            $itemTitle = text("Item {$itemCount} title", required: true);
+            $itemContent = textarea("Item {$itemCount} content", required: true);
+            
+            $items[] = [
+                'value' => $itemValue,
+                'title' => $itemTitle,
+                'content' => $itemContent,
+            ];
+            
+            $itemCount++;
+        }
+        
+        if (empty($items)) {
+            warning('No items added to accordion');
+        } else {
+            $builder->prop('items', $items);
+            info("✓ Added {$itemCount} accordion items");
+        }
+        
+        return $builder;
+    }
+
+    protected function buildTabs(): ComponentBuilder
+    {
+        $id = text('Component ID', placeholder: 'tabs-settings', required: true);
+        $builder = ComponentBuilder::make($id, 'tabs');
+        
+        $defaultValue = text('Default tab value', placeholder: 'tab1');
+        if ($defaultValue) {
+            $builder->prop('defaultValue', $defaultValue);
+        }
+        
+        // Add tabs
+        $tabs = [];
+        $tabCount = 1;
+        
+        while (confirm($tabCount === 1 ? 'Add tab?' : 'Add another tab?', $tabCount === 1)) {
+            $tabValue = text("Tab {$tabCount} value", default: "tab{$tabCount}", required: true);
+            $tabLabel = text("Tab {$tabCount} label", required: true);
+            $tabContent = textarea("Tab {$tabCount} content", required: true);
+            
+            $tabs[] = [
+                'value' => $tabValue,
+                'label' => $tabLabel,
+                'content' => $tabContent,
+            ];
+            
+            $tabCount++;
+        }
+        
+        if (empty($tabs)) {
+            warning('No tabs added');
+        } else {
+            $builder->prop('tabs', $tabs);
+            info("✓ Added {$tabCount} tabs");
+        }
+        
+        return $builder;
+    }
+
+    protected function buildNavigateAction(): array
+    {
+        $pageKey = text('Page key to navigate to', required: true);
+        return ActionBuilder::navigate($pageKey)->toArray();
+    }
+
+    protected function buildModalAction(): array
+    {
+        $title = text('Modal title', default: 'Details');
+        $url = text('Data URL (optional)', placeholder: '/api/data/{id}');
+        
+        $action = ActionBuilder::modal()->title($title);
+        
+        if ($url) {
+            $action->url($url);
+        }
+        
+        return $action->toArray();
+    }
+
+    protected function buildHttpAction(): array
+    {
+        $url = text('Request URL', required: true);
+        $method = select(
+            'HTTP method',
+            ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+            default: 'POST'
+        );
+        
+        $action = ActionBuilder::http($url, $method);
+        
+        if (confirm('Add payload data?', false)) {
+            $payloadJson = textarea(
+                'Payload (JSON)',
+                placeholder: '{"key": "value"}'
+            );
+            
+            if ($payloadJson) {
+                $payload = json_decode($payloadJson, true);
+                if ($payload) {
+                    $action->payload($payload);
+                }
+            }
+        }
+        
+        $refreshTarget = text('Refresh target ID (optional)', hint: 'Component to refresh after request');
+        if ($refreshTarget) {
+            $action->refreshTarget($refreshTarget);
+        }
+        
+        return $action->toArray();
+    }
+
+    protected function buildEmitAction(): array
+    {
+        $eventName = text('Event name', required: true);
+        
+        $payload = [];
+        if (confirm('Add event payload?', false)) {
+            $payloadJson = textarea(
+                'Payload (JSON)',
+                placeholder: '{"key": "value"}'
+            );
+            
+            if ($payloadJson) {
+                $payload = json_decode($payloadJson, true) ?: [];
+            }
+        }
+        
+        return ActionBuilder::emit($eventName, $payload)->toArray();
+    }
+
+    protected function buildCommandAction(): array
+    {
+        $commandName = text('Command name', required: true);
+        
+        $params = [];
+        if (confirm('Add command parameters?', false)) {
+            $paramsJson = textarea(
+                'Parameters (JSON)',
+                placeholder: '{"param1": "value1"}'
+            );
+            
+            if ($paramsJson) {
+                $params = json_decode($paramsJson, true) ?: [];
+            }
+        }
+        
+        return [
+            'type' => 'command',
+            'command' => $commandName,
+            'params' => $params,
+        ];
     }
 }
