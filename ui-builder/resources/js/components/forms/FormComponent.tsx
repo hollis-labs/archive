@@ -12,6 +12,9 @@ export function FormComponent({ config }: { config: FormConfig }) {
     className,
   } = props || {};
 
+  console.log('FormComponent: customComponents:', customComponents);
+  console.log('FormComponent: customComponents.length:', customComponents?.length);
+
   const {
     handleSubmit,
     formState: { errors },
