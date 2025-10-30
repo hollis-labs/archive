@@ -11,10 +11,8 @@ return new class extends Migration
         Schema::create('ui_pages', function (Blueprint $table) {
             $table->id();
             $table->string('key')->unique();
-            // TODO: rename to config
             $table->json('config');
-            $table->string('route', 255)->nullable()->index();
-            $table->json('meta')->nullable();
+            $table->json('metadata')->nullable();
             $table->string('module_key', 100)->nullable()->index();
             $table->json('guards')->nullable();
             $table->boolean('enabled')->default(true)->index();

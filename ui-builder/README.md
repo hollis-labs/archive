@@ -14,7 +14,7 @@ The package centers around a **single, unified DataSource system** that handles 
 
 ```
 DataSource System
-├── Table: fe_ui_datasources (single source of truth)
+├── Table: ui_datasources (single source of truth)
 ├── Resolver: DataSourceResolver (handles all operations)
 └── Controller: TypesController (API endpoints)
 ```
@@ -60,10 +60,10 @@ vendor/hollis-labs/ui-builder/
 
 ### Database Schema
 
-The `fe_ui_datasources` table stores all data source configurations:
+The `ui_datasources` table stores all data source configurations:
 
 ```sql
-fe_ui_datasources
+ui_datasources
 ├── alias                     # Unique identifier (e.g., 'UiPage', 'Agent')
 ├── model_class               # Eloquent model class
 ├── handler                   # Optional model override
@@ -128,14 +128,14 @@ GET    /api/ui/types/{alias}/{id}               # Show (uses DataSourceResolver)
 
 ## Models
 
-All models use the `fe_ui_*` table prefix:
+All models use the `ui_*` table prefix:
 
-- **Page** - UI page configurations (`fe_ui_pages`)
-- **Component** - Reusable component definitions (`fe_ui_components`)
-- **Datasource** - Model-to-API mappings (`fe_ui_datasources`)
-- **Action** - Action handlers (`fe_ui_actions`)
-- **Module** - Module grouping (`fe_ui_modules`)
-- **Theme** - Theme configurations (`fe_ui_themes`)
+- **Page** - UI page configurations (`ui_pages`)
+- **Component** - Reusable component definitions (`ui_components`)
+- **Datasource** - Model-to-API mappings (`ui_datasources`)
+- **Action** - Action handlers (`ui_actions`)
+- **Module** - Module grouping (`ui_modules`)
+- **Theme** - Theme configurations (`ui_themes`)
 
 ## Key Concepts
 
@@ -162,7 +162,7 @@ Fields define structure, behavior, and validation:
   "searchable": true,
   "sortable": true,
   "filterable": true,
-  "validation": ["required", "unique:fe_ui_pages,key"],
+  "validation": ["required", "unique:ui_pages,key"],
   "metadata": {"placeholder": "page.example.key"},
   "order": 1
 }
@@ -202,19 +202,19 @@ Control what operations are available:
 **Type System Consolidation:**
 Previously, the package had two parallel systems:
 - **FeType System** (3 tables: `fe_types`, `fe_type_fields`, `fe_type_relations`)
-- **DataSource System** (1 table: `fe_ui_datasources`)
+- **DataSource System** (1 table: `ui_datasources`)
 
 These were **consolidated into a single DataSource system** by:
-1. Extending `fe_ui_datasources` with fields from FeType
+1. Extending `ui_datasources` with fields from FeType
 2. Enhancing `DataSourceResolver` with show/update/delete methods
-3. Migrating data from fe_types → fe_ui_datasources
+3. Migrating data from fe_types → ui_datasources
 4. Removing FeType models, TypeRegistry, TypeResolver
 5. Dropping fe_types tables
 
 **Unused Feature Removal:**
 Removed scaffolding that was never wired into application logic:
-- Dropped `fe_ui_registry` table (component catalog - never used)
-- Dropped `fe_ui_feature_flags` table (feature flags - never used)
+- Dropped `ui_registry` table (component catalog - never used)
+- Dropped `ui_feature_flags` table (feature flags - never used)
 - Removed Registry and FeatureFlag models
 - Removed RegistryItem and FeatureFlagDTO (zero usage)
 

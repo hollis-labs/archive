@@ -1,7 +1,6 @@
 import { PageConfig } from './types';
 export interface PageData {
     config: PageConfig;
-    featureFlags: Record<string, any>;
 }
 export interface ShellPageProps {
     pageKey: string;

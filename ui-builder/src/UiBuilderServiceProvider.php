@@ -25,6 +25,8 @@ class UiBuilderServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 \HollisLabs\UiBuilder\Console\Commands\ExportUiPages::class,
+                \HollisLabs\UiBuilder\Console\Commands\BuildPageCommand::class,
+                \HollisLabs\UiBuilder\Console\Commands\BuildDatasourceCommand::class,
             ]);
         }
         

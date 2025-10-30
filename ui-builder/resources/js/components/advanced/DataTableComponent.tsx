@@ -286,8 +286,38 @@ export function DataTableComponent({ config }: { config: DataTableConfig }) {
 
   if (loading) {
     return (
-      <div className="w-full h-64 flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
+      <div className="space-y-4">
+        {toolbar && toolbar.length > 0 && (
+          <div className="flex justify-end gap-2">
+            <div className="h-9 w-24 bg-muted animate-pulse rounded" />
+          </div>
+        )}
+        <div className="rounded-md border">
+          <div className="relative w-full overflow-auto">
+            <table className="w-full caption-bottom text-sm">
+              <thead className="[&_tr]:border-b">
+                <tr className="border-b transition-colors hover:bg-muted/50">
+                  {columnConfigs.map((_, idx) => (
+                    <th key={idx} className="h-12 px-4 text-left align-middle font-medium">
+                      <div className="h-4 bg-muted animate-pulse rounded w-20" />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="[&_tr:last-child]:border-0">
+                {Array.from({ length: pagination.pageSize || 5 }).map((_, rowIdx) => (
+                  <tr key={rowIdx} className="border-b transition-colors">
+                    {columnConfigs.map((_, colIdx) => (
+                      <td key={colIdx} className="p-4 align-middle">
+                        <div className="h-4 bg-muted animate-pulse rounded w-full" />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     );
   }

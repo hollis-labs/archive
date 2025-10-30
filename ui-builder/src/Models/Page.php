@@ -6,15 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Page extends Model
 {
-    protected $table = 'fe_ui_pages';
+    protected $table = 'ui_pages';
 
     protected $fillable = [
         'key',
-        'title',
         'config',
-        'layout',
+        'metadata',
         'module_key',
-        'guards_json',
+        'guards',
         'enabled',
         'hash',
         'version',
@@ -22,8 +21,8 @@ class Page extends Model
 
     protected $casts = [
         'config' => 'array',
-        'layout' => 'array',
-        'guards_json' => 'array',
+        'metadata' => 'array',
+        'guards' => 'array',
         'enabled' => 'boolean',
         'version' => 'integer',
     ];
@@ -50,8 +49,5 @@ class Page extends Model
         return $query->where('enabled', true);
     }
 
-    public function scopeByRoute($query, string $route)
-    {
-        return $query->where('route', $route);
-    }
+
 }

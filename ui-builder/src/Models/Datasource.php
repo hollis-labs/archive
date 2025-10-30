@@ -6,12 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Datasource extends Model
 {
-    protected $table = 'fe_ui_datasources';
+    protected $table = 'ui_datasources';
 
     protected $fillable = [
         'alias',
         'model_class',
-        'resolver_class',
+        'handler',
         'capabilities',
         'default_params',
         'schema',

@@ -1,6 +1,6 @@
 {
   "name": "@hollis-labs/ui-builder",
-  "version": "3.0.0",
+  "version": "3.2.1",
   "type": "module",
   "main": "./dist/ui-builder.cjs",
   "module": "./dist/ui-builder.js",

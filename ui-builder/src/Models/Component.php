@@ -6,26 +6,26 @@ use Illuminate\Database\Eloquent\Model;
 
 class Component extends Model
 {
-    protected $table = 'fe_ui_components';
+    protected $table = 'ui_components';
 
     protected $fillable = [
         'key',
         'type',
         'kind',
+        'config',
         'variant',
         'schema',
         'defaults',
         'capabilities',
         'hash',
         'version',
-        'enabled',
     ];
 
     protected $casts = [
+        'config' => 'array',
         'schema' => 'array',
         'defaults' => 'array',
         'capabilities' => 'array',
-        'enabled' => 'boolean',
         'version' => 'integer',
     ];
 

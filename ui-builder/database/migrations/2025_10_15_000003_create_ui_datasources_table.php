@@ -12,10 +12,15 @@ return new class extends Migration
             $table->id();
             $table->string('alias')->unique();
             $table->string('model_class')->nullable();
+            $table->string('handler')->nullable();
             $table->json('default_params')->nullable();
             $table->json('capabilities')->nullable();
             $table->json('schema')->nullable();
-            $table->string('handler')->nullable();
+            $table->json('fields')->nullable();
+            $table->json('relations')->nullable();
+            $table->json('config')->nullable();
+            $table->json('metadata')->nullable();
+            $table->boolean('enabled')->default(true);
             $table->timestamps();
             
             $table->index('alias');

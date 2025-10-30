@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('fe_ui_datasources', function (Blueprint $table) {
+        Schema::table('ui_datasources', function (Blueprint $table) {
             $table->json('fields_json')->nullable()->after('capabilities_json');
             $table->json('relations_json')->nullable()->after('fields_json');
             $table->json('config_json')->nullable()->after('relations_json');
@@ -22,7 +22,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('fe_ui_datasources', function (Blueprint $table) {
+        Schema::table('ui_datasources', function (Blueprint $table) {
             $table->dropColumn([
                 'fields_json',
                 'relations_json',

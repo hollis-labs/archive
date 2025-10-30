@@ -12,19 +12,19 @@ This release includes significant refactoring and cleanup of the UI Builder pack
 
 ### Database Schema Changes
 1. **Removed unused columns:**
-   - `fe_ui_components.config` (always empty)
-   - `fe_ui_pages.route` (unused, key is used instead)
-   - `fe_ui_pages.meta_json` (unused)
-   - `fe_ui_datasources.model_class` (duplicate of handler)
-   - `fe_ui_datasources.capabilities` (duplicate of capabilities_json)
+   - `ui_components.config` (always empty)
+   - `ui_pages.route` (unused, key is used instead)
+   - `ui_pages.meta_json` (unused)
+   - `ui_datasources.model_class` (duplicate of handler)
+   - `ui_datasources.capabilities` (duplicate of capabilities_json)
 
 2. **Removed `_json` suffixes from ALL columns:**
    - All tables now use clean column names (e.g., `config` instead of `config_json`)
    - Model casts remain the same for type safety
-   - Affects: `fe_ui_components`, `fe_ui_pages`, `fe_ui_datasources`, `fe_ui_actions`, `fe_ui_modules`, `fe_ui_themes`
+   - Affects: `ui_components`, `ui_pages`, `ui_datasources`, `ui_actions`, `ui_modules`, `ui_themes`
 
 3. **Renamed columns:**
-   - `fe_ui_datasources.handler` → `model_class` (for clarity)
+   - `ui_datasources.handler` → `model_class` (for clarity)
 
 ### Code Changes
 
@@ -121,7 +121,7 @@ Three new migrations included (run in order):
    - Fully reversible
 
 3. **`2025_10_29_000003_rename_handler_to_model_class.php`**
-   - Renames `handler` → `model_class` in `fe_ui_datasources`
+   - Renames `handler` → `model_class` in `ui_datasources`
    - Reversible
 
 ---
@@ -134,7 +134,7 @@ Three new migrations included (run in order):
 php artisan db:backup
 
 # Or manually export critical tables
-php artisan tinker --execute="echo json_encode(DB::table('fe_ui_pages')->get(), JSON_PRETTY_PRINT);" > backup-pages.json
+php artisan tinker --execute="echo json_encode(DB::table('ui_pages')->get(), JSON_PRETTY_PRINT);" > backup-pages.json
 ```
 
 ### Step 2: Update Package

@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::dropIfExists('fe_ui_registry');
-        Schema::dropIfExists('fe_ui_feature_flags');
+        Schema::dropIfExists('ui_registry');
+        Schema::dropIfExists('ui_feature_flags');
     }
 
     public function down(): void
     {
-        Schema::create('fe_ui_feature_flags', function (Blueprint $table) {
+        Schema::create('ui_feature_flags', function (Blueprint $table) {
             $table->id();
             $table->string('key')->unique();
             $table->string('name');
@@ -30,7 +30,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('fe_ui_registry', function (Blueprint $table) {
+        Schema::create('ui_registry', function (Blueprint $table) {
             $table->id();
             $table->string('type');
             $table->string('name');

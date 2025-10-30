@@ -49,9 +49,9 @@ mysqldump -u user -p database > backup-$(date +%Y%m%d).sql
 
 **Option B: Export critical tables**
 ```bash
-php artisan tinker --execute="file_put_contents('backup-pages.json', json_encode(DB::table('fe_ui_pages')->get(), JSON_PRETTY_PRINT));"
-php artisan tinker --execute="file_put_contents('backup-components.json', json_encode(DB::table('fe_ui_components')->get(), JSON_PRETTY_PRINT));"
-php artisan tinker --execute="file_put_contents('backup-datasources.json', json_encode(DB::table('fe_ui_datasources')->get(), JSON_PRETTY_PRINT));"
+php artisan tinker --execute="file_put_contents('backup-pages.json', json_encode(DB::table('ui_pages')->get(), JSON_PRETTY_PRINT));"
+php artisan tinker --execute="file_put_contents('backup-components.json', json_encode(DB::table('ui_components')->get(), JSON_PRETTY_PRINT));"
+php artisan tinker --execute="file_put_contents('backup-datasources.json', json_encode(DB::table('ui_datasources')->get(), JSON_PRETTY_PRINT));"
 ```
 
 ### 2. Update the Package
@@ -243,11 +243,11 @@ $model = $datasource->model_class;
 Export your production data for version control:
 
 ```bash
-php artisan tinker --execute="file_put_contents('vendor/hollis-labs/ui-builder/database/seeders/json/pages/pages.json', json_encode(DB::table('fe_ui_pages')->get(), JSON_PRETTY_PRINT));"
+php artisan tinker --execute="file_put_contents('vendor/hollis-labs/ui-builder/database/seeders/json/pages/pages.json', json_encode(DB::table('ui_pages')->get(), JSON_PRETTY_PRINT));"
 
-php artisan tinker --execute="file_put_contents('vendor/hollis-labs/ui-builder/database/seeders/json/components/components.json', json_encode(DB::table('fe_ui_components')->get(), JSON_PRETTY_PRINT));"
+php artisan tinker --execute="file_put_contents('vendor/hollis-labs/ui-builder/database/seeders/json/components/components.json', json_encode(DB::table('ui_components')->get(), JSON_PRETTY_PRINT));"
 
-php artisan tinker --execute="file_put_contents('vendor/hollis-labs/ui-builder/database/seeders/json/datasources/datasources.json', json_encode(DB::table('fe_ui_datasources')->get(), JSON_PRETTY_PRINT));"
+php artisan tinker --execute="file_put_contents('vendor/hollis-labs/ui-builder/database/seeders/json/datasources/datasources.json', json_encode(DB::table('ui_datasources')->get(), JSON_PRETTY_PRINT));"
 ```
 
 ### Optional: Update Routes Config
