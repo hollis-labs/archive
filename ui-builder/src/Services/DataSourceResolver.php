@@ -87,7 +87,8 @@ class DataSourceResolver
 
         foreach ($transform as $outputKey => $config) {
             if (is_string($config)) {
-                $result[$outputKey] = data_get($item, $config);
+                $value = data_get($item, $config);
+                $result[$outputKey] = $this->normalizeValue($value);
             } elseif (is_array($config)) {
                 $source = $config['source'] ?? $outputKey;
                 $value = data_get($item, $source);
@@ -96,11 +97,31 @@ class DataSourceResolver
                     $value = $this->formatValue($value, $config['format']);
                 }
 
-                $result[$outputKey] = $value;
+                $result[$outputKey] = $this->normalizeValue($value);
             }
         }
 
         return $result;
+    }
+
+    protected function normalizeValue($value)
+    {
+        // Convert Collections to arrays for JSON serialization
+        if ($value instanceof \Illuminate\Support\Collection) {
+            return $value->toArray();
+        }
+
+        // Convert other objects that have toArray method
+        if (is_object($value) && method_exists($value, 'toArray')) {
+            return $value->toArray();
+        }
+
+        // Convert any remaining objects to arrays if possible
+        if (is_object($value)) {
+            return json_decode(json_encode($value), true);
+        }
+
+        return $value;
     }
 
     protected function formatValue($value, string $format)

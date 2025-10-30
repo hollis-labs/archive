@@ -637,17 +637,33 @@ export function DataTableComponent({ config }: { config: DataTableConfig }) {
               </div>
             ) : detailModalData ? (
               <div className="space-y-3">
-                {rowAction?.fields?.map((field: any) => (
-                  <div key={field.key} className="grid grid-cols-3 gap-4">
-                    <div className="font-medium text-muted-foreground">{field.label}:</div>
-                    <div className="col-span-2">
-                      {field.type === 'date' 
-                        ? new Date(detailModalData[field.key]).toLocaleString()
-                        : detailModalData[field.key] || '—'
-                      }
+                {rowAction?.fields?.map((field: any) => {
+                  const value = detailModalData[field.key];
+                  let displayValue;
+                  
+                  if (value === null || value === undefined) {
+                    displayValue = '—';
+                  } else if (field.type === 'date') {
+                    displayValue = new Date(value).toLocaleString();
+                  } else if (field.type === 'json' || typeof value === 'object') {
+                    displayValue = (
+                      <pre className="text-xs bg-muted p-2 rounded overflow-auto max-h-48">
+                        {JSON.stringify(value, null, 2)}
+                      </pre>
+                    );
+                  } else {
+                    displayValue = String(value);
+                  }
+                  
+                  return (
+                    <div key={field.key} className="grid grid-cols-3 gap-4">
+                      <div className="font-medium text-muted-foreground">{field.label}:</div>
+                      <div className="col-span-2">
+                        {displayValue}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center text-muted-foreground">No data available</div>

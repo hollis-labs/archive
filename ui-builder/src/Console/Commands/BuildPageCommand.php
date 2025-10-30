@@ -228,33 +228,14 @@ class BuildPageCommand extends Command
         $builder = DataTableBuilder::make($id)->dataSource($dataSource);
 
         // Add columns (REQUIRED for data tables)
-        $columnsJson = null;
-        while (!$columnsJson) {
-            $columnsJson = textarea(
-                label: 'Columns (JSON array) - REQUIRED',
-                placeholder: '[{"key":"name","label":"Name","sortable":true}]',
-                hint: 'Enter column definitions as JSON. Cannot be empty!'
-            );
-            
-            if (!$columnsJson) {
-                error('Columns are required for data tables!');
-                continue;
-            }
-            
-            try {
-                $columns = json_decode($columnsJson, true);
-                if (!is_array($columns) || empty($columns)) {
-                    error('Columns must be a non-empty JSON array');
-                    $columnsJson = null; // Force retry
-                    continue;
-                }
-                $builder->columns($columns);
-                break;
-            } catch (\Exception $e) {
-                error('Invalid JSON for columns: ' . $e->getMessage());
-                $columnsJson = null; // Force retry
-            }
+        $columns = $this->configureDataTableColumns($dataSource);
+        
+        if (empty($columns)) {
+            error('Columns are required for data tables!');
+            return null;
         }
+        
+        $builder->columns($columns);
 
         // Add row action
         if (confirm('Add row click action?', true)) {
@@ -273,9 +254,18 @@ class BuildPageCommand extends Command
                     ->url("/api/ui/datasources/{$dataSource}/{{row.id}}");
                 
                 // Ask for detail fields
-                $autoGenerate = confirm('Auto-generate detail fields from table columns?', true);
+                $detailFieldMode = select(
+                    label: 'Detail fields configuration',
+                    options: [
+                        'auto' => 'Use table columns',
+                        'select' => 'Select from available fields',
+                        'manual' => 'Manual JSON entry',
+                        'skip' => 'Skip (no detail fields)',
+                    ],
+                    default: 'auto'
+                );
                 
-                if ($autoGenerate) {
+                if ($detailFieldMode === 'auto') {
                     // Auto-generate detail fields from the columns already defined
                     $detailFields = [];
                     if (isset($columns) && is_array($columns)) {
@@ -289,7 +279,13 @@ class BuildPageCommand extends Command
                         $modalAction->fields($detailFields);
                         info("✓ Auto-generated " . count($detailFields) . " detail fields from table columns");
                     }
-                } else {
+                } elseif ($detailFieldMode === 'select') {
+                    $detailFields = $this->selectDetailFields($dataSource, $columns);
+                    if (!empty($detailFields)) {
+                        $modalAction->fields($detailFields);
+                        info("✓ Added " . count($detailFields) . " detail fields");
+                    }
+                } elseif ($detailFieldMode === 'manual') {
                     $detailFieldsJson = textarea(
                         label: 'Detail fields (JSON array)',
                         placeholder: '[{"key":"id","label":"ID","type":"text"},{"key":"name","label":"Name","type":"text"}]',
@@ -408,5 +404,291 @@ class BuildPageCommand extends Command
             'select',
             'badge',
         ];
+    }
+
+    protected function configureDataTableColumns(string $dataSourceAlias): array
+    {
+        $configMode = select(
+            label: 'How would you like to configure columns?',
+            options: [
+                'interactive' => 'Interactive (select fields with checkboxes)',
+                'manual' => 'Manual JSON entry',
+            ],
+            default: 'interactive',
+            hint: 'Choose configuration method'
+        );
+
+        if ($configMode === 'manual') {
+            $columnsJson = textarea(
+                label: 'Columns (JSON array)',
+                placeholder: '[{"key":"name","label":"Name","sortable":true}]',
+                hint: 'Enter column definitions as JSON'
+            );
+            
+            if ($columnsJson) {
+                try {
+                    $columns = json_decode($columnsJson, true);
+                    if (is_array($columns) && !empty($columns)) {
+                        return $columns;
+                    }
+                } catch (\Exception $e) {
+                    error('Invalid JSON: ' . $e->getMessage());
+                }
+            }
+            return [];
+        }
+
+        // Interactive mode: Get fields from datasource
+        try {
+            $datasource = Datasource::where('alias', $dataSourceAlias)->first();
+            
+            if (!$datasource) {
+                warning("Datasource '{$dataSourceAlias}' not found. Using manual entry.");
+                return $this->manualColumnEntry();
+            }
+
+            $availableFields = [];
+            $defaultSelected = [];
+
+            // Try to get fields from datasource configuration
+            if (!empty($datasource->fields)) {
+                foreach ($datasource->fields as $field) {
+                    $fieldName = $field['name'];
+                    $fieldLabel = $field['label'] ?? ucwords(str_replace('_', ' ', $fieldName));
+                    $fieldType = $field['type'] ?? 'string';
+                    
+                    $availableFields[$fieldName] = "{$fieldLabel} ({$fieldType})";
+                    
+                    // Auto-select common display fields
+                    if (!in_array($fieldName, ['password', 'remember_token', 'deleted_at'])) {
+                        $defaultSelected[] = $fieldName;
+                    }
+                }
+            } elseif ($datasource->model_class && class_exists($datasource->model_class)) {
+                // Fall back to model introspection
+                $model = new $datasource->model_class;
+                $table = $model->getTable();
+                $columns = \Schema::getColumns($table);
+                
+                foreach ($columns as $column) {
+                    $colName = $column['name'];
+                    $colType = $column['type_name'];
+                    
+                    $availableFields[$colName] = "{$colName} ({$colType})";
+                    
+                    // Auto-select common display fields
+                    if (!in_array($colName, ['password', 'remember_token', 'deleted_at'])) {
+                        $defaultSelected[] = $colName;
+                    }
+                }
+            } else {
+                warning("Cannot introspect datasource fields. Using manual entry.");
+                return $this->manualColumnEntry();
+            }
+
+            if (empty($availableFields)) {
+                warning("No fields found in datasource. Using manual entry.");
+                return $this->manualColumnEntry();
+            }
+
+            info("Found " . count($availableFields) . " available fields");
+            $this->newLine();
+
+            // Let user select which columns to include
+            $selectedColumns = multiselect(
+                label: 'Select columns to display',
+                options: $availableFields,
+                default: $defaultSelected,
+                hint: 'Uncheck columns you want to exclude',
+                required: true
+            );
+
+            if (empty($selectedColumns)) {
+                warning('No columns selected.');
+                return [];
+            }
+
+            $this->newLine();
+            
+            // Ask if user wants to customize column properties
+            $customizeProperties = confirm(
+                'Customize column properties (sortable, width, etc.)?',
+                false
+            );
+
+            $columns = [];
+            foreach ($selectedColumns as $colName) {
+                // Find field info from datasource
+                $fieldInfo = null;
+                if (!empty($datasource->fields)) {
+                    $fieldInfo = collect($datasource->fields)->firstWhere('name', $colName);
+                }
+
+                $column = [
+                    'key' => $colName,
+                    'label' => $fieldInfo['label'] ?? ucwords(str_replace('_', ' ', $colName)),
+                    'sortable' => $fieldInfo['sortable'] ?? true,
+                ];
+
+                if ($customizeProperties) {
+                    $this->line("Column: {$colName}");
+                    
+                    $customLabel = text(
+                        label: '  Label',
+                        default: $column['label']
+                    );
+                    
+                    if ($customLabel) {
+                        $column['label'] = $customLabel;
+                    }
+                    
+                    $column['sortable'] = confirm(
+                        '  Sortable?',
+                        $column['sortable']
+                    );
+                    
+                    $width = text(
+                        label: '  Width (optional)',
+                        placeholder: '200px or 20%',
+                        hint: 'Leave empty for auto'
+                    );
+                    
+                    if ($width) {
+                        $column['width'] = $width;
+                    }
+                    
+                    $align = select(
+                        label: '  Text alignment',
+                        options: ['left', 'center', 'right'],
+                        default: 'left'
+                    );
+                    
+                    if ($align !== 'left') {
+                        $column['align'] = $align;
+                    }
+                    
+                    $this->newLine();
+                }
+
+                $columns[] = $column;
+            }
+
+            if (!$customizeProperties) {
+                info("✓ Using smart defaults for column properties");
+            }
+
+            return $columns;
+
+        } catch (\Exception $e) {
+            error("Error configuring columns: {$e->getMessage()}");
+            return $this->manualColumnEntry();
+        }
+    }
+
+    protected function selectDetailFields(string $dataSourceAlias, array $tableColumns): array
+    {
+        try {
+            $datasource = Datasource::where('alias', $dataSourceAlias)->first();
+            
+            if (!$datasource || empty($datasource->fields)) {
+                // Fall back to using table columns
+                $detailFields = [];
+                foreach ($tableColumns as $column) {
+                    $detailFields[] = [
+                        'key' => $column['key'],
+                        'label' => $column['label'],
+                        'type' => 'text',
+                    ];
+                }
+                return $detailFields;
+            }
+
+            $availableFields = [];
+            $defaultSelected = [];
+
+            foreach ($datasource->fields as $field) {
+                $fieldName = $field['name'];
+                $fieldLabel = $field['label'] ?? ucwords(str_replace('_', ' ', $fieldName));
+                $fieldType = $field['type'] ?? 'string';
+                
+                $availableFields[$fieldName] = "{$fieldLabel} ({$fieldType})";
+                
+                // Auto-select fields that are in table columns
+                $inTableColumns = collect($tableColumns)->firstWhere('key', $fieldName);
+                if ($inTableColumns) {
+                    $defaultSelected[] = $fieldName;
+                }
+            }
+
+            if (empty($availableFields)) {
+                // Fall back to table columns
+                $detailFields = [];
+                foreach ($tableColumns as $column) {
+                    $detailFields[] = [
+                        'key' => $column['key'],
+                        'label' => $column['label'],
+                        'type' => 'text',
+                    ];
+                }
+                return $detailFields;
+            }
+
+            $selectedFields = multiselect(
+                label: 'Select detail fields to display',
+                options: $availableFields,
+                default: $defaultSelected,
+                hint: 'Choose fields for the detail modal',
+                required: true
+            );
+
+            $detailFields = [];
+            foreach ($selectedFields as $fieldName) {
+                $fieldInfo = collect($datasource->fields)->firstWhere('name', $fieldName);
+                
+                $detailFields[] = [
+                    'key' => $fieldName,
+                    'label' => $fieldInfo['label'] ?? ucwords(str_replace('_', ' ', $fieldName)),
+                    'type' => 'text', // Always use text for detail view
+                ];
+            }
+
+            return $detailFields;
+
+        } catch (\Exception $e) {
+            warning("Error selecting detail fields: {$e->getMessage()}");
+            
+            // Fall back to table columns
+            $detailFields = [];
+            foreach ($tableColumns as $column) {
+                $detailFields[] = [
+                    'key' => $column['key'],
+                    'label' => $column['label'],
+                    'type' => 'text',
+                ];
+            }
+            return $detailFields;
+        }
+    }
+
+    protected function manualColumnEntry(): array
+    {
+        $columnsJson = textarea(
+            label: 'Columns (JSON array)',
+            placeholder: '[{"key":"name","label":"Name","sortable":true}]',
+            hint: 'Enter column definitions as JSON'
+        );
+        
+        if ($columnsJson) {
+            try {
+                $columns = json_decode($columnsJson, true);
+                if (is_array($columns) && !empty($columns)) {
+                    return $columns;
+                }
+            } catch (\Exception $e) {
+                error('Invalid JSON: ' . $e->getMessage());
+            }
+        }
+        
+        return [];
     }
 }

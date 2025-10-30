@@ -187,6 +187,9 @@ ComponentBuilder::searchBar('id')
 ## CLI Commands
 
 ```bash
+# Interactive datasource builder
+php artisan ui:build-datasource
+
 # Interactive page builder
 php artisan ui:build-page
 
@@ -195,6 +198,74 @@ php artisan ui-builder:export-pages
 
 # Sync pages (if using JSON files)
 php artisan ui-builder:sync-pages
+```
+
+### Interactive Field Selection
+
+Both `ui:build-datasource` and `ui:build-page` now support **interactive field selection with checkboxes**:
+
+**BuildDatasourceCommand:**
+- **Interactive Mode** (default): Select fields using checkboxes with all fields pre-selected
+  - Shows field name and type (e.g., "name (varchar)")
+  - Uncheck fields you want to exclude
+  - Optional customization of field properties (label, searchable, sortable, filterable)
+  - Auto-generates both `schema` (transform mappings) and `fields` (field definitions)
+- **Auto Mode**: Generates all fields automatically (previous default)
+- **Manual Mode**: Enter JSON manually (previous behavior)
+
+**BuildPageCommand:**
+- **Interactive Column Selection**: When adding DataTable components
+  - Pulls fields from datasource configuration or model introspection
+  - Shows checkboxes with smart defaults (excludes password, tokens, etc.)
+  - Optional customization: label, sortable, width, text alignment
+- **Interactive Detail Fields**: When configuring row-click modals
+  - Four modes: auto (use table columns), select (checkboxes), manual (JSON), skip
+  - Smart defaults match table columns when using select mode
+
+**Smart Defaults:**
+- String/text fields → searchable
+- Non-text/json fields → sortable  
+- String/integer/boolean/datetime → filterable
+- Datetime fields get ISO8601 format automatically
+- Sensitive fields (password, remember_token) auto-excluded
+
+**Example Flow:**
+```bash
+$ php artisan ui:build-datasource
+
+🗄️  Datasource Builder
+
+📋 Step 1: Basic Information
+Datasource Alias: Agent
+
+🏗️  Step 2: Model Configuration
+Select Model: Agent
+
+⚡ Step 3: Capabilities
+[Select operations...]
+
+📐 Step 4: Schema Configuration
+How would you like to configure schema and fields?
+> Interactive (select fields with checkboxes)
+  Auto-generate all fields
+  Manual JSON entry
+
+Found 9 columns in table: agents
+
+Select fields to include:
+☑ id (uuid)
+☑ name (varchar)
+☑ designation (varchar)
+☑ avatar_path (varchar)
+☐ remember_token (varchar)  # Smart exclusion
+☑ agent_profile_id (uuid)
+☑ status (varchar)
+☑ created_at (timestamp)
+☑ updated_at (timestamp)
+
+Customize field properties? [no]
+
+✓ Configured schema with 8 fields
 ```
 
 ---

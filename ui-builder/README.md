@@ -68,13 +68,13 @@ ui_datasources
 ├── model_class               # Eloquent model class
 ├── handler                   # Optional model override
 ├── resolver_class            # Resolver to use
-├── capabilities_json         # {searchable, filterable, sortable, create, update, delete}
-├── fields_json               # [{name, type, label, required, searchable, sortable, filterable, validation, metadata, order}]
-├── relations_json            # [{name, type, related_type, foreign_key, local_key, metadata}]
-├── config_json               # {table, primary_key, source_type}
-├── schema_json               # {transform: {...}}
-├── default_params_json       # {with, scopes, default_sort}
-├── metadata_json             # {description, icon, category, display_name}
+├── capabilities              # {searchable, filterable, sortable, create, update, delete}
+├── fields                    # [{name, type, label, required, searchable, sortable, filterable, validation, metadata, order}]
+├── relations                 # [{name, type, related_type, foreign_key, local_key, metadata}]
+├── config                    # {table, primary_key, source_type}
+├── schema                    # {transform: {...}}
+├── default_params            # {with, scopes, default_sort}
+├── metadata                  # {description, icon, category, display_name}
 └── enabled                   # Active status
 ```
 
