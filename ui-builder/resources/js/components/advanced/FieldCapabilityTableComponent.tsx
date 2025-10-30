@@ -36,18 +36,14 @@ export const FieldCapabilityTableComponent: React.FC<FieldCapabilityTableProps> 
   // Listen to the model_class select field changes
   useEffect(() => {
     let selectElement: HTMLSelectElement | null = null;
-    
+
     const findAndAttach = () => {
       // Try multiple selectors to find the model_class field
-      selectElement = document.querySelector('select[name="model_class"]') as HTMLSelectElement;
-      
-      if (!selectElement) {
-        selectElement = document.querySelector('#select-model') as HTMLSelectElement;
-      }
+      selectElement = document.querySelector('select[name="#model_class"]') as HTMLSelectElement;
       
       console.log('FieldCapabilityTable: Found select:', selectElement);
       console.log('FieldCapabilityTable: Select value:', selectElement?.value);
-      
+
       if (selectElement) {
         // Use MutationObserver to watch the hidden select for changes
         const observer = new MutationObserver(() => {
@@ -56,13 +52,13 @@ export const FieldCapabilityTableComponent: React.FC<FieldCapabilityTableProps> 
             setModelClass(selectElement.value);
           }
         });
-        
+
         observer.observe(selectElement, {
           attributes: true,
           childList: true,
           subtree: true,
         });
-        
+
         // Listen to change events
         const handleChange = () => {
           console.log('FieldCapabilityTable: Change event, value:', selectElement?.value);
@@ -70,15 +66,15 @@ export const FieldCapabilityTableComponent: React.FC<FieldCapabilityTableProps> 
             setModelClass(selectElement.value);
           }
         };
-        
+
         selectElement.addEventListener('change', handleChange);
-        
+
         // Set initial value
         if (selectElement.value) {
           console.log('FieldCapabilityTable: Initial value:', selectElement.value);
           setModelClass(selectElement.value);
         }
-        
+
         // Poll as fallback
         const pollInterval = setInterval(() => {
           if (selectElement && selectElement.value && selectElement.value !== modelClass) {
@@ -86,7 +82,7 @@ export const FieldCapabilityTableComponent: React.FC<FieldCapabilityTableProps> 
             setModelClass(selectElement.value);
           }
         }, 1000);
-        
+
         return () => {
           observer.disconnect();
           selectElement?.removeEventListener('change', handleChange);
@@ -96,17 +92,17 @@ export const FieldCapabilityTableComponent: React.FC<FieldCapabilityTableProps> 
         console.warn('FieldCapabilityTable: Select not found');
       }
     };
-    
+
     // Try immediately
     const cleanup = findAndAttach();
-    
+
     // Also try after a short delay in case the form isn't rendered yet
     const timeout = setTimeout(() => {
       if (!selectElement) {
         findAndAttach();
       }
     }, 500);
-    
+
     return () => {
       cleanup?.();
       clearTimeout(timeout);
@@ -279,7 +275,7 @@ export const FieldCapabilityTableComponent: React.FC<FieldCapabilityTableProps> 
           ))}
         </TableBody>
       </Table>
-      
+
       {/* Hidden inputs for form submission */}
       <input type="hidden" name="searchable_fields" value={fields.filter(f => f.searchable).map(f => f.name).join(',')} />
       <input type="hidden" name="filterable_fields" value={fields.filter(f => f.filterable).map(f => f.name).join(',')} />
