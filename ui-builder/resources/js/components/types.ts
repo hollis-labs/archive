@@ -642,7 +642,9 @@ export interface FormConfig extends BaseComponentConfig {
   type: 'form';
   props: {
     fields: FormField[];
+    customComponents?: ComponentConfig[];
     submitButton?: ComponentConfig;
+    resetButton?: boolean;
     onSubmit?: ActionConfig;
     className?: string;
   };

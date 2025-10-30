@@ -29,6 +29,7 @@ namespace HollisLabs\UiBuilder\Builders;
 class FormBuilder extends ComponentBuilder
 {
     protected array $fields = [];
+    protected array $customComponents = [];
     protected array $validationRules = [];
     protected array|ActionBuilder|null $submitAction = null;
     protected array|ComponentBuilder|null $submitButtonConfig = null;
@@ -81,6 +82,28 @@ class FormBuilder extends ComponentBuilder
             if (isset($fieldConfig['label'], $fieldConfig['field'])) {
                 $this->field($name, $fieldConfig['label'], $fieldConfig['field']);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Add a custom component to the form (not a field, just a component)
+     * This is useful for adding informational components, dividers, or complex
+     * interactive components like the field capability table.
+     * 
+     * @param ComponentBuilder|array $component The component to add
+     * @param int|null $position Optional position index (null = append to end)
+     * @return self
+     */
+    public function component(ComponentBuilder|array $component, ?int $position = null): self
+    {
+        $componentConfig = $component instanceof ComponentBuilder ? $component->toArray() : $component;
+        
+        if ($position !== null) {
+            array_splice($this->customComponents, $position, 0, [$componentConfig]);
+        } else {
+            $this->customComponents[] = $componentConfig;
         }
 
         return $this;
@@ -160,6 +183,10 @@ class FormBuilder extends ComponentBuilder
 
         if (!empty($this->fields)) {
             $formProps['fields'] = array_values($this->fields);
+        }
+
+        if (!empty($this->customComponents)) {
+            $formProps['customComponents'] = array_values($this->customComponents);
         }
 
         if (!empty($this->validationRules)) {

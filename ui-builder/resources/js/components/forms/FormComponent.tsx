@@ -6,6 +6,7 @@ export function FormComponent({ config }: { config: FormConfig }) {
   const { props, actions } = config;
   const {
     fields = [],
+    customComponents = [],
     submitButton,
     onSubmit: submitAction,
     className,
@@ -38,7 +39,7 @@ export function FormComponent({ config }: { config: FormConfig }) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className={className}>
+    <form onSubmit={handleSubmit(onSubmit)} className={className} id={config.id}>
       <div className="space-y-4">
         {fields.map((field) => {
           const { name, label, field: fieldComponent, validation, helperText } = field;
@@ -67,6 +68,17 @@ export function FormComponent({ config }: { config: FormConfig }) {
             </div>
           );
         })}
+        
+        {/* Render custom components injected into the form */}
+        {customComponents && customComponents.length > 0 && (
+          <div className="space-y-4 mt-6">
+            {customComponents.map((component, index) => (
+              <div key={component.id || `custom-${index}`}>
+                {renderComponent(component)}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {submitButton && (
