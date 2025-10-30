@@ -23,7 +23,7 @@ interface FieldCapabilityTableProps {
 }
 
 export const FieldCapabilityTableComponent: React.FC<FieldCapabilityTableProps> = ({
-  modelClass,
+  modelClass: modelClassProp,
   apiEndpoint = '/api/ui/datasources/builder/fields',
   onChange,
   className = '',
@@ -31,6 +31,29 @@ export const FieldCapabilityTableComponent: React.FC<FieldCapabilityTableProps> 
   const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [modelClass, setModelClass] = useState<string>(modelClassProp || '');
+
+  // Listen to the model_class select field changes
+  useEffect(() => {
+    const selectElement = document.querySelector('select[name="model_class"]') as HTMLSelectElement;
+    
+    if (selectElement) {
+      const handleChange = () => {
+        setModelClass(selectElement.value);
+      };
+      
+      // Set initial value
+      if (selectElement.value) {
+        setModelClass(selectElement.value);
+      }
+      
+      selectElement.addEventListener('change', handleChange);
+      
+      return () => {
+        selectElement.removeEventListener('change', handleChange);
+      };
+    }
+  }, []);
 
   useEffect(() => {
     if (!modelClass) {
