@@ -35,24 +35,54 @@ export const FieldCapabilityTableComponent: React.FC<FieldCapabilityTableProps> 
 
   // Listen to the model_class select field changes
   useEffect(() => {
-    const selectElement = document.querySelector('select[name="model_class"]') as HTMLSelectElement;
+    let selectElement: HTMLSelectElement | null = null;
     
-    if (selectElement) {
-      const handleChange = () => {
-        setModelClass(selectElement.value);
-      };
+    const findAndAttach = () => {
+      // Try multiple selectors to find the model_class field
+      selectElement = document.querySelector('select[name="model_class"]') as HTMLSelectElement;
       
-      // Set initial value
-      if (selectElement.value) {
-        setModelClass(selectElement.value);
+      if (!selectElement) {
+        selectElement = document.querySelector('#select-model') as HTMLSelectElement;
       }
       
-      selectElement.addEventListener('change', handleChange);
+      console.log('FieldCapabilityTable: Looking for model select field...', selectElement);
       
-      return () => {
-        selectElement.removeEventListener('change', handleChange);
-      };
-    }
+      if (selectElement) {
+        const handleChange = () => {
+          console.log('FieldCapabilityTable: Model changed to:', selectElement?.value);
+          setModelClass(selectElement!.value);
+        };
+        
+        // Set initial value
+        if (selectElement.value) {
+          console.log('FieldCapabilityTable: Initial model value:', selectElement.value);
+          setModelClass(selectElement.value);
+        }
+        
+        selectElement.addEventListener('change', handleChange);
+        
+        return () => {
+          selectElement?.removeEventListener('change', handleChange);
+        };
+      } else {
+        console.warn('FieldCapabilityTable: Could not find model_class select element');
+      }
+    };
+    
+    // Try immediately
+    const cleanup = findAndAttach();
+    
+    // Also try after a short delay in case the form isn't rendered yet
+    const timeout = setTimeout(() => {
+      if (!selectElement) {
+        findAndAttach();
+      }
+    }, 500);
+    
+    return () => {
+      cleanup?.();
+      clearTimeout(timeout);
+    };
   }, []);
 
   useEffect(() => {
