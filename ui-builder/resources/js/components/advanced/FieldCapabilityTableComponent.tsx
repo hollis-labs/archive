@@ -45,27 +45,55 @@ export const FieldCapabilityTableComponent: React.FC<FieldCapabilityTableProps> 
         selectElement = document.querySelector('#select-model') as HTMLSelectElement;
       }
       
-      console.log('FieldCapabilityTable: Looking for model select field...', selectElement);
+      console.log('FieldCapabilityTable: Found select:', selectElement);
+      console.log('FieldCapabilityTable: Select value:', selectElement?.value);
       
       if (selectElement) {
-        const handleChange = () => {
-          console.log('FieldCapabilityTable: Model changed to:', selectElement?.value);
-          setModelClass(selectElement!.value);
-        };
+        // Use MutationObserver to watch the hidden select for changes
+        const observer = new MutationObserver(() => {
+          if (selectElement && selectElement.value) {
+            console.log('FieldCapabilityTable: MutationObserver detected change:', selectElement.value);
+            setModelClass(selectElement.value);
+          }
+        });
         
-        // Set initial value
-        if (selectElement.value) {
-          console.log('FieldCapabilityTable: Initial model value:', selectElement.value);
-          setModelClass(selectElement.value);
-        }
+        observer.observe(selectElement, {
+          attributes: true,
+          childList: true,
+          subtree: true,
+        });
+        
+        // Listen to change events
+        const handleChange = () => {
+          console.log('FieldCapabilityTable: Change event, value:', selectElement?.value);
+          if (selectElement?.value) {
+            setModelClass(selectElement.value);
+          }
+        };
         
         selectElement.addEventListener('change', handleChange);
         
+        // Set initial value
+        if (selectElement.value) {
+          console.log('FieldCapabilityTable: Initial value:', selectElement.value);
+          setModelClass(selectElement.value);
+        }
+        
+        // Poll as fallback
+        const pollInterval = setInterval(() => {
+          if (selectElement && selectElement.value && selectElement.value !== modelClass) {
+            console.log('FieldCapabilityTable: Poll detected change:', selectElement.value);
+            setModelClass(selectElement.value);
+          }
+        }, 1000);
+        
         return () => {
+          observer.disconnect();
           selectElement?.removeEventListener('change', handleChange);
+          clearInterval(pollInterval);
         };
       } else {
-        console.warn('FieldCapabilityTable: Could not find model_class select element');
+        console.warn('FieldCapabilityTable: Select not found');
       }
     };
     
