@@ -85,25 +85,22 @@ export const FieldCapabilityTableComponent: React.FC<FieldCapabilityTableProps> 
 
     selectElement.addEventListener('change', handleChange);
 
-    // Poll as aggressive fallback - check every 500ms
-    // Check multiple ways to get the value since Radix Select might not update .value
+    // Poll as aggressive fallback - get FRESH reference each time
     console.log('FieldCapabilityTable: Starting polling interval');
     const pollInterval = setInterval(() => {
-      let currentValue = selectElement.value;
+      // Get fresh reference each poll - the element might be replaced by React
+      const freshSelect = document.querySelector('select[name="model_class"]') as HTMLSelectElement;
       
-      // If value is empty, try to find the selected option
-      if (!currentValue) {
-        const selectedOption = Array.from(selectElement.options).find((opt: any) => opt.selected);
-        if (selectedOption) {
-          currentValue = (selectedOption as HTMLOptionElement).value;
-        }
+      if (!freshSelect) {
+        return;
       }
       
-      console.log('FieldCapabilityTable: Polling... direct value:', selectElement.value, 
-                  'selected option:', currentValue, 'state:', modelClass);
+      const currentValue = freshSelect.value;
+      
+      console.log('FieldCapabilityTable: Polling... value:', currentValue, 'state:', modelClass);
       
       if (currentValue && currentValue !== modelClass) {
-        console.log('FieldCapabilityTable: Poll detected change:', currentValue);
+        console.log('FieldCapabilityTable: Poll detected change from', modelClass, 'to', currentValue);
         setModelClass(currentValue);
       }
     }, 500);
