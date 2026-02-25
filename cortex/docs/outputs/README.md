@@ -88,6 +88,24 @@ Review cadence guidance:
 Canonical precedence:
 - Ownership and cadence controls exist to keep summaries aligned; they do not elevate outputs above canonical specs/ADRs.
 
+## Stale-artifact triage
+Use this triage flow for stale artifacts in both sets:
+- `docs/outputs/*`
+- `docs/SPECS/outputs/*`
+
+Triage classes:
+- `critical`: artifact contradicts canonical behavior or references removed contract fields.
+- `important`: artifact omits recently added canonical behavior with operational impact.
+- `routine`: wording/format drift without behavioral mismatch.
+
+Priority order:
+1. Update `critical` items before new feature docs are published.
+2. Resolve `important` items in the same release window as the canonical change.
+3. Batch `routine` items into regular documentation maintenance passes.
+
+Triage rule:
+- When uncertainty exists, treat canonical specs/ADRs as source of truth and downgrade artifact confidence until refreshed.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
