@@ -122,6 +122,7 @@ func contractSuites() []contractSuite {
 		{Name: "runlog-helper", Command: "go test ./tests/integration -run RunlogHelperContract -count=1"},
 		{Name: "contract-suite-commands-format", Command: "go test ./tests/integration -run ContractSuiteCommandsFormatContract -count=1"},
 		{Name: "contract-suite-commands-unique", Command: "go test ./tests/integration -run ContractSuiteCommandsUniqueContract -count=1"},
+		{Name: "contract-suite-commands-prefix", Command: "go test ./tests/integration -run ContractSuiteCommandsPrefixContract -count=1"},
 		{Name: "fixture-lint-script", Command: "go test ./tests/integration -run ContractFixtureLintScript -count=1"},
 		{Name: "agents-boot-check", Command: "go test ./tests/integration -run AgentsBootCheckContract -count=1"},
 	}
