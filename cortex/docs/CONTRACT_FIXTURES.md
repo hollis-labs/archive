@@ -123,7 +123,22 @@ Recommended run order:
 | `cli-contract-list-default-output` | `context contract list` defaults to JSON output. | `go test ./tests/integration -run ContractListDefaultOutputContract` |
 | `cli-contract-run-default-output` | `context contract run --suite <name>` defaults to JSON dry mode (`executed=false`). | `go test ./tests/integration -run ContractRunDefaultOutputContract` |
 
-See also: `docs/DEV.md#contract-output-quick-reference`.
+See also: `docs/DEV.md#contract-run-mode-matrix`.
+
+## Contract Run Mode Matrix
+
+| Mode | Intent | Targeted command |
+|---|---|---|
+| `run-single-default-json` | Verify single-suite default dry JSON output. | `go test ./tests/integration -run ContractRunDefaultOutputContract` |
+| `run-all-default-json` | Verify full-catalog default dry JSON output. | `go test ./tests/integration -run ContractRunAllDefaultOutputContract` |
+| `run-single-dry-table` | Verify single-suite dry table output. | `go test ./tests/integration -run ContractRunTableDryContract` |
+| `run-all-dry-table` | Verify full-catalog dry table output. | `go test ./tests/integration -run ContractRunAllTableContract` |
+| `run-single-execute-table` | Verify single-suite execute table output. | `go test ./tests/integration -run ContractRunExecuteTableContract` |
+| `run-all-execute-table` | Verify full-catalog execute table output. | `go test ./tests/integration -run ContractRunAllExecuteTableContract` |
+| `run-all-execute-json` | Verify full-catalog execute JSON summary and per-item `ok` values. | `go test ./tests/integration -run ContractRunAllExecuteJSONContract` |
+| `run-table-header-guardrail` | Verify table header token stability in dry and execute modes. | `go test ./tests/integration -run ContractRunTableHeaderContract` |
+
+See also: `docs/DEV.md#contract-run-mode-matrix`.
 
 ## List/Run Parity Suites
 
@@ -176,6 +191,7 @@ See also: `docs/DEV.md#contract-quick-run-pack`.
   - `go test ./tests/integration -run ContractRunAllExecuteJSONContract`
   - `go test ./tests/integration -run ContractRunDefaultOutputContract`
   - `go test ./tests/integration -run ContractRunTableDryContract`
+  - `go test ./tests/integration -run ContractRunTableHeaderContract`
   - `go test ./tests/integration -run ContractRunExecuteTableContract`
   - `go test ./tests/integration -run ContractRunExecuteInvalidOutputErrorContract`
   - `go test ./tests/integration -run ContractRunInvalidOutputErrorContract`

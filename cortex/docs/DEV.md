@@ -145,6 +145,7 @@ Rotation checklist:
 - Contract run default-output suite: `go test ./tests/integration -run ContractRunDefaultOutputContract`
 - Golden contract run dry-table fixture: `tests/integration/fixtures/contract_run_table_dry_golden.json`
 - Contract run dry-table suite: `go test ./tests/integration -run ContractRunTableDryContract`
+- Contract run table header suite: `go test ./tests/integration -run ContractRunTableHeaderContract`
 - Golden contract run execute-table fixture: `tests/integration/fixtures/contract_run_execute_table_golden.json`
 - Contract run execute-table suite: `go test ./tests/integration -run ContractRunExecuteTableContract`
 - Golden contract run execute invalid-output fixture: `tests/integration/fixtures/contract_run_execute_invalid_output_error_golden.json`
@@ -217,15 +218,24 @@ Rotation checklist:
   - `make contract-cli-run SUITE=api-errors`
   - `make contract-commands`
 
-## Contract Output Quick Reference
+## Contract Run Mode Matrix
 
-| Command mode | Behavior | Contract suite |
+| Command mode | Behavior | Verification suite |
 |---|---|---|
-| `context contract list` | Default JSON output (`count`, `items`). | `go test ./tests/integration -run ContractListDefaultOutputContract` |
-| `context contract list --output table` | Table output with `SUITE/COMMAND` columns. | `go test ./tests/integration -run ContractListTableContract` |
-| `context contract run --suite api` | Default JSON dry mode (`executed=false`). | `go test ./tests/integration -run ContractRunDefaultOutputContract` |
-| `context contract run --suite api --output table` | Dry-run table output with `SUITE/COMMAND`. | `go test ./tests/integration -run ContractRunTableDryContract` |
-| `context contract run --suite api --execute --output table` | Executed table output with `SUITE/OK/COMMAND`. | `go test ./tests/integration -run ContractRunExecuteTableContract` |
+| `context contract run --suite api` | Default JSON dry mode (`executed=false`) for one suite. | `go test ./tests/integration -run ContractRunDefaultOutputContract` |
+| `context contract run --suite all` | Default JSON dry mode across full suite catalog. | `go test ./tests/integration -run ContractRunAllDefaultOutputContract` |
+| `context contract run --suite api --output table` | Dry-run table output with `SUITE/COMMAND` columns. | `go test ./tests/integration -run ContractRunTableDryContract` |
+| `context contract run --suite all --output table` | Dry-run table output across all suites. | `go test ./tests/integration -run ContractRunAllTableContract` |
+| `context contract run --suite api --execute --output table` | Execute table output with `SUITE/OK/COMMAND` columns. | `go test ./tests/integration -run ContractRunExecuteTableContract` |
+| `context contract run --suite all --execute --output table` | Execute table output across all suites. | `go test ./tests/integration -run ContractRunAllExecuteTableContract` |
+| `context contract run --suite all --execute` | Execute JSON output with summary + per-suite `ok` status. | `go test ./tests/integration -run ContractRunAllExecuteJSONContract` |
+
+Header guardrail:
+- `go test ./tests/integration -run ContractRunTableHeaderContract`
+
+Related list-mode references:
+- `context contract list`: `go test ./tests/integration -run ContractListDefaultOutputContract`
+- `context contract list --output table`: `go test ./tests/integration -run ContractListTableContract`
 
 ## Contract Quick-Run Pack
 

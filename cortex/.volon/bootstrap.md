@@ -2,7 +2,7 @@
 version: 1
 type: bootstrap
 iteration: 36
-updated_at: 2026-02-25T17:14:00Z
+updated_at: 2026-02-25T17:18:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-117` to document the contract run mode matrix.
+- Start `TASK-20260225-118` to add non-empty output guardrail coverage for contract-suite-commands.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 116 done
+- Tasks: 1 todo, 0 blocked, 117 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-117 — Document contract run mode matrix (all/default/execute) (B)
 - TASK-20260225-118 — Add regression test for contract-suite-commands non-empty output (B)
 
 ### Blockers
