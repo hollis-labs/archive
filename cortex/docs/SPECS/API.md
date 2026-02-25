@@ -46,6 +46,29 @@ Migration notes:
 - Future `optional-gated-read`/`strict-auth-all` modes must preserve response ordering and payload schema contracts.
 - CLI/MCP adapters should surface mode expectations clearly and fail with deterministic `auth_required` envelopes when gated.
 
+Optional-gated read/view mode examples:
+- Gated read request (`head`) with bearer token:
+```http
+GET /v1/context/head?namespace=user/profile&key=summary
+Authorization: Bearer <token>
+```
+- Gated view request with bearer token:
+```http
+POST /v1/views/evaluate
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{"selector":{"namespaces":["user/*"],"order":["namespace","key","revision"]},"limit":50}
+```
+- Auth failure envelope when token missing/invalid in gated mode:
+```json
+{
+  "code": "auth_required",
+  "message": "missing or invalid bearer token",
+  "details": null
+}
+```
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)

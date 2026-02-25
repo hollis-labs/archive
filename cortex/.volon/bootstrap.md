@@ -2,7 +2,7 @@
 version: 1
 type: bootstrap
 iteration: 59
-updated_at: 2026-02-25T19:02:00Z
+updated_at: 2026-02-25T19:06:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-136` to add optional-gated read/view API examples.
+- Start `TASK-20260225-137` to add CLI operator quick-reference.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 3 todo, 0 blocked, 135 done
-- Last run log: `.volon/logs/run-iteration-059-2026-02-25.md`
+- Tasks: 2 todo, 0 blocked, 136 done
+- Last run log: `.volon/logs/run-iteration-060-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-136 — Add API examples for optional-gated read/view mode (B)
 - TASK-20260225-137 — Add CLI operator quick-reference for policy and promote flows (B)
 - TASK-20260225-138 — Index spec output artifacts from SPECS README (B)
 
@@ -41,6 +40,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `f18529b`
+- Last implementation commit: `da99275`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
