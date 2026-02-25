@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-076` to add integration contract coverage for bootstrap-sync make shortcuts.
+- Start `TASK-20260225-077` to add grouped fixture index docs for bootstrap/make command suites.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 3 todo, 0 blocked, 75 done
+- Tasks: 2 todo, 0 blocked, 76 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-076 — Add integration contract for bootstrap-sync make shortcut targets (A)
 - TASK-20260225-077 — Add contract fixture index section for bootstrap and make command suites (B)
 - TASK-20260225-078 — Add regression test for bootstrap-sync no-log behavior (B)
 

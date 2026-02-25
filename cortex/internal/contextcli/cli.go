@@ -106,6 +106,7 @@ func contractSuites() []contractSuite {
 		{Name: "make-contract-cli-list", Command: "go test ./tests/integration -run MakeContractCLIListContract -count=1"},
 		{Name: "make-contract-cli-run", Command: "go test ./tests/integration -run MakeContractCLIRunContract -count=1"},
 		{Name: "bootstrap-sync", Command: "go test ./tests/integration -run BootstrapSyncScript -count=1"},
+		{Name: "make-bootstrap-sync", Command: "go test ./tests/integration -run MakeBootstrapSyncContract -count=1"},
 		{Name: "make-smoke-invalid-token", Command: "go test ./tests/integration -run MakeSmokeInvalidTokenContract -count=1"},
 		{Name: "runlog-helper", Command: "go test ./tests/integration -run RunlogHelperContract -count=1"},
 		{Name: "agents-boot-check", Command: "go test ./tests/integration -run AgentsBootCheckContract -count=1"},

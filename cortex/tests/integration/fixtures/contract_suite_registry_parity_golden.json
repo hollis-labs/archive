@@ -12,6 +12,7 @@
     {"name": "make-contract-cli-list", "command": "go test ./tests/integration -run MakeContractCLIListContract -count=1"},
     {"name": "make-contract-cli-run", "command": "go test ./tests/integration -run MakeContractCLIRunContract -count=1"},
     {"name": "bootstrap-sync", "command": "go test ./tests/integration -run BootstrapSyncScript -count=1"},
+    {"name": "make-bootstrap-sync", "command": "go test ./tests/integration -run MakeBootstrapSyncContract -count=1"},
     {"name": "make-smoke-invalid-token", "command": "go test ./tests/integration -run MakeSmokeInvalidTokenContract -count=1"},
     {"name": "runlog-helper", "command": "go test ./tests/integration -run RunlogHelperContract -count=1"},
     {"name": "agents-boot-check", "command": "go test ./tests/integration -run AgentsBootCheckContract -count=1"}
