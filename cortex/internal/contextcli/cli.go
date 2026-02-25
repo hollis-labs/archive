@@ -38,6 +38,9 @@ func (c *CLI) Run(ctx context.Context, args []string) int {
 	if c.Store == nil {
 		return c.fail("store is required")
 	}
+	if err := c.reloadPolicies(ctx); err != nil {
+		return c.fail(err.Error())
+	}
 	if len(args) == 0 || args[0] != "context" {
 		return c.fail("usage: context <namespace|put|get|history|view|promote> ...")
 	}
@@ -70,6 +73,10 @@ func (c *CLI) Run(ctx context.Context, args []string) int {
 		return c.runBackup(ctx, args[2:])
 	case "health":
 		return c.runHealth(ctx, args[2:])
+	case "bootstrap":
+		return c.runBootstrap(ctx, args[2:])
+	case "compact":
+		return c.runCompact(ctx, args[2:])
 	default:
 		return c.fail("unknown subcommand: " + args[1])
 	}
@@ -98,6 +105,14 @@ func (c *CLI) runNamespaceRegister(args []string) int {
 	if err := fs.Parse(args); err != nil {
 		return c.fail(err.Error())
 	}
+	entry := contextstore.NamespacePolicyEntry{
+		Namespace: *namespace,
+		OwnerType: *ownerType,
+		OwnerID:   *ownerID,
+	}
+	if err := c.Store.UpsertNamespacePolicy(context.Background(), entry); err != nil {
+		return c.fail(err.Error())
+	}
 	if err := c.Policy.RegisterNamespace(*namespace, *ownerType, *ownerID, nil); err != nil {
 		return c.fail(err.Error())
 	}
@@ -111,15 +126,16 @@ func (c *CLI) runNamespaceShow(args []string) int {
 	if err := fs.Parse(args); err != nil {
 		return c.fail(err.Error())
 	}
-	owner, ok := c.Policy.GetNamespace(*namespace)
-	if !ok {
-		return c.fail("namespace not registered")
+	entry, err := c.Store.GetNamespacePolicy(context.Background(), *namespace)
+	if err != nil {
+		return c.fail(err.Error())
 	}
+	_ = c.Policy.RegisterNamespace(entry.Namespace, entry.OwnerType, entry.OwnerID, entry.Policy)
 	return c.writeJSON(map[string]any{
 		"namespace":  *namespace,
-		"owner_type": owner.OwnerType,
-		"owner_id":   owner.OwnerID,
-		"policy":     owner.Policy,
+		"owner_type": entry.OwnerType,
+		"owner_id":   entry.OwnerID,
+		"policy":     entry.Policy,
 	})
 }
 
@@ -506,8 +522,10 @@ func (c *CLI) runBackup(ctx context.Context, args []string) int {
 		return c.runBackupExport(ctx, args[1:])
 	case "restore":
 		return c.runBackupRestore(ctx, args[1:])
+	case "verify":
+		return c.runBackupVerify(args[1:])
 	default:
-		return c.fail("usage: context backup <export|restore> ...")
+		return c.fail("usage: context backup <export|restore|verify> ...")
 	}
 }
 
@@ -543,6 +561,22 @@ func (c *CLI) runBackupRestore(ctx context.Context, args []string) int {
 	return c.writeJSON(map[string]any{"restored": true, "path": *inPath})
 }
 
+func (c *CLI) runBackupVerify(args []string) int {
+	fs := flag.NewFlagSet("backup verify", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	inPath := fs.String("in", "", "backup input file path")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	if strings.TrimSpace(*inPath) == "" {
+		return c.fail("--in is required")
+	}
+	if err := c.Store.VerifyBackup(*inPath); err != nil {
+		return c.fail(err.Error())
+	}
+	return c.writeJSON(map[string]any{"verified": true, "path": *inPath})
+}
+
 func (c *CLI) runHealth(ctx context.Context, args []string) int {
 	fs := flag.NewFlagSet("health", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -566,6 +600,111 @@ func (c *CLI) runHealth(ctx context.Context, args []string) int {
 	default:
 		return c.fail("output must be json|table")
 	}
+}
+
+func (c *CLI) runBootstrap(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("bootstrap", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	defaultApp := fs.String("default-app", "default", "default app namespace owner id")
+	output := fs.String("output", "json", "json|table")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+
+	seed := []contextstore.NamespacePolicyEntry{
+		{Namespace: "user/goals", OwnerType: "user", OwnerID: "user"},
+		{Namespace: "user/preferences", OwnerType: "user", OwnerID: "user"},
+	}
+	if strings.TrimSpace(*defaultApp) != "" {
+		seed = append(seed, contextstore.NamespacePolicyEntry{
+			Namespace: "app/" + strings.TrimSpace(*defaultApp) + "/session",
+			OwnerType: "app",
+			OwnerID:   strings.TrimSpace(*defaultApp),
+		})
+	}
+
+	for _, entry := range seed {
+		if err := c.Store.UpsertNamespacePolicy(ctx, entry); err != nil {
+			return c.fail(err.Error())
+		}
+		if err := c.Policy.RegisterNamespace(entry.Namespace, entry.OwnerType, entry.OwnerID, entry.Policy); err != nil {
+			return c.fail(err.Error())
+		}
+	}
+
+	report, err := c.Store.Readiness(ctx)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+	switch strings.TrimSpace(*output) {
+	case "json", "":
+		return c.writeJSON(map[string]any{
+			"bootstrapped":      true,
+			"seeded_namespaces": seed,
+			"readiness":         report,
+		})
+	case "table":
+		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
+		_, _ = fmt.Fprintln(w, "BOOTSTRAPPED\tHEALTHY\tSCHEMA_VERSION\tCONSISTENCY_ISSUES")
+		_, _ = fmt.Fprintf(w, "true\t%t\t%d\t%d\n", report.Healthy, report.SchemaVersion, report.ConsistencyIssues)
+		_ = w.Flush()
+		return 0
+	default:
+		return c.fail("output must be json|table")
+	}
+}
+
+func (c *CLI) runCompact(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("compact", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	keepRevisions := fs.Int("keep-revisions", 1, "revisions to keep per namespace/key")
+	keepAudit := fs.Int("keep-audit", 1000, "audit events to keep")
+	output := fs.String("output", "json", "json|table")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+
+	deletedRevisions, err := c.Store.CompactRevisions(ctx, *keepRevisions)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+	trimmedAudit, err := c.Store.TrimAuditEvents(ctx, *keepAudit)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+	report, err := c.Store.Readiness(ctx)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+	switch strings.TrimSpace(*output) {
+	case "json", "":
+		return c.writeJSON(map[string]any{
+			"deleted_revisions": deletedRevisions,
+			"trimmed_audit":     trimmedAudit,
+			"readiness":         report,
+		})
+	case "table":
+		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
+		_, _ = fmt.Fprintln(w, "DELETED_REVISIONS\tTRIMMED_AUDIT\tHEALTHY\tCONSISTENCY_ISSUES")
+		_, _ = fmt.Fprintf(w, "%d\t%d\t%t\t%d\n", deletedRevisions, trimmedAudit, report.Healthy, report.ConsistencyIssues)
+		_ = w.Flush()
+		return 0
+	default:
+		return c.fail("output must be json|table")
+	}
+}
+
+func (c *CLI) reloadPolicies(ctx context.Context) error {
+	entries, err := c.Store.ListNamespacePolicies(ctx)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if err := c.Policy.RegisterNamespace(entry.Namespace, entry.OwnerType, entry.OwnerID, entry.Policy); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c *CLI) writeRecords(recs []contextstore.Record, output string) int {

@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	schemaVersion = 3
+	schemaVersion = 4
 	// DefaultSelectLimit bounds selector response size when no explicit limit is provided.
 	DefaultSelectLimit = 200
 	// MaxSelectLimit is the upper bound accepted for selector limits.
@@ -133,6 +133,16 @@ type backupSnapshot struct {
 	Records     []backupRecord    `json:"records"`
 	AuditEvents []AuditEvent      `json:"audit_events"`
 	AuthTokens  []backupAuthToken `json:"auth_tokens"`
+	Checksum    string            `json:"checksum"`
+}
+
+// NamespacePolicyEntry stores persistent namespace owner/policy metadata.
+type NamespacePolicyEntry struct {
+	Namespace string         `json:"namespace"`
+	OwnerType string         `json:"owner_type"`
+	OwnerID   string         `json:"owner_id"`
+	Policy    map[string]any `json:"policy,omitempty"`
+	UpdatedAt string         `json:"updated_at"`
 }
 
 // ReadinessReport summarizes operational readiness in a stable shape.
@@ -282,6 +292,20 @@ CREATE TABLE IF NOT EXISTS auth_tokens (
 				return err
 			}
 			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_auth_tokens_created ON auth_tokens(created_at, token_id)`); err != nil {
+				return err
+			}
+		case 4:
+			if _, err = tx.ExecContext(ctx, `
+CREATE TABLE IF NOT EXISTS namespace_policies (
+	namespace TEXT PRIMARY KEY,
+	owner_type TEXT NOT NULL,
+	owner_id TEXT NOT NULL,
+	policy_json TEXT,
+	updated_at TEXT NOT NULL
+)`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_namespace_policies_updated ON namespace_policies(updated_at, namespace)`); err != nil {
 				return err
 			}
 		}
@@ -1046,6 +1070,12 @@ ORDER BY created_at ASC, token_id ASC`)
 		return err
 	}
 
+	sum, err := backupChecksum(snap)
+	if err != nil {
+		return err
+	}
+	snap.Checksum = sum
+
 	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 		return err
 	}
@@ -1067,6 +1097,9 @@ func (s *Store) RestoreBackup(ctx context.Context, inPath string) error {
 	}
 	var snap backupSnapshot
 	if err := json.Unmarshal(data, &snap); err != nil {
+		return err
+	}
+	if err := verifyBackupChecksum(snap); err != nil {
 		return err
 	}
 	if snap.Version != 1 {
@@ -1142,6 +1175,22 @@ VALUES (?, ?, ?, ?, ?, ?)`,
 	return err
 }
 
+// VerifyBackup validates backup integrity metadata without mutating state.
+func (s *Store) VerifyBackup(inPath string) error {
+	if strings.TrimSpace(inPath) == "" {
+		return errors.New("backup input path required")
+	}
+	data, err := os.ReadFile(inPath)
+	if err != nil {
+		return err
+	}
+	var snap backupSnapshot
+	if err := json.Unmarshal(data, &snap); err != nil {
+		return err
+	}
+	return verifyBackupChecksum(snap)
+}
+
 // Readiness returns deterministic operational readiness status.
 func (s *Store) Readiness(ctx context.Context) (ReadinessReport, error) {
 	report := ReadinessReport{
@@ -1170,6 +1219,187 @@ func (s *Store) Readiness(ctx context.Context) (ReadinessReport, error) {
 	return report, nil
 }
 
+// CompactRevisions keeps newest N revisions per namespace/key and removes older revisions.
+func (s *Store) CompactRevisions(ctx context.Context, keepPerKey int) (int64, error) {
+	if keepPerKey <= 0 {
+		return 0, errors.New("keepPerKey must be > 0")
+	}
+
+	rows, err := s.db.QueryContext(ctx, `
+SELECT record_id, file_path
+FROM (
+	SELECT record_id, file_path,
+		ROW_NUMBER() OVER (PARTITION BY namespace, key_name ORDER BY revision DESC) AS rn
+	FROM records
+)
+WHERE rn > ?
+ORDER BY file_path ASC`, keepPerKey)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	type doomed struct {
+		recordID string
+		filePath string
+	}
+	var doomedRows []doomed
+	for rows.Next() {
+		var d doomed
+		if err := rows.Scan(&d.recordID, &d.filePath); err != nil {
+			return 0, err
+		}
+		doomedRows = append(doomedRows, d)
+	}
+	if err := rows.Err(); err != nil {
+		return 0, err
+	}
+	if len(doomedRows) == 0 {
+		return 0, nil
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	var deleted int64
+	for _, d := range doomedRows {
+		if _, err = tx.ExecContext(ctx, `DELETE FROM records WHERE record_id = ?`, d.recordID); err != nil {
+			return 0, err
+		}
+		_ = os.Remove(filepath.Join(s.recordsDir, d.filePath))
+		deleted++
+	}
+	if err = tx.Commit(); err != nil {
+		return 0, err
+	}
+	if _, err := s.RebuildHeads(ctx); err != nil {
+		return deleted, err
+	}
+	return deleted, nil
+}
+
+// TrimAuditEvents keeps newest N audit events and drops older rows.
+func (s *Store) TrimAuditEvents(ctx context.Context, keep int) (int64, error) {
+	if keep < 0 {
+		return 0, errors.New("keep must be >= 0")
+	}
+	res, err := s.db.ExecContext(ctx, `
+DELETE FROM audit_events
+WHERE id IN (
+	SELECT id FROM audit_events
+	ORDER BY id DESC
+	LIMIT -1 OFFSET ?
+)`, keep)
+	if err != nil {
+		return 0, err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return 0, nil
+	}
+	return n, nil
+}
+
+// UpsertNamespacePolicy persists namespace owner/policy metadata.
+func (s *Store) UpsertNamespacePolicy(ctx context.Context, entry NamespacePolicyEntry) error {
+	if strings.TrimSpace(entry.Namespace) == "" {
+		return errors.New("namespace required")
+	}
+	if strings.TrimSpace(entry.OwnerType) == "" {
+		return errors.New("owner_type required")
+	}
+	if strings.TrimSpace(entry.OwnerID) == "" {
+		return errors.New("owner_id required")
+	}
+	policyJSON := ""
+	if entry.Policy != nil {
+		b, err := json.Marshal(entry.Policy)
+		if err != nil {
+			return err
+		}
+		policyJSON = string(b)
+	}
+	if strings.TrimSpace(entry.UpdatedAt) == "" {
+		entry.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	}
+	_, err := s.db.ExecContext(ctx, `
+INSERT INTO namespace_policies (namespace, owner_type, owner_id, policy_json, updated_at)
+VALUES (?, ?, ?, ?, ?)
+ON CONFLICT(namespace) DO UPDATE SET
+	owner_type=excluded.owner_type,
+	owner_id=excluded.owner_id,
+	policy_json=excluded.policy_json,
+	updated_at=excluded.updated_at`,
+		entry.Namespace, entry.OwnerType, entry.OwnerID, policyJSON, entry.UpdatedAt)
+	return err
+}
+
+// GetNamespacePolicy returns persisted namespace metadata.
+func (s *Store) GetNamespacePolicy(ctx context.Context, namespace string) (NamespacePolicyEntry, error) {
+	namespace = strings.TrimSpace(namespace)
+	if namespace == "" {
+		return NamespacePolicyEntry{}, errors.New("namespace required")
+	}
+	var entry NamespacePolicyEntry
+	var policyJSON string
+	err := s.db.QueryRowContext(ctx, `
+SELECT namespace, owner_type, owner_id, COALESCE(policy_json, ''), updated_at
+FROM namespace_policies
+WHERE namespace = ?
+LIMIT 1`, namespace).Scan(&entry.Namespace, &entry.OwnerType, &entry.OwnerID, &policyJSON, &entry.UpdatedAt)
+	if err != nil {
+		return NamespacePolicyEntry{}, err
+	}
+	if strings.TrimSpace(policyJSON) != "" {
+		var policy map[string]any
+		if err := json.Unmarshal([]byte(policyJSON), &policy); err != nil {
+			return NamespacePolicyEntry{}, err
+		}
+		entry.Policy = policy
+	}
+	return entry, nil
+}
+
+// ListNamespacePolicies returns all persisted policies ordered by namespace.
+func (s *Store) ListNamespacePolicies(ctx context.Context) ([]NamespacePolicyEntry, error) {
+	rows, err := s.db.QueryContext(ctx, `
+SELECT namespace, owner_type, owner_id, COALESCE(policy_json, ''), updated_at
+FROM namespace_policies
+ORDER BY namespace ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []NamespacePolicyEntry
+	for rows.Next() {
+		var entry NamespacePolicyEntry
+		var policyJSON string
+		if err := rows.Scan(&entry.Namespace, &entry.OwnerType, &entry.OwnerID, &policyJSON, &entry.UpdatedAt); err != nil {
+			return nil, err
+		}
+		if strings.TrimSpace(policyJSON) != "" {
+			var policy map[string]any
+			if err := json.Unmarshal([]byte(policyJSON), &policy); err != nil {
+				return nil, err
+			}
+			entry.Policy = policy
+		}
+		out = append(out, entry)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func generateToken() (string, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
@@ -1193,6 +1423,31 @@ func hashToken(token string) string {
 	}
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])
+}
+
+func verifyBackupChecksum(snap backupSnapshot) error {
+	if strings.TrimSpace(snap.Checksum) == "" {
+		return errors.New("backup checksum missing")
+	}
+	got, err := backupChecksum(snap)
+	if err != nil {
+		return err
+	}
+	if got != snap.Checksum {
+		return errors.New("backup checksum mismatch")
+	}
+	return nil
+}
+
+func backupChecksum(snap backupSnapshot) (string, error) {
+	tmp := snap
+	tmp.Checksum = ""
+	b, err := json.Marshal(tmp)
+	if err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256(b)
+	return hex.EncodeToString(sum[:]), nil
 }
 
 func sanitizePathPart(in string) (string, error) {

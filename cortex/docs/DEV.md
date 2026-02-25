@@ -47,6 +47,7 @@ Status: active draft
 
 ## Backup and restore
 - Export snapshot: `contextd context backup export --out /path/to/backup.json`
+- Verify snapshot integrity: `contextd context backup verify --in /path/to/backup.json`
 - Restore snapshot: `contextd context backup restore --in /path/to/backup.json`
 - Expected behavior: deterministic record/history parity and restored audit/token metadata.
 
@@ -54,6 +55,16 @@ Status: active draft
 - CLI readiness report: `contextd context health --output table`
 - API readiness report: `GET /v1/health/readiness`
 - Readiness includes storage-path status, schema version, and consistency issue count.
+
+## First-time bootstrap
+- Run deterministic setup: `contextd context bootstrap --default-app editor --output json`
+- Command seeds baseline namespaces and returns readiness summary.
+- Re-running bootstrap is idempotent.
+
+## Retention and compaction
+- Compact revisions + trim audit events:
+  - `contextd context compact --keep-revisions 5 --keep-audit 5000 --output table`
+- Compaction preserves latest heads per `(namespace,key)` and rebuilds head pointers deterministically.
 
 ## Repository conventions
 - Product specifications: `docs/SPECS/`

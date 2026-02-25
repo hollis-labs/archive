@@ -34,6 +34,7 @@ Provide deterministic context persistence/retrieval for multiple local clients w
 6. Audit/observability layer
 - Stores structured operation events (`write`, `promote`) with actor/namespace/key/revision metadata.
 - Exposes deterministic query surfaces for operators (`context audit`, `/v1/context/audit`).
+- Supports retention trimming and revision compaction while preserving head invariants.
 
 ## Write lifecycle
 1. Validate actor + namespace policy.

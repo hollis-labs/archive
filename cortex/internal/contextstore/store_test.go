@@ -345,3 +345,104 @@ func TestReadinessHealthyAndDegraded(t *testing.T) {
 		t.Fatalf("expected degraded readiness, got %+v", degraded)
 	}
 }
+
+func TestNamespacePolicyPersistenceMethods(t *testing.T) {
+	s, err := Open(context.Background(), Config{RootDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	entry := NamespacePolicyEntry{
+		Namespace: "app/editor/session",
+		OwnerType: "app",
+		OwnerID:   "editor",
+		Policy: map[string]any{
+			"required_keys": []string{"title", "summary"},
+		},
+	}
+	if err := s.UpsertNamespacePolicy(context.Background(), entry); err != nil {
+		t.Fatalf("upsert: %v", err)
+	}
+	got, err := s.GetNamespacePolicy(context.Background(), entry.Namespace)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.OwnerID != entry.OwnerID || got.OwnerType != entry.OwnerType {
+		t.Fatalf("unexpected entry: %+v", got)
+	}
+	list, err := s.ListNamespacePolicies(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(list) != 1 || list[0].Namespace != entry.Namespace {
+		t.Fatalf("unexpected list: %+v", list)
+	}
+}
+
+func TestCompactionPreservesHeadsAndTrimsAudit(t *testing.T) {
+	s, err := Open(context.Background(), Config{RootDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	for i := 1; i <= 5; i++ {
+		rec, err := s.AppendRecord(context.Background(), AppendInput{
+			Namespace: "app/editor/session",
+			Key:       "summary",
+			Actor:     "app:editor",
+			Payload:   json.RawMessage([]byte(`{"n":` + string(rune('0'+i)) + `}`)),
+		})
+		if err != nil {
+			t.Fatalf("append %d: %v", i, err)
+		}
+		if err := s.RecordAuditEvent(context.Background(), AuditEvent{
+			EventType: "write",
+			Actor:     rec.Actor,
+			Namespace: rec.Namespace,
+			Key:       rec.Key,
+			Revision:  rec.Revision,
+			RecordID:  rec.RecordID,
+		}); err != nil {
+			t.Fatalf("audit %d: %v", i, err)
+		}
+	}
+
+	deleted, err := s.CompactRevisions(context.Background(), 2)
+	if err != nil {
+		t.Fatalf("compact revisions: %v", err)
+	}
+	if deleted != 3 {
+		t.Fatalf("expected 3 deleted revisions, got %d", deleted)
+	}
+	history, err := s.History(context.Background(), "app/editor/session", "summary", 0)
+	if err != nil {
+		t.Fatalf("history: %v", err)
+	}
+	if len(history) != 2 || history[0].Revision != 4 || history[1].Revision != 5 {
+		t.Fatalf("unexpected history after compaction: %+v", history)
+	}
+	head, err := s.Head(context.Background(), "app/editor/session", "summary")
+	if err != nil {
+		t.Fatalf("head after compaction: %v", err)
+	}
+	if head.Revision != 5 {
+		t.Fatalf("expected head revision 5 after compaction, got %d", head.Revision)
+	}
+
+	trimmed, err := s.TrimAuditEvents(context.Background(), 2)
+	if err != nil {
+		t.Fatalf("trim audit: %v", err)
+	}
+	if trimmed != 3 {
+		t.Fatalf("expected 3 trimmed audit rows, got %d", trimmed)
+	}
+	events, err := s.ListAuditEvents(context.Background(), 10)
+	if err != nil {
+		t.Fatalf("list audit: %v", err)
+	}
+	if len(events) != 2 {
+		t.Fatalf("expected 2 audit rows after trim, got %d", len(events))
+	}
+}

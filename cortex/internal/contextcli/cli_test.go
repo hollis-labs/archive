@@ -257,7 +257,17 @@ func TestNamespaceSchemaShowAndPutValidation(t *testing.T) {
 		t.Fatalf("namespace register failed: %s", errOut.String())
 	}
 
-	// Directly update policy with schema-required keys for this test.
+	// Persist schema-required keys policy for this test.
+	if err := cli.Store.UpsertNamespacePolicy(context.Background(), contextstore.NamespacePolicyEntry{
+		Namespace: "app/editor/session",
+		OwnerType: "app",
+		OwnerID:   "editor",
+		Policy: map[string]any{
+			"required_keys": []any{"title", "summary"},
+		},
+	}); err != nil {
+		t.Fatalf("persist schema policy: %v", err)
+	}
 	if err := cli.Policy.RegisterNamespace("app/editor/session", "app", "editor", map[string]any{
 		"required_keys": []any{"title", "summary"},
 	}); err != nil {
@@ -307,5 +317,84 @@ func TestHealthCommandOutput(t *testing.T) {
 	}
 	if !strings.Contains(out.String(), "HEALTHY") {
 		t.Fatalf("unexpected health output: %s", out.String())
+	}
+}
+
+func TestBackupVerifyCommand(t *testing.T) {
+	cli, out, errOut, root := newTestCLIWithRoot(t)
+	if code := cli.Run(context.Background(), []string{
+		"context", "put",
+		"--client-id", "editor",
+		"--actor", "app:editor",
+		"--namespace", "app/editor/session",
+		"--key", "summary",
+		"--json", `{"v":1}`,
+	}); code != 0 {
+		t.Fatalf("put failed: %s", errOut.String())
+	}
+
+	backupPath := filepath.Join(root, "backup.json")
+	if code := cli.Run(context.Background(), []string{"context", "backup", "export", "--out", backupPath}); code != 0 {
+		t.Fatalf("backup export failed: %s", errOut.String())
+	}
+
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{"context", "backup", "verify", "--in", backupPath}); code != 0 {
+		t.Fatalf("backup verify failed: %s", errOut.String())
+	}
+	if !strings.Contains(out.String(), "\"verified\":true") {
+		t.Fatalf("unexpected verify output: %s", out.String())
+	}
+}
+
+func TestBootstrapCommandIdempotent(t *testing.T) {
+	cli, out, errOut, _ := newTestCLIWithRoot(t)
+
+	if code := cli.Run(context.Background(), []string{"context", "bootstrap", "--default-app", "editor", "--output", "json"}); code != 0 {
+		t.Fatalf("bootstrap first run failed: %s", errOut.String())
+	}
+	first := out.String()
+	if !strings.Contains(first, "\"bootstrapped\":true") {
+		t.Fatalf("unexpected bootstrap output: %s", first)
+	}
+
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{"context", "bootstrap", "--default-app", "editor", "--output", "json"}); code != 0 {
+		t.Fatalf("bootstrap second run failed: %s", errOut.String())
+	}
+	second := out.String()
+	if !strings.Contains(second, "\"bootstrapped\":true") {
+		t.Fatalf("unexpected second bootstrap output: %s", second)
+	}
+
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{"context", "namespace", "show", "--namespace", "user/goals"}); code != 0 {
+		t.Fatalf("namespace show failed: %s", errOut.String())
+	}
+	if !strings.Contains(out.String(), "\"owner_type\":\"user\"") {
+		t.Fatalf("expected user namespace from bootstrap, got: %s", out.String())
+	}
+}
+
+func TestCompactCommand(t *testing.T) {
+	cli, out, errOut, _ := newTestCLIWithRoot(t)
+	for i := 1; i <= 4; i++ {
+		if code := cli.Run(context.Background(), []string{
+			"context", "put",
+			"--client-id", "editor",
+			"--actor", "app:editor",
+			"--namespace", "app/editor/session",
+			"--key", "summary",
+			"--json", `{"n":` + string(rune('0'+i)) + `}`,
+		}); code != 0 {
+			t.Fatalf("put %d failed: %s", i, errOut.String())
+		}
+	}
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{"context", "compact", "--keep-revisions", "2", "--keep-audit", "2", "--output", "table"}); code != 0 {
+		t.Fatalf("compact failed: %s", errOut.String())
+	}
+	if !strings.Contains(out.String(), "DELETED_REVISIONS") {
+		t.Fatalf("unexpected compact output: %s", out.String())
 	}
 }

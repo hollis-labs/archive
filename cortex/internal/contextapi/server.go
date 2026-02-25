@@ -22,6 +22,7 @@ type Server struct {
 	AuthToken string
 	// ManagedAuth enables token lifecycle validation using store-backed auth_tokens.
 	ManagedAuth bool
+	startupErr  error
 }
 
 // NewServer creates an API server.
@@ -29,10 +30,16 @@ func NewServer(store *contextstore.Store, policy *contextpolicy.Engine) *Server 
 	if policy == nil {
 		policy = contextpolicy.New()
 	}
-	return &Server{Store: store, Policy: policy}
+	s := &Server{Store: store, Policy: policy}
+	s.startupErr = s.reloadPolicies(context.Background())
+	return s
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if s.startupErr != nil {
+		writeError(w, http.StatusInternalServerError, "startup_failed", s.startupErr.Error(), nil)
+		return
+	}
 	switch {
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/namespaces/register":
 		if !s.authorizeMutatingRequest(w, r) {
@@ -163,6 +170,16 @@ func (s *Server) handleNamespaceRegister(w http.ResponseWriter, r *http.Request)
 		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
 		return
 	}
+	entry := contextstore.NamespacePolicyEntry{
+		Namespace: req.Namespace,
+		OwnerType: req.OwnerType,
+		OwnerID:   req.OwnerID,
+		Policy:    req.Policy,
+	}
+	if err := s.Store.UpsertNamespacePolicy(r.Context(), entry); err != nil {
+		writeError(w, http.StatusInternalServerError, "write_failed", err.Error(), nil)
+		return
+	}
 	if err := s.Policy.RegisterNamespace(req.Namespace, req.OwnerType, req.OwnerID, req.Policy); err != nil {
 		writeError(w, http.StatusBadRequest, "validation_error", err.Error(), nil)
 		return
@@ -181,16 +198,21 @@ func (s *Server) handleNamespaceGet(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "validation_error", "namespace is required", nil)
 		return
 	}
-	owner, ok := s.Policy.GetNamespace(namespace)
-	if !ok {
-		writeError(w, http.StatusNotFound, "not_found", "namespace not registered", nil)
+	entry, err := s.Store.GetNamespacePolicy(r.Context(), namespace)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusNotFound, "not_found", "namespace not registered", nil)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "read_failed", err.Error(), nil)
 		return
 	}
+	_ = s.Policy.RegisterNamespace(entry.Namespace, entry.OwnerType, entry.OwnerID, entry.Policy)
 	writeJSON(w, http.StatusOK, map[string]any{
 		"namespace":  namespace,
-		"owner_type": owner.OwnerType,
-		"owner_id":   owner.OwnerID,
-		"policy":     owner.Policy,
+		"owner_type": entry.OwnerType,
+		"owner_id":   entry.OwnerID,
+		"policy":     entry.Policy,
 	})
 }
 
@@ -495,6 +517,19 @@ func normalizedScope(scope string) string {
 func quoteJSON(s string) string {
 	b, _ := json.Marshal(s)
 	return string(b)
+}
+
+func (s *Server) reloadPolicies(ctx context.Context) error {
+	entries, err := s.Store.ListNamespacePolicies(ctx)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if err := s.Policy.RegisterNamespace(entry.Namespace, entry.OwnerType, entry.OwnerID, entry.Policy); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Write is used by tests needing isolated request context timeouts.

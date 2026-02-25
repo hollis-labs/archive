@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -49,6 +50,9 @@ func TestBackupRestoreParity(t *testing.T) {
 	if err := src.ExportBackup(context.Background(), backupPath); err != nil {
 		t.Fatalf("export backup: %v", err)
 	}
+	if err := src.VerifyBackup(backupPath); err != nil {
+		t.Fatalf("verify backup: %v", err)
+	}
 
 	dstRoot := t.TempDir()
 	dst, err := contextstore.Open(context.Background(), contextstore.Config{RootDir: dstRoot})
@@ -86,6 +90,28 @@ func TestBackupRestoreParity(t *testing.T) {
 
 	if err := dst.ValidateAuthToken(context.Background(), token); err != nil {
 		t.Fatalf("restored token should validate: %v", err)
+	}
+
+	// Tamper with backup and ensure verification fails.
+	tamperedPath := filepath.Join(t.TempDir(), "tampered.json")
+	raw, err := os.ReadFile(backupPath)
+	if err != nil {
+		t.Fatalf("read backup: %v", err)
+	}
+	var snap map[string]any
+	if err := json.Unmarshal(raw, &snap); err != nil {
+		t.Fatalf("unmarshal backup: %v", err)
+	}
+	snap["version"] = float64(999)
+	rawTampered, err := json.Marshal(snap)
+	if err != nil {
+		t.Fatalf("marshal tampered: %v", err)
+	}
+	if err := os.WriteFile(tamperedPath, rawTampered, 0o644); err != nil {
+		t.Fatalf("write tampered: %v", err)
+	}
+	if err := dst.VerifyBackup(tamperedPath); err == nil {
+		t.Fatalf("expected tampered backup verification failure")
 	}
 }
 
