@@ -119,6 +119,24 @@ Matrix usage notes:
 - Classify the request first using the auth-mode endpoint matrix, then follow the `auth_required` decision tree.
 - If endpoint class assumptions are wrong, fix routing/targeting before rotating tokens or changing policy settings.
 
+### Auth troubleshooting quick decision path
+
+Use this first-response path for `auth_required` incidents:
+1. Classify endpoint:
+   - Determine whether the request is read/view, mutating, or operational read.
+2. Confirm mode expectation:
+   - Verify active environment mode (`mvp-open-read`, `optional-gated-read`, `strict-auth-all`) and expected token requirement for that endpoint class.
+3. Check token propagation:
+   - Confirm `Authorization: Bearer <token>` reaches the API boundary from caller/tool path.
+   - Validate token lifecycle status if managed auth mode is active.
+4. Verify environment targeting:
+   - Confirm base URL/cluster/host matches the mode assumption.
+   - Check that no proxy/adapter is stripping auth headers.
+5. Choose next action:
+   - If mode mismatch: update caller assumptions/scripts to current mode.
+   - If token path failure: fix propagation before retry.
+   - If token invalid: rotate/re-issue token and re-run request.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
