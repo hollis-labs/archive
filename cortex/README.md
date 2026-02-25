@@ -10,6 +10,18 @@ A **project-agnostic** set of Claude Code plugins, skills, and workflow contract
 Volon automates the full development lifecycle:
 **Ideation → Requirements → PRD → Spec → Plan → Tasks → Execute (PR/worktree) → QA/Docs → Investigate**
 
+## Context Service Bootstrap Note
+
+This repo is currently being used to scaffold initial planning artifacts for the
+Context Memory Service. Bootstrap deliverables are located at:
+
+- `docs/ARCHITECTURE.md`
+- `docs/SCOPE.md`
+- `docs/DEV.md`
+- `docs/DECISIONS/`
+- `docs/SPECS/`
+- `outputs/`
+
 ---
 
 ## Agent entry points
