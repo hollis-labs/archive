@@ -146,6 +146,7 @@ See also: `docs/DEV.md#contract-output-quick-reference`.
   - `go test ./tests/integration -run ContractSuiteCommandsScript`
   - `go test ./tests/integration -run ContractSuiteRegistryParity`
   - `go test ./tests/integration -run ContractListDefaultOutputContract`
+  - `go test ./tests/integration -run ContractListDefaultOutputDeterministicContract`
   - `go test ./tests/integration -run ContractListInvalidOutputErrorContract`
   - `go test ./tests/integration -run ContractListTableContract`
   - `go test ./tests/integration -run ContractListTableCountParityContract`

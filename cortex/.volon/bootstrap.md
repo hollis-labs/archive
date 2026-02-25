@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 33
-updated_at: 2026-02-25T22:00:00Z
+iteration: 34
+updated_at: 2026-02-25T22:45:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,20 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-106` to add list default-output deterministic ordering coverage.
+- Start `TASK-20260225-107` to add suite-all table-output coverage for contract run.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 1 todo, 0 blocked, 105 done
+- Tasks: 4 todo, 0 blocked, 106 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-106 — Add regression test for contract list default output deterministic ordering (B)
+- TASK-20260225-107 — Add contract test for context contract run --suite all table output (A)
+- TASK-20260225-108 — Add contract test for context contract list count field parity (A)
+- TASK-20260225-109 — Document contract list/run parity checks (B)
+- TASK-20260225-110 — Add regression test for contract suite command suffix validity (B)
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
