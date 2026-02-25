@@ -200,6 +200,33 @@ Integration notes:
 Future extension option:
 - A runtime capability descriptor may be added later, but must be additive and must not relax deterministic validation behavior for unsupported fields.
 
+Compatibility examples:
+- Additive rollout (supported capability):
+```json
+{
+  "selector": {
+    "namespaces": ["app/editor/*"],
+    "order": ["namespace", "key", "revision"],
+    "tags_all": ["active", "session"]
+  },
+  "assumption": "tags_all is explicitly documented as supported by current server capability profile"
+}
+```
+- Unsupported additive field (strict failure):
+```json
+{
+  "selector": {
+    "namespaces": ["app/editor/*"],
+    "order": ["namespace", "key", "revision"],
+    "tags_all": ["active", "session"]
+  },
+  "expected_error": {
+    "code": "validation_error",
+    "message": "unknown selector field: tags_all"
+  }
+}
+```
+
 ## Quick validation checklist
 
 Before adding/updating selector examples:
