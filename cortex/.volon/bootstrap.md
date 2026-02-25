@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-081` to document suite ordering policy and update sequence.
+- Start `TASK-20260225-082` to add bootstrap-sync apply idempotence regression coverage.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 80 done
+- Tasks: 1 todo, 0 blocked, 81 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-081 — Document contract suite ordering policy for CLI/script registries (B)
 - TASK-20260225-082 — Add bootstrap-sync apply idempotence regression test (B)
 
 ### Blockers

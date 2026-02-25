@@ -37,6 +37,23 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/bootstrap_sync_contract_golden.json` | `scripts/bootstrap-sync.sh` | `go test ./tests/integration -run BootstrapSyncScript` |
 | `tests/integration/fixtures/bootstrap_sync_no_log_contract_golden.json` | `scripts/bootstrap-sync.sh` (empty `.volon/logs`) | `go test ./tests/integration -run BootstrapSyncNoLogContract` |
 
+## Suite Ordering Policy
+
+- Canonical order is defined by `scripts/contract-suite-commands.sh`.
+- `internal/contextcli/cli.go` `contractSuites()` must match the same suite sequence and commands.
+- `tests/integration/fixtures/contract_suite_registry_parity_golden.json` must be updated in the same commit as ordering changes.
+
+Update checklist:
+- Update `scripts/contract-suite-commands.sh`.
+- Update `internal/contextcli/cli.go` `contractSuites()`.
+- Update `tests/integration/fixtures/contract_suite_commands_contract_golden.json`.
+- Update `tests/integration/fixtures/cli_contract_command_golden.json`.
+- Update `tests/integration/fixtures/contract_suite_registry_parity_golden.json`.
+- Run `go test ./tests/integration -run ContractSuiteCommandsScript`.
+- Run `go test ./tests/integration -run CLIContractCommand`.
+- Run `go test ./tests/integration -run ContractSuiteRegistryParity`.
+- Run `go test ./...`.
+
 ## Full validation
 
 - `go test ./...`

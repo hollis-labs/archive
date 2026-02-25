@@ -149,6 +149,7 @@ Rotation checklist:
 - AGENTS boot check contract suite: `go test ./tests/integration -run AgentsBootCheckContract`
 - Full fixture inventory: `docs/CONTRACT_FIXTURES.md`
 - Bootstrap/make fixture index: `docs/CONTRACT_FIXTURES.md#bootstrap-and-make-fixture-index`
+- Suite ordering policy: `docs/CONTRACT_FIXTURES.md#suite-ordering-policy`
 - Fixture ownership/update policy: see `docs/CONTRACT_FIXTURES.md#ownership-and-update-policy`
 - Fixture quickstart: see `docs/CONTRACT_FIXTURES.md#quickstart`
 - Script-based suites: see `docs/CONTRACT_FIXTURES.md#script-based-suites`
