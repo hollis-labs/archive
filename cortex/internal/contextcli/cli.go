@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -22,6 +23,8 @@ type CLI struct {
 	Policy *contextpolicy.Engine
 	Stdout io.Writer
 	Stderr io.Writer
+	// ExecCommand is an optional command runner hook used by contract helpers.
+	ExecCommand func(ctx context.Context, name string, args ...string) ([]byte, error)
 }
 
 // Run executes `context ...` commands.
@@ -77,9 +80,151 @@ func (c *CLI) Run(ctx context.Context, args []string) int {
 		return c.runBootstrap(ctx, args[2:])
 	case "compact":
 		return c.runCompact(ctx, args[2:])
+	case "contract":
+		return c.runContract(ctx, args[2:])
 	default:
 		return c.fail("unknown subcommand: " + args[1])
 	}
+}
+
+type contractSuite struct {
+	Name    string `json:"name"`
+	Command string `json:"command"`
+}
+
+func contractSuites() []contractSuite {
+	return []contractSuite{
+		{Name: "api", Command: "go test ./tests/integration -run APIContract -count=1"},
+		{Name: "api-errors", Command: "go test ./tests/integration -run APIErrorContract -count=1"},
+		{Name: "audit", Command: "go test ./tests/integration -run AuditContract -count=1"},
+		{Name: "metrics", Command: "go test ./tests/integration -run MetricsContract -count=1"},
+		{Name: "log-metrics", Command: "go test ./tests/integration -run LogMetricsContract -count=1"},
+		{Name: "readiness", Command: "go test ./tests/integration -run ReadinessContract -count=1"},
+		{Name: "cli-health-summary", Command: "go test ./tests/integration -run CLIHealthSummaryContract -count=1"},
+		{Name: "cli-audit", Command: "go test ./tests/integration -run CLIAuditContract -count=1"},
+		{Name: "smoke-invalid-token", Command: "go test ./tests/integration -run SmokeInvalidTokenContract -count=1"},
+		{Name: "runlog-helper", Command: "go test ./tests/integration -run RunlogHelperContract -count=1"},
+	}
+}
+
+func (c *CLI) runContract(ctx context.Context, args []string) int {
+	if len(args) == 0 {
+		return c.fail("usage: context contract <list|run> ...")
+	}
+	switch args[0] {
+	case "list":
+		return c.runContractList(args[1:])
+	case "run":
+		return c.runContractRun(ctx, args[1:])
+	default:
+		return c.fail("usage: context contract <list|run> ...")
+	}
+}
+
+func (c *CLI) runContractList(args []string) int {
+	fs := flag.NewFlagSet("contract list", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	output := fs.String("output", "json", "json|table")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	suites := contractSuites()
+	switch strings.TrimSpace(*output) {
+	case "json", "":
+		return c.writeJSON(map[string]any{"count": len(suites), "items": suites})
+	case "table":
+		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
+		_, _ = fmt.Fprintln(w, "SUITE\tCOMMAND")
+		for _, suite := range suites {
+			_, _ = fmt.Fprintf(w, "%s\t%s\n", suite.Name, suite.Command)
+		}
+		_ = w.Flush()
+		return 0
+	default:
+		return c.fail("output must be json|table")
+	}
+}
+
+func (c *CLI) runContractRun(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("contract run", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	suiteName := fs.String("suite", "all", "suite name or all")
+	execute := fs.Bool("execute", false, "execute the suite command(s)")
+	output := fs.String("output", "json", "json|table")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	allSuites := contractSuites()
+	selected := make([]contractSuite, 0, len(allSuites))
+	if strings.TrimSpace(*suiteName) == "all" {
+		selected = append(selected, allSuites...)
+	} else {
+		for _, suite := range allSuites {
+			if suite.Name == strings.TrimSpace(*suiteName) {
+				selected = append(selected, suite)
+				break
+			}
+		}
+		if len(selected) == 0 {
+			return c.fail("unknown contract suite: " + strings.TrimSpace(*suiteName))
+		}
+	}
+
+	type result struct {
+		Suite   string `json:"suite"`
+		Command string `json:"command"`
+		OK      bool   `json:"ok"`
+		Output  string `json:"output,omitempty"`
+	}
+	results := make([]result, 0, len(selected))
+	for _, suite := range selected {
+		entry := result{Suite: suite.Name, Command: suite.Command, OK: true}
+		if *execute {
+			out, err := c.execCommand(ctx, suite.Command)
+			entry.Output = strings.TrimSpace(string(out))
+			if err != nil {
+				entry.OK = false
+			}
+		}
+		results = append(results, entry)
+	}
+
+	switch strings.TrimSpace(*output) {
+	case "json", "":
+		return c.writeJSON(map[string]any{
+			"executed": *execute,
+			"count":    len(results),
+			"items":    results,
+		})
+	case "table":
+		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
+		if *execute {
+			_, _ = fmt.Fprintln(w, "SUITE\tOK\tCOMMAND")
+			for _, item := range results {
+				_, _ = fmt.Fprintf(w, "%s\t%t\t%s\n", item.Suite, item.OK, item.Command)
+			}
+		} else {
+			_, _ = fmt.Fprintln(w, "SUITE\tCOMMAND")
+			for _, item := range results {
+				_, _ = fmt.Fprintf(w, "%s\t%s\n", item.Suite, item.Command)
+			}
+		}
+		_ = w.Flush()
+		return 0
+	default:
+		return c.fail("output must be json|table")
+	}
+}
+
+func (c *CLI) execCommand(ctx context.Context, cmdline string) ([]byte, error) {
+	fields := strings.Fields(strings.TrimSpace(cmdline))
+	if len(fields) == 0 {
+		return nil, errors.New("empty command")
+	}
+	if c.ExecCommand != nil {
+		return c.ExecCommand(ctx, fields[0], fields[1:]...)
+	}
+	return exec.CommandContext(ctx, fields[0], fields[1:]...).CombinedOutput()
 }
 
 func (c *CLI) runNamespace(args []string) int {

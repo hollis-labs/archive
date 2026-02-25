@@ -1,4 +1,4 @@
-.PHONY: test contracts contract-api contract-errors contract-metrics smoke smoke-invalid-token validate e2e-local e2e-managed runlog-init contract-lint
+.PHONY: test contracts contract-api contract-errors contract-metrics smoke smoke-invalid-token validate e2e-local e2e-managed runlog-init contract-lint agents-boot-check
 
 BASE_URL ?= http://127.0.0.1:8080
 TOKEN ?=
@@ -72,3 +72,6 @@ runlog-init:
 
 contract-lint:
 	scripts/contract-fixture-lint.sh
+
+agents-boot-check:
+	scripts/agents-boot-drift-check.sh

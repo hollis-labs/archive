@@ -122,9 +122,17 @@ Rotation checklist:
 - CLI audit contract suite: `go test ./tests/integration -run CLIAuditContract`
 - Golden smoke invalid-token fixture: `tests/integration/fixtures/smoke_invalid_token_contract_golden.json`
 - Smoke invalid-token contract suite: `go test ./tests/integration -run SmokeInvalidTokenContract`
+- Golden make smoke-invalid-token fixture: `tests/integration/fixtures/make_smoke_invalid_token_contract_golden.json`
+- Make smoke-invalid-token contract suite: `go test ./tests/integration -run MakeSmokeInvalidTokenContract`
 - Golden run-log helper fixture: `tests/integration/fixtures/runlog_helper_contract_golden.json`
 - Run-log helper contract suite: `go test ./tests/integration -run RunlogHelperContract`
 - Full fixture inventory: `docs/CONTRACT_FIXTURES.md`
+- Fixture ownership/update policy: see `docs/CONTRACT_FIXTURES.md#ownership-and-update-policy`
+
+## Contract helper CLI
+- List suites: `contextd context contract list --output table`
+- Show suite command(s) without execution: `contextd context contract run --suite api --output json`
+- Execute suite command(s): `contextd context contract run --suite api --execute --output table`
 
 ## Metrics contract checks
 - Golden metrics fixture: `tests/integration/fixtures/metrics_contract_golden.json`
@@ -165,6 +173,7 @@ Rotation checklist:
 - Run smoke with invalid-token precheck: `make smoke BASE_URL=http://127.0.0.1:8080 AUTH_MODE=managed TOKEN=<token> INVALID_TOKEN_CHECK=1`
 - Smoke invalid-token preset: `make smoke-invalid-token BASE_URL=http://127.0.0.1:8080 AUTH_MODE=managed TOKEN=<token>`
 - Contract fixture presence lint: `make contract-lint`
+- AGENTS boot drift check: `make agents-boot-check`
 - Run full local harness (boot + contracts + smoke + teardown):
   - `make e2e-local`
   - `AUTH_MODE=static make e2e-local`
@@ -183,6 +192,10 @@ Rotation checklist:
   - By default, existing run-log files are not overwritten.
   - Use script-level force only when intentional:
     - `scripts/volon-runlog-init.sh --iteration 47 --date 2026-02-25 --force`
+
+## Boot profile drift checks
+- Script: `scripts/agents-boot-drift-check.sh`
+- Purpose: verify critical AGENTS/boot files exist and warn on AGENTS boot-reference drift.
 - Default output path pattern:
   - `.volon/logs/run-iteration-<NNN>-<YYYY-MM-DD>.md`
 - Quick validation sequence:

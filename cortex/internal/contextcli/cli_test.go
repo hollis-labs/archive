@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -507,5 +508,45 @@ func TestCompactCommand(t *testing.T) {
 	}
 	if !strings.Contains(out.String(), "DELETED_REVISIONS") {
 		t.Fatalf("unexpected compact output: %s", out.String())
+	}
+}
+
+func TestContractListAndRunDryMode(t *testing.T) {
+	cli, out, errOut, _ := newTestCLIWithRoot(t)
+
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{"context", "contract", "list", "--output", "json"}); code != 0 {
+		t.Fatalf("contract list failed: %s", errOut.String())
+	}
+	if !strings.Contains(out.String(), "\"count\"") || !strings.Contains(out.String(), "\"api\"") {
+		t.Fatalf("unexpected contract list output: %s", out.String())
+	}
+
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{"context", "contract", "run", "--suite", "api", "--output", "json"}); code != 0 {
+		t.Fatalf("contract run dry failed: %s", errOut.String())
+	}
+	if !strings.Contains(out.String(), "\"executed\":false") || !strings.Contains(out.String(), "APIContract") {
+		t.Fatalf("unexpected contract run dry output: %s", out.String())
+	}
+}
+
+func TestContractRunExecuteUsesInjectedRunner(t *testing.T) {
+	cli, out, errOut, _ := newTestCLIWithRoot(t)
+	var called int
+	cli.ExecCommand = func(ctx context.Context, name string, args ...string) ([]byte, error) {
+		called++
+		return []byte(fmt.Sprintf("ran %s %s", name, strings.Join(args, " "))), nil
+	}
+
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{"context", "contract", "run", "--suite", "metrics", "--execute", "--output", "json"}); code != 0 {
+		t.Fatalf("contract run execute failed: %s", errOut.String())
+	}
+	if called != 1 {
+		t.Fatalf("expected injected runner to be called once, got %d", called)
+	}
+	if !strings.Contains(out.String(), "\"executed\":true") || !strings.Contains(out.String(), "\"ok\":true") {
+		t.Fatalf("unexpected execute output: %s", out.String())
 	}
 }
