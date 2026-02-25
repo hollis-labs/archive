@@ -2,7 +2,7 @@
 version: 1
 type: bootstrap
 iteration: 49
-updated_at: 2026-02-25T18:16:00Z
+updated_at: 2026-02-25T18:20:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-127` to document post-MVP auth mode roadmap for read/view endpoints.
+- Start `TASK-20260225-128` to define selector extension/versioning policy.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 4 todo, 0 blocked, 126 done
-- Last run log: `.volon/logs/run-iteration-048-2026-02-25.md`
+- Tasks: 3 todo, 0 blocked, 127 done
+- Last run log: `.volon/logs/run-iteration-049-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-127 — Document post-MVP auth mode roadmap for read/view endpoints (A)
 - TASK-20260225-128 — Define selector extension/versioning policy in VIEWS spec (B)
 - TASK-20260225-129 — Add storage retention default proposal and rationale (B)
 - TASK-20260225-130 — Add phased MCP capability model (B)
@@ -42,6 +41,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `3669ae4`
+- Last implementation commit: `d6d5681`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

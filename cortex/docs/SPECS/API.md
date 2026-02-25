@@ -28,6 +28,24 @@ Common error codes:
   - `code: "auth_required"`
   - `message: "missing or invalid bearer token"`
 
+### Post-MVP read/view auth roadmap
+
+Mode options under evaluation:
+1. `mvp-open-read`:
+   - `head`, `history`, `views/evaluate` remain unauthenticated.
+   - Backward compatible with current local-first defaults.
+2. `optional-gated-read`:
+   - server flag enables bearer-token checks for read/view endpoints.
+   - intended for shared workstations or team-local environments.
+3. `strict-auth-all`:
+   - all endpoints require auth tokens.
+   - requires explicit migration guidance for existing local scripts.
+
+Migration notes:
+- Default behavior remains `mvp-open-read` until a mode switch is explicitly configured.
+- Future `optional-gated-read`/`strict-auth-all` modes must preserve response ordering and payload schema contracts.
+- CLI/MCP adapters should surface mode expectations clearly and fail with deterministic `auth_required` envelopes when gated.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
