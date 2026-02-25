@@ -994,6 +994,20 @@ LIMIT ?`, limit)
 	return out, nil
 }
 
+// HasActiveAuthTokens reports whether at least one non-revoked, non-expired token exists.
+func (s *Store) HasActiveAuthTokens(ctx context.Context) (bool, error) {
+	now := time.Now().UTC().Format(time.RFC3339)
+	var n int
+	if err := s.db.QueryRowContext(ctx, `
+SELECT COUNT(1)
+FROM auth_tokens
+WHERE revoked_at IS NULL
+  AND (expires_at IS NULL OR expires_at = '' OR expires_at > ?)`, now).Scan(&n); err != nil {
+		return false, err
+	}
+	return n > 0, nil
+}
+
 // ExportBackup writes a deterministic JSON snapshot containing records, audit events, and auth token metadata.
 func (s *Store) ExportBackup(ctx context.Context, outPath string) error {
 	if strings.TrimSpace(outPath) == "" {

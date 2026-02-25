@@ -30,6 +30,23 @@ Status: active draft
 - List token metadata: `contextd context token list --output table`
 - In managed mode, revoked/expired tokens are rejected for mutating API endpoints.
 
+Safe local handling:
+- Do not commit tokens into the repository.
+- Prefer exporting tokens into a local shell session (`export CONTEXTD_TOKEN=...`) or an untracked env file.
+- Rotate tokens after local sharing events and revoke obsolete tokens promptly.
+
+Rotation checklist:
+1. Issue or rotate to obtain a new token.
+2. Update local runtime environment with the new token.
+3. Verify API mutating route access with the new token.
+4. Revoke the old token.
+
+## Service runner
+- Start API server (default `:8080`): `contextd serve`
+- Start with managed token auth: `contextd serve --managed-auth --addr :8080`
+- Start with legacy static token: `contextd serve --static-token <token> --addr :8080`
+- Managed auth guard: server startup fails if no active token exists.
+
 ## Namespace schema contract operations
 - Register namespace: `contextd context namespace register --namespace app/editor/session --owner-type app --owner-id editor`
 - Show namespace policy: `contextd context namespace show --namespace app/editor/session`
@@ -65,6 +82,11 @@ Status: active draft
 - Compact revisions + trim audit events:
   - `contextd context compact --keep-revisions 5 --keep-audit 5000 --output table`
 - Compaction preserves latest heads per `(namespace,key)` and rebuilds head pointers deterministically.
+
+## API contract fixtures
+- Golden API contract fixture: `tests/integration/fixtures/api_contract_golden.json`
+- Contract suite: `go test ./tests/integration -run APIContract`
+- Update process: modify fixture intentionally alongside API shape changes and include rationale in commit message.
 
 ## Repository conventions
 - Product specifications: `docs/SPECS/`
