@@ -11,6 +11,7 @@
     "cli-contract-list-table",
     "cli-contract-run-dry-table",
     "cli-contract-run-table",
+    "cli-contract-run-invalid-output",
     "cli-contract-run-unknown-suite",
     "smoke-invalid-token",
     "make-contract-cli-list",

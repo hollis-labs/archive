@@ -13,6 +13,7 @@ cli-audit	go test ./tests/integration -run CLIAuditContract -count=1
 cli-contract-list-table	go test ./tests/integration -run ContractListTableContract -count=1
 cli-contract-run-dry-table	go test ./tests/integration -run ContractRunTableDryContract -count=1
 cli-contract-run-table	go test ./tests/integration -run ContractRunExecuteTableContract -count=1
+cli-contract-run-invalid-output	go test ./tests/integration -run ContractRunInvalidOutputErrorContract -count=1
 cli-contract-run-unknown-suite	go test ./tests/integration -run ContractRunUnknownSuiteErrorContract -count=1
 smoke-invalid-token	go test ./tests/integration -run SmokeInvalidTokenContract -count=1
 make-contract-cli-list	go test ./tests/integration -run MakeContractCLIListContract -count=1
