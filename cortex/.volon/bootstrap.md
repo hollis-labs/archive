@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 39
-updated_at: 2026-02-25T17:51:00Z
+iteration: 44
+updated_at: 2026-02-25T17:56:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,20 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Generate next task batch (`TASK-20260225-123` .. `TASK-20260225-126`) and start `TASK-20260225-123`.
+- Start `TASK-20260225-123` to add the pivot architecture summary artifact.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 0 todo, 0 blocked, 122 done
-- Last run log: `.volon/logs/run-iteration-042-2026-02-25.md`
+- Tasks: 4 todo, 0 blocked, 122 done
+- Last run log: `.volon/logs/run-iteration-043-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- None currently queued; generate next batch.
+- TASK-20260225-123 — Add pivot architecture summary note artifact (A)
+- TASK-20260225-124 — Document pivot open questions and decision backlog (B)
+- TASK-20260225-125 — Add API/CLI actor-namespace contract matrix (B)
+- TASK-20260225-126 — Add MCP adapter spec note and cross-links (B)
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
@@ -39,6 +42,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `f606e18`
+- Last implementation commit: `569ba48`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
