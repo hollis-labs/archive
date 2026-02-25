@@ -1,0 +1,16 @@
+{
+  "ordered_suites": [
+    "api",
+    "api-errors",
+    "audit",
+    "metrics",
+    "log-metrics",
+    "readiness",
+    "cli-health-summary",
+    "cli-audit",
+    "smoke-invalid-token",
+    "make-smoke-invalid-token",
+    "runlog-helper",
+    "agents-boot-check"
+  ]
+}

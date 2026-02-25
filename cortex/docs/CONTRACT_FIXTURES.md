@@ -13,6 +13,8 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/cli_health_summary_contract_golden.json` | CLI `context health --summary` contract | `go test ./tests/integration -run CLIHealthSummaryContract` |
 | `tests/integration/fixtures/cli_audit_contract_golden.json` | CLI `context audit` cursor/filter JSON contract | `go test ./tests/integration -run CLIAuditContract` |
 | `tests/integration/fixtures/cli_contract_command_golden.json` | CLI `context contract list/run` dry-mode contract | `go test ./tests/integration -run CLIContractCommand` |
+| `tests/integration/fixtures/make_contract_cli_list_contract_golden.json` | `make contract-cli-list` output marker contract | `go test ./tests/integration -run MakeContractCLIListContract` |
+| `tests/integration/fixtures/contract_suite_commands_contract_golden.json` | `scripts/contract-suite-commands.sh` output ordering contract | `go test ./tests/integration -run ContractSuiteCommandsScript` |
 | `tests/integration/fixtures/smoke_invalid_token_contract_golden.json` | Smoke invalid-token marker sequence contract | `go test ./tests/integration -run SmokeInvalidTokenContract` |
 | `tests/integration/fixtures/make_smoke_invalid_token_contract_golden.json` | `make smoke-invalid-token` output marker contract | `go test ./tests/integration -run MakeSmokeInvalidTokenContract` |
 | `tests/integration/fixtures/runlog_helper_contract_golden.json` | Run-log helper output skeleton contract | `go test ./tests/integration -run RunlogHelperContract` |
@@ -22,6 +24,14 @@ This index lists fixture files and their associated validation command.
 
 - `go test ./...`
 - `make contract-lint`
+
+## Quickstart
+
+1. `make contract-lint`
+2. `go test ./tests/integration -run APIContract`
+3. `go test ./tests/integration -run CLIContractCommand`
+4. `go test ./tests/integration -run SmokeInvalidTokenContract`
+5. `go test ./...`
 
 ## Ownership And Update Policy
 

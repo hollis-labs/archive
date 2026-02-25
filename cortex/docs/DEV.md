@@ -122,6 +122,10 @@ Rotation checklist:
 - CLI audit contract suite: `go test ./tests/integration -run CLIAuditContract`
 - Golden CLI contract command fixture: `tests/integration/fixtures/cli_contract_command_golden.json`
 - CLI contract command suite: `go test ./tests/integration -run CLIContractCommand`
+- Golden make contract-cli-list fixture: `tests/integration/fixtures/make_contract_cli_list_contract_golden.json`
+- Make contract-cli-list suite: `go test ./tests/integration -run MakeContractCLIListContract`
+- Golden contract-suite-commands fixture: `tests/integration/fixtures/contract_suite_commands_contract_golden.json`
+- Contract-suite-commands suite: `go test ./tests/integration -run ContractSuiteCommandsScript`
 - Golden smoke invalid-token fixture: `tests/integration/fixtures/smoke_invalid_token_contract_golden.json`
 - Smoke invalid-token contract suite: `go test ./tests/integration -run SmokeInvalidTokenContract`
 - Golden make smoke-invalid-token fixture: `tests/integration/fixtures/make_smoke_invalid_token_contract_golden.json`
@@ -132,6 +136,7 @@ Rotation checklist:
 - AGENTS boot check contract suite: `go test ./tests/integration -run AgentsBootCheckContract`
 - Full fixture inventory: `docs/CONTRACT_FIXTURES.md`
 - Fixture ownership/update policy: see `docs/CONTRACT_FIXTURES.md#ownership-and-update-policy`
+- Fixture quickstart: see `docs/CONTRACT_FIXTURES.md#quickstart`
 
 ## Contract helper CLI
 - List suites: `contextd context contract list --output table`
@@ -200,6 +205,9 @@ Rotation checklist:
   - By default, existing run-log files are not overwritten.
   - Use script-level force only when intentional:
     - `scripts/volon-runlog-init.sh --iteration 47 --date 2026-02-25 --force`
+- Bootstrap summary sync:
+  - report only: `make bootstrap-report`
+  - apply updates: `make bootstrap-sync`
 
 ## Boot profile drift checks
 - Script: `scripts/agents-boot-drift-check.sh`

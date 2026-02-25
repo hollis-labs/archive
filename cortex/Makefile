@@ -1,4 +1,4 @@
-.PHONY: test contracts contract-api contract-errors contract-metrics smoke smoke-invalid-token validate e2e-local e2e-managed runlog-init contract-lint agents-boot-check contract-commands contract-cli-list contract-cli-run
+.PHONY: test contracts contract-api contract-errors contract-metrics smoke smoke-invalid-token validate e2e-local e2e-managed runlog-init contract-lint agents-boot-check contract-commands contract-cli-list contract-cli-run bootstrap-sync bootstrap-report
 
 BASE_URL ?= http://127.0.0.1:8080
 TOKEN ?=
@@ -88,3 +88,9 @@ contract-cli-list:
 contract-cli-run:
 	@mkdir -p $(CONTEXTD_ROOT)
 	CONTEXTD_ROOT=$(CONTEXTD_ROOT) go run ./cmd/contextd context contract run --suite $(SUITE) --output table
+
+bootstrap-report:
+	scripts/bootstrap-sync.sh
+
+bootstrap-sync:
+	scripts/bootstrap-sync.sh --apply
