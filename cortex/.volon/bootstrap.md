@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 20
-updated_at: 2026-02-25T13:41:00Z
+iteration: 22
+updated_at: 2026-02-25T13:55:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,12 +18,12 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Generate next task batch (`TASK-20260225-063+`) for continued hardening.
+- Generate next task batch (`TASK-20260225-067+`) for continued hardening.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 0 todo, 0 blocked, 62 done
+- Tasks: 0 todo, 0 blocked, 66 done
 - Last run log: `.volon/logs/run-iteration-006-2026-02-25.md`
 
 ## Active work
@@ -39,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `504ef77`
+- Last implementation commit: `62f81fc`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

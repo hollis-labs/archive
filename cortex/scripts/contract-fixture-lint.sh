@@ -10,8 +10,11 @@ fixtures=(
   "tests/integration/fixtures/readiness_contract_golden.json"
   "tests/integration/fixtures/cli_health_summary_contract_golden.json"
   "tests/integration/fixtures/cli_audit_contract_golden.json"
+  "tests/integration/fixtures/cli_contract_command_golden.json"
   "tests/integration/fixtures/smoke_invalid_token_contract_golden.json"
+  "tests/integration/fixtures/make_smoke_invalid_token_contract_golden.json"
   "tests/integration/fixtures/runlog_helper_contract_golden.json"
+  "tests/integration/fixtures/agents_boot_check_contract_golden.json"
 )
 
 missing=0

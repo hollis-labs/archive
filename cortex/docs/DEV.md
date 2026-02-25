@@ -120,12 +120,16 @@ Rotation checklist:
 - CLI health summary contract suite: `go test ./tests/integration -run CLIHealthSummaryContract`
 - Golden CLI audit fixture: `tests/integration/fixtures/cli_audit_contract_golden.json`
 - CLI audit contract suite: `go test ./tests/integration -run CLIAuditContract`
+- Golden CLI contract command fixture: `tests/integration/fixtures/cli_contract_command_golden.json`
+- CLI contract command suite: `go test ./tests/integration -run CLIContractCommand`
 - Golden smoke invalid-token fixture: `tests/integration/fixtures/smoke_invalid_token_contract_golden.json`
 - Smoke invalid-token contract suite: `go test ./tests/integration -run SmokeInvalidTokenContract`
 - Golden make smoke-invalid-token fixture: `tests/integration/fixtures/make_smoke_invalid_token_contract_golden.json`
 - Make smoke-invalid-token contract suite: `go test ./tests/integration -run MakeSmokeInvalidTokenContract`
 - Golden run-log helper fixture: `tests/integration/fixtures/runlog_helper_contract_golden.json`
 - Run-log helper contract suite: `go test ./tests/integration -run RunlogHelperContract`
+- Golden AGENTS boot check fixture: `tests/integration/fixtures/agents_boot_check_contract_golden.json`
+- AGENTS boot check contract suite: `go test ./tests/integration -run AgentsBootCheckContract`
 - Full fixture inventory: `docs/CONTRACT_FIXTURES.md`
 - Fixture ownership/update policy: see `docs/CONTRACT_FIXTURES.md#ownership-and-update-policy`
 
@@ -133,6 +137,10 @@ Rotation checklist:
 - List suites: `contextd context contract list --output table`
 - Show suite command(s) without execution: `contextd context contract run --suite api --output json`
 - Execute suite command(s): `contextd context contract run --suite api --execute --output table`
+- Make shortcuts:
+  - `make contract-cli-list`
+  - `make contract-cli-run SUITE=api`
+  - `make contract-commands`
 
 ## Metrics contract checks
 - Golden metrics fixture: `tests/integration/fixtures/metrics_contract_golden.json`

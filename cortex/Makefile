@@ -1,4 +1,4 @@
-.PHONY: test contracts contract-api contract-errors contract-metrics smoke smoke-invalid-token validate e2e-local e2e-managed runlog-init contract-lint agents-boot-check
+.PHONY: test contracts contract-api contract-errors contract-metrics smoke smoke-invalid-token validate e2e-local e2e-managed runlog-init contract-lint agents-boot-check contract-commands contract-cli-list contract-cli-run
 
 BASE_URL ?= http://127.0.0.1:8080
 TOKEN ?=
@@ -10,6 +10,8 @@ ITERATION ?=
 RUN_DATE ?= $(shell date +%F)
 PROFILE ?= orchestrator
 RUNLOG_OUT ?=
+CONTEXTD_ROOT ?= .volon/tmp/contextd
+SUITE ?= all
 
 TEST ?= go test ./...
 
@@ -75,3 +77,14 @@ contract-lint:
 
 agents-boot-check:
 	scripts/agents-boot-drift-check.sh
+
+contract-commands:
+	scripts/contract-suite-commands.sh
+
+contract-cli-list:
+	@mkdir -p $(CONTEXTD_ROOT)
+	CONTEXTD_ROOT=$(CONTEXTD_ROOT) go run ./cmd/contextd context contract list --output table
+
+contract-cli-run:
+	@mkdir -p $(CONTEXTD_ROOT)
+	CONTEXTD_ROOT=$(CONTEXTD_ROOT) go run ./cmd/contextd context contract run --suite $(SUITE) --output table
