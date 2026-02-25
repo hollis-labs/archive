@@ -178,6 +178,7 @@ Rotation checklist:
 - Contract suite command-prefix guardrail: `go test ./tests/integration -run ContractSuiteCommandsPrefixContract`
 - Contract suite deterministic-order guardrail: `go test ./tests/integration -run ContractSuiteCommandsDeterministicContract`
 - Contract suite command-suffix guardrail: `go test ./tests/integration -run ContractSuiteCommandsSuffixContract`
+- Contract suite command token-count guardrail: `go test ./tests/integration -run ContractSuiteCommandsTokenCountContract`
 - Contract fixture lint script suite: `go test ./tests/integration -run ContractFixtureLintScript`
 - Golden bootstrap-sync fixture: `tests/integration/fixtures/bootstrap_sync_contract_golden.json`
 - Bootstrap-sync contract suite: `go test ./tests/integration -run BootstrapSyncScript`

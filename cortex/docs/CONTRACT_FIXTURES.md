@@ -105,6 +105,7 @@ When to add a new suite ID:
 | `contract-suite-commands-prefix` | Require integration-test command prefix validity. | `go test ./tests/integration -run ContractSuiteCommandsPrefixContract` |
 | `contract-suite-commands-deterministic` | Enforce stable output ordering across repeated runs. | `go test ./tests/integration -run ContractSuiteCommandsDeterministicContract` |
 | `contract-suite-commands-suffix` | Enforce `-count=1` command suffix consistency. | `go test ./tests/integration -run ContractSuiteCommandsSuffixContract` |
+| `contract-suite-commands-token-count` | Enforce minimum command token structure (`go test ./tests/integration -run ...`). | `go test ./tests/integration -run ContractSuiteCommandsTokenCountContract` |
 
 Recommended run order:
 1. `go test ./tests/integration -run ContractSuiteCommandsFormatContract`
@@ -112,6 +113,7 @@ Recommended run order:
 3. `go test ./tests/integration -run ContractSuiteCommandsPrefixContract`
 4. `go test ./tests/integration -run ContractSuiteCommandsDeterministicContract`
 5. `go test ./tests/integration -run ContractSuiteCommandsSuffixContract`
+6. `go test ./tests/integration -run ContractSuiteCommandsTokenCountContract`
 
 ## Default Output-Mode Suites
 
@@ -182,6 +184,7 @@ See also: `docs/DEV.md#contract-quick-run-pack`.
   - `go test ./tests/integration -run ContractSuiteCommandsPrefixContract`
   - `go test ./tests/integration -run ContractSuiteCommandsDeterministicContract`
   - `go test ./tests/integration -run ContractSuiteCommandsSuffixContract`
+  - `go test ./tests/integration -run ContractSuiteCommandsTokenCountContract`
   - `go test ./tests/integration -run ContractFixtureLintScript`
   - `go test ./tests/integration -run BootstrapSyncScript`
   - `go test ./tests/integration -run BootstrapSyncNoLogContract`
