@@ -14,6 +14,7 @@
     "bootstrap-sync",
     "bootstrap-sync-no-log",
     "bootstrap-sync-idempotent",
+    "make-bootstrap-report",
     "make-bootstrap-sync",
     "make-smoke-invalid-token",
     "runlog-helper",

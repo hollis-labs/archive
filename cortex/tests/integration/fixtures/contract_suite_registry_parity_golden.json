@@ -14,6 +14,7 @@
     {"name": "bootstrap-sync", "command": "go test ./tests/integration -run BootstrapSyncScript -count=1"},
     {"name": "bootstrap-sync-no-log", "command": "go test ./tests/integration -run BootstrapSyncNoLogContract -count=1"},
     {"name": "bootstrap-sync-idempotent", "command": "go test ./tests/integration -run BootstrapSyncIdempotentContract -count=1"},
+    {"name": "make-bootstrap-report", "command": "go test ./tests/integration -run MakeBootstrapReportContract -count=1"},
     {"name": "make-bootstrap-sync", "command": "go test ./tests/integration -run MakeBootstrapSyncContract -count=1"},
     {"name": "make-smoke-invalid-token", "command": "go test ./tests/integration -run MakeSmokeInvalidTokenContract -count=1"},
     {"name": "runlog-helper", "command": "go test ./tests/integration -run RunlogHelperContract -count=1"},

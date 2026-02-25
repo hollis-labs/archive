@@ -108,6 +108,7 @@ func contractSuites() []contractSuite {
 		{Name: "bootstrap-sync", Command: "go test ./tests/integration -run BootstrapSyncScript -count=1"},
 		{Name: "bootstrap-sync-no-log", Command: "go test ./tests/integration -run BootstrapSyncNoLogContract -count=1"},
 		{Name: "bootstrap-sync-idempotent", Command: "go test ./tests/integration -run BootstrapSyncIdempotentContract -count=1"},
+		{Name: "make-bootstrap-report", Command: "go test ./tests/integration -run MakeBootstrapReportContract -count=1"},
 		{Name: "make-bootstrap-sync", Command: "go test ./tests/integration -run MakeBootstrapSyncContract -count=1"},
 		{Name: "make-smoke-invalid-token", Command: "go test ./tests/integration -run MakeSmokeInvalidTokenContract -count=1"},
 		{Name: "runlog-helper", Command: "go test ./tests/integration -run RunlogHelperContract -count=1"},

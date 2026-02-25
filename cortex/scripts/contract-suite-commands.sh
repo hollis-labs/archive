@@ -16,6 +16,7 @@ make-contract-cli-run	go test ./tests/integration -run MakeContractCLIRunContrac
 bootstrap-sync	go test ./tests/integration -run BootstrapSyncScript -count=1
 bootstrap-sync-no-log	go test ./tests/integration -run BootstrapSyncNoLogContract -count=1
 bootstrap-sync-idempotent	go test ./tests/integration -run BootstrapSyncIdempotentContract -count=1
+make-bootstrap-report	go test ./tests/integration -run MakeBootstrapReportContract -count=1
 make-bootstrap-sync	go test ./tests/integration -run MakeBootstrapSyncContract -count=1
 make-smoke-invalid-token	go test ./tests/integration -run MakeSmokeInvalidTokenContract -count=1
 runlog-helper	go test ./tests/integration -run RunlogHelperContract -count=1
