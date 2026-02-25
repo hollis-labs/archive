@@ -58,6 +58,19 @@ This directory (and `docs/SPECS/outputs/`) contains generated pivot support note
 ## Usage note
 These artifacts are summaries and operator-facing guides. When conflicts appear, the canonical source specs/ADRs take precedence.
 
+## Freshness note convention
+Use a one-line freshness marker near the top of each artifact in both output sets:
+- `docs/outputs/*`
+- `docs/SPECS/outputs/*`
+
+Preferred format:
+- `Freshness: verified against canonical specs on YYYY-MM-DD`
+
+Guidance:
+- Update the freshness line whenever artifact content is revised for spec/ADR alignment.
+- If the artifact is intentionally stale pending canonical updates, mark it explicitly (for example: `Freshness: stale pending API spec update`).
+- Keep canonical-source precedence explicit in the artifact body (summary guidance must never override source specs/ADRs).
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
