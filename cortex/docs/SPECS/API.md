@@ -46,6 +46,14 @@ Migration notes:
 - Future `optional-gated-read`/`strict-auth-all` modes must preserve response ordering and payload schema contracts.
 - CLI/MCP adapters should surface mode expectations clearly and fail with deterministic `auth_required` envelopes when gated.
 
+Auth-mode endpoint matrix:
+
+| Endpoint class | `mvp-open-read` | `optional-gated-read` | `strict-auth-all` |
+|---|---|---|---|
+| Read/view (`GET /v1/context/head`, `GET /v1/context/history`, `POST /v1/views/evaluate`) | No token required | Token required | Token required |
+| Mutating (`POST /v1/namespaces/register`, `POST /v1/context/write`, `POST /v1/context/promote`, `POST /v1/context/consistency/repair`) | Token required | Token required | Token required |
+| Operational read (`GET /v1/context/audit`, `GET /v1/context/consistency/scan`, `GET /v1/health/readiness`) | No token required | Token required | Token required |
+
 Optional-gated read/view mode examples:
 - Gated read request (`head`) with bearer token:
 ```http
