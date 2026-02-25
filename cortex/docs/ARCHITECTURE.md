@@ -25,7 +25,7 @@ Provide deterministic context persistence/retrieval for multiple local clients w
 
 4. Interface adapters
 - HTTP API and CLI adapters share the same core service operations.
-- MCP adapter (planned) maps tool calls to identical contracts.
+- MCP adapter (planned) maps tool calls to identical contracts (see `docs/SPECS/MCP.md`).
 
 5. View evaluator
 - Parses selector definitions.

@@ -2,7 +2,7 @@
 version: 1
 type: bootstrap
 iteration: 44
-updated_at: 2026-02-25T18:06:00Z
+updated_at: 2026-02-25T18:10:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,17 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-126` to add MCP adapter spec note and cross-links.
+- Generate next task batch (`TASK-20260225-127` .. `TASK-20260225-130`) and start `TASK-20260225-127`.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 1 todo, 0 blocked, 125 done
-- Last run log: `.volon/logs/run-iteration-046-2026-02-25.md`
+- Tasks: 0 todo, 0 blocked, 126 done
+- Last run log: `.volon/logs/run-iteration-047-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-126 — Add MCP adapter spec note and cross-links (B)
+- None currently queued; generate next batch.
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
@@ -39,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `058daf2`
+- Last implementation commit: `94390b9`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
