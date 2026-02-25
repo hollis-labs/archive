@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 89
-updated_at: 2026-02-25T21:27:00Z
+iteration: 90
+updated_at: 2026-02-25T21:45:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-159` to add API mutate endpoint preflight checklist.
+- Start `TASK-20260225-160` to add VIEWS reviewer checklist for doc PRs.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 4 todo, 0 blocked, 158 done
-- Last run log: `.volon/logs/run-iteration-088-2026-02-25.md`
+- Tasks: 3 todo, 0 blocked, 159 done
+- Last run log: `.volon/logs/run-iteration-090-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-159 — Add API mutate endpoint preflight checklist (A)
 - TASK-20260225-160 — Add VIEWS reviewer checklist for doc PRs (B)
 - TASK-20260225-161 — Add MCP phase gate criteria table (B)
 - TASK-20260225-162 — Add outputs artifact freshness note (B)
@@ -42,6 +41,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `94cf25d`
+- Last implementation commit: `3181949`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

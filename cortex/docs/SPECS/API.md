@@ -120,6 +120,21 @@ Policy notes:
 | `policy_denied` (`403`) | `context/write`, `context/promote` | Actor/namespace ownership mismatch or protected `user/*` transition without required actor semantics | Re-check actor identity, namespace ownership policy, and promote constraints in actor/namespace matrix. |
 | `validation_error` (`400`) | `namespaces/register`, `context/write`, `context/promote` | Invalid payload schema (e.g., `required_keys`) or malformed request fields | Fix request shape/schema mismatch; align payload with namespace policy contract before retry. |
 
+### Mutating call preflight checklist
+Run this quick preflight before `POST /v1/namespaces/register`, `POST /v1/context/write`, `POST /v1/context/promote`, or `POST /v1/context/consistency/repair`:
+1. Auth/token readiness:
+   - Confirm active mode and endpoint expectations from the auth-mode matrix.
+   - Ensure `Authorization: Bearer <token>` is present and token is not revoked/expired.
+   - If this fails, expect `401 auth_required`.
+2. Actor/namespace policy readiness:
+   - Confirm `actor` and `client_id` match intended ownership scope.
+   - Validate target namespace transitions against the actor-namespace contract matrix.
+   - If this fails, expect `403 policy_denied`.
+3. Payload/schema readiness:
+   - Validate required request fields and payload shape before send.
+   - For contract-bound namespaces, confirm payload satisfies `required_keys`.
+   - If this fails, expect `400 validation_error`.
+
 ## Endpoints
 
 ### POST `/v1/namespaces/register`
