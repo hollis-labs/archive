@@ -315,8 +315,52 @@ func TestHealthCommandOutput(t *testing.T) {
 	if code := cli.Run(context.Background(), []string{"context", "health", "--output", "table"}); code != 0 {
 		t.Fatalf("health failed: %s", errOut.String())
 	}
-	if !strings.Contains(out.String(), "HEALTHY") {
+	if !strings.Contains(out.String(), "HEALTHY") || !strings.Contains(out.String(), "STATUS") {
 		t.Fatalf("unexpected health output: %s", out.String())
+	}
+}
+
+func TestHealthSummaryStatusTiers(t *testing.T) {
+	cli, out, errOut, root := newTestCLIWithRoot(t)
+	if code := cli.Run(context.Background(), []string{
+		"context", "put",
+		"--client-id", "editor",
+		"--actor", "app:editor",
+		"--namespace", "app/editor/session",
+		"--key", "summary",
+		"--json", `{"v":1}`,
+	}); code != 0 {
+		t.Fatalf("put failed: %s", errOut.String())
+	}
+
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{"context", "health", "--summary", "--output", "json"}); code != 0 {
+		t.Fatalf("health summary healthy failed: %s", errOut.String())
+	}
+	if !strings.Contains(out.String(), `"status":"healthy"`) {
+		t.Fatalf("expected healthy summary, got: %s", out.String())
+	}
+
+	if err := os.Remove(filepath.Join(root, "data", "records", "app", "editor", "session", "summary", "1.json")); err != nil {
+		t.Fatalf("remove payload: %v", err)
+	}
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{"context", "health", "--summary", "--output", "json"}); code != 0 {
+		t.Fatalf("health summary degraded failed: %s", errOut.String())
+	}
+	if !strings.Contains(out.String(), `"status":"degraded"`) {
+		t.Fatalf("expected degraded summary, got: %s", out.String())
+	}
+
+	if err := os.RemoveAll(filepath.Join(root, "data", "records")); err != nil {
+		t.Fatalf("remove records dir: %v", err)
+	}
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{"context", "health", "--summary", "--output", "table"}); code != 0 {
+		t.Fatalf("health summary failing failed: %s", errOut.String())
+	}
+	if !strings.Contains(out.String(), "failing") {
+		t.Fatalf("expected failing summary table, got: %s", out.String())
 	}
 }
 

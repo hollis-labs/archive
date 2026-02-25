@@ -20,7 +20,7 @@ trap cleanup EXIT
 
 host_port="${BASE_URL#http://}"
 serve_args=(serve --addr "$host_port")
-smoke_args=(smoke BASE_URL="$BASE_URL")
+smoke_args=(smoke BASE_URL="$BASE_URL" AUTH_MODE="$AUTH_MODE")
 
 if [[ "$ENABLE_METRICS" == "1" ]]; then
   serve_args+=(--metrics)

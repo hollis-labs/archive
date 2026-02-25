@@ -4,10 +4,12 @@ set -euo pipefail
 BASE_URL="http://127.0.0.1:8080"
 TOKEN=""
 CHECK_METRICS=0
+AUTH_MODE="none" # none|static|managed
+ASSERT_AUTH_GUARD=0
 
 usage() {
   cat <<USAGE
-Usage: $(basename "$0") [--base-url URL] [--token TOKEN] [--metrics]
+Usage: $(basename "$0") [--base-url URL] [--token TOKEN] [--metrics] [--auth-mode MODE] [--assert-auth-guard]
 
 Checks readiness, write, head, history, view routes against a running contextd service.
 Use --token for static or managed auth modes on mutating routes.
@@ -28,6 +30,14 @@ while [[ $# -gt 0 ]]; do
       CHECK_METRICS=1
       shift
       ;;
+    --auth-mode)
+      AUTH_MODE="$2"
+      shift 2
+      ;;
+    --assert-auth-guard)
+      ASSERT_AUTH_GUARD=1
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -39,6 +49,18 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+if [[ "$AUTH_MODE" != "none" && "$AUTH_MODE" != "static" && "$AUTH_MODE" != "managed" ]]; then
+  echo "invalid --auth-mode value: $AUTH_MODE (expected none|static|managed)" >&2
+  exit 2
+fi
+if [[ "$AUTH_MODE" != "none" && -z "$TOKEN" ]]; then
+  echo "--token is required when --auth-mode is static or managed" >&2
+  exit 2
+fi
+if [[ "$AUTH_MODE" != "none" ]]; then
+  ASSERT_AUTH_GUARD=1
+fi
 
 AUTH_ARGS=()
 if [[ -n "$TOKEN" ]]; then
@@ -82,6 +104,28 @@ curl_json() {
   rm -f "$body_file"
 }
 
+curl_expect_status_noauth() {
+  local method="$1"
+  local path="$2"
+  local data="${3:-}"
+  local expected="$4"
+  local url="${BASE_URL}${path}"
+  local body_file
+  body_file="$(mktemp /tmp/contextd-smoke-body.XXXXXX)"
+  local out
+  if [[ -n "$data" ]]; then
+    out=$(curl -sS -o "$body_file" -w "%{http_code}" -X "$method" "$url" -H "Content-Type: application/json" --data "$data" || true)
+  else
+    out=$(curl -sS -o "$body_file" -w "%{http_code}" -X "$method" "$url" || true)
+  fi
+  if [[ "$out" != "$expected" ]]; then
+    echo "expected status $expected for unauth $method $path, got $out body=$(cat "$body_file")" >&2
+    rm -f "$body_file"
+    return 1
+  fi
+  rm -f "$body_file"
+}
+
 contains_json_key() {
   local body="$1"
   local key="$2"
@@ -94,6 +138,12 @@ contains_json_key() {
 echo "[smoke] checking readiness"
 readiness=$(curl_json GET "/v1/health/readiness" "")
 contains_json_key "$readiness" "healthy"
+
+if [[ "$ASSERT_AUTH_GUARD" -eq 1 ]]; then
+  echo "[smoke] checking mutating auth guard"
+  write_payload='{"client_id":"editor","actor":"app:editor","namespace":"app/editor/session","key":"smoke","payload":{"ok":true}}'
+  curl_expect_status_noauth POST "/v1/context/write" "$write_payload" "401"
+fi
 
 echo "[smoke] writing revision"
 write_payload='{"client_id":"editor","actor":"app:editor","namespace":"app/editor/session","key":"smoke","payload":{"ok":true}}'

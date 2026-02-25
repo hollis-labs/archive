@@ -83,6 +83,7 @@ Rotation checklist:
 
 ## Readiness checks
 - CLI readiness report: `contextd context health --output table`
+- CLI readiness summary: `contextd context health --summary --output table`
 - API readiness report: `GET /v1/health/readiness`
 - Readiness includes storage-path status, schema version, consistency issue count, and status tier:
   - `healthy`: all core checks pass.
@@ -128,27 +129,35 @@ Rotation checklist:
 - Script: `scripts/contextd-smoke.sh`
 - No-auth server:
   - `contextd serve --addr 127.0.0.1:8080`
-  - `scripts/contextd-smoke.sh --base-url http://127.0.0.1:8080`
+  - `scripts/contextd-smoke.sh --base-url http://127.0.0.1:8080 --auth-mode none`
 - Static auth server:
   - `contextd serve --static-token local-dev-token --addr 127.0.0.1:8080`
-  - `scripts/contextd-smoke.sh --base-url http://127.0.0.1:8080 --token local-dev-token`
+  - `scripts/contextd-smoke.sh --base-url http://127.0.0.1:8080 --auth-mode static --token local-dev-token`
 - Managed auth server:
   - `contextd context token issue --label local --ttl 24h --output table`
   - `contextd serve --managed-auth --addr 127.0.0.1:8080 --metrics`
-  - `scripts/contextd-smoke.sh --base-url http://127.0.0.1:8080 --token <issued-token> --metrics`
+  - `scripts/contextd-smoke.sh --base-url http://127.0.0.1:8080 --auth-mode managed --token <issued-token> --metrics`
+- In `static`/`managed` mode, smoke pre-checks mutating auth guard by asserting unauthenticated writes return `401`.
 
 ## Make targets
 - Run all tests: `make test`
 - Run contract suites: `make contracts`
 - Run smoke against active server: `make smoke BASE_URL=http://127.0.0.1:8080`
-- Run smoke with auth token: `make smoke BASE_URL=http://127.0.0.1:8080 TOKEN=<token>`
-- Run smoke with metrics check enabled: `make smoke BASE_URL=http://127.0.0.1:8080 TOKEN=<token> METRICS=1`
+- Run smoke with auth token: `make smoke BASE_URL=http://127.0.0.1:8080 AUTH_MODE=static TOKEN=<token>`
+- Run smoke with metrics check enabled: `make smoke BASE_URL=http://127.0.0.1:8080 AUTH_MODE=managed TOKEN=<token> METRICS=1`
 - Run full local harness (boot + contracts + smoke + teardown):
   - `make e2e-local`
   - `AUTH_MODE=static make e2e-local`
   - `AUTH_MODE=managed make e2e-local`
 - Managed-auth preset:
   - `make e2e-managed`
+
+## Iteration run-log helper
+- Script: `scripts/volon-runlog-init.sh`
+- Example:
+  - `scripts/volon-runlog-init.sh --iteration 47 --date 2026-02-25 --profile orchestrator`
+- Default output path pattern:
+  - `.volon/logs/run-iteration-<NNN>-<YYYY-MM-DD>.md`
 - Quick validation sequence:
   1. `make contracts`
   2. Start `contextd serve ...`

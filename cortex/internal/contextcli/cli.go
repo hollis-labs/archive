@@ -581,6 +581,7 @@ func (c *CLI) runHealth(ctx context.Context, args []string) int {
 	fs := flag.NewFlagSet("health", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	output := fs.String("output", "json", "json|table")
+	summary := fs.Bool("summary", false, "emit readiness status summary")
 	if err := fs.Parse(args); err != nil {
 		return c.fail(err.Error())
 	}
@@ -588,13 +589,35 @@ func (c *CLI) runHealth(ctx context.Context, args []string) int {
 	if err != nil {
 		return c.fail(err.Error())
 	}
+	if *summary {
+		payload := map[string]any{
+			"status":             report.Status,
+			"healthy":            report.Healthy,
+			"consistency_issues": report.ConsistencyIssues,
+			"records_dir_exists": report.RecordsDirExists,
+			"schema_version":     report.SchemaVersion,
+		}
+		switch strings.TrimSpace(*output) {
+		case "json", "":
+			return c.writeJSON(payload)
+		case "table":
+			w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
+			_, _ = fmt.Fprintln(w, "STATUS\tHEALTHY\tSCHEMA_VERSION\tCONSISTENCY_ISSUES\tRECORDS_DIR_EXISTS")
+			_, _ = fmt.Fprintf(w, "%s\t%t\t%d\t%d\t%t\n", report.Status, report.Healthy, report.SchemaVersion, report.ConsistencyIssues, report.RecordsDirExists)
+			_ = w.Flush()
+			return 0
+		default:
+			return c.fail("output must be json|table")
+		}
+	}
+
 	switch strings.TrimSpace(*output) {
 	case "json", "":
 		return c.writeJSON(report)
 	case "table":
 		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
-		_, _ = fmt.Fprintln(w, "HEALTHY\tSCHEMA_VERSION\tCONSISTENCY_ISSUES\tRECORDS_DIR_EXISTS\tDB_PATH")
-		_, _ = fmt.Fprintf(w, "%t\t%d\t%d\t%t\t%s\n", report.Healthy, report.SchemaVersion, report.ConsistencyIssues, report.RecordsDirExists, report.DBPath)
+		_, _ = fmt.Fprintln(w, "STATUS\tHEALTHY\tSCHEMA_VERSION\tCONSISTENCY_ISSUES\tRECORDS_DIR_EXISTS\tDB_PATH")
+		_, _ = fmt.Fprintf(w, "%s\t%t\t%d\t%d\t%t\t%s\n", report.Status, report.Healthy, report.SchemaVersion, report.ConsistencyIssues, report.RecordsDirExists, report.DBPath)
 		_ = w.Flush()
 		return 0
 	default:

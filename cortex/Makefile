@@ -3,6 +3,7 @@
 BASE_URL ?= http://127.0.0.1:8080
 TOKEN ?=
 METRICS ?= 0
+AUTH_MODE ?= none
 
 TEST ?= go test ./...
 
@@ -33,7 +34,7 @@ contract-metrics:
 contracts: contract-api contract-errors contract-metrics
 
 smoke:
-	scripts/contextd-smoke.sh --base-url $(BASE_URL) $(SMOKE_TOKEN_ARG) $(SMOKE_METRICS_ARG)
+	scripts/contextd-smoke.sh --base-url $(BASE_URL) --auth-mode $(AUTH_MODE) $(SMOKE_TOKEN_ARG) $(SMOKE_METRICS_ARG)
 
 validate: contracts
 	@echo "validate complete: contract suites passed"
