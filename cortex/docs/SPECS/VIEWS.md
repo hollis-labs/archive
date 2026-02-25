@@ -242,6 +242,19 @@ Before adding/updating selector examples:
 5. API alignment:
    - Cross-check `POST /v1/views/evaluate` validation notes in `docs/SPECS/API.md` for matching error/constraint behavior.
 
+## Reviewer checklist (doc PRs)
+
+Use this during VIEWS doc review after the quick validation checklist has passed:
+1. Deterministic ordering guarantees:
+   - Confirm examples and prose keep fallback ordering `(namespace,key,revision)` intact when `order` is omitted.
+   - Verify no new language suggests non-deterministic ordering or sampling behavior.
+2. Unknown-field strictness:
+   - Ensure unsupported selector fields are still documented as `validation_error` outcomes.
+   - Confirm new additive-field examples explicitly state capability support assumptions.
+3. Capability discovery consistency:
+   - Check that capability negotiation guidance stays documentation-driven for MVP.
+   - Verify API/MCP cross-references remain aligned with selector capability and validation behavior.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
