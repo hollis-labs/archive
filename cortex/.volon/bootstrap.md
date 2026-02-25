@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 94
-updated_at: 2026-02-25T22:25:00Z
+iteration: 95
+updated_at: 2026-02-25T22:35:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-163` to add API read/view gated-mode preflight checklist.
+- Start `TASK-20260225-164` to add VIEWS selector deprecation example set.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 4 todo, 0 blocked, 162 done
-- Last run log: `.volon/logs/run-iteration-094-2026-02-25.md`
+- Tasks: 3 todo, 0 blocked, 163 done
+- Last run log: `.volon/logs/run-iteration-095-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-163 — Add API read/view gated-mode preflight checklist (A)
 - TASK-20260225-164 — Add VIEWS selector deprecation example set (B)
 - TASK-20260225-165 — Add MCP phase-to-tool exposure matrix (B)
 - TASK-20260225-166 — Add outputs artifact ownership and review cadence note (B)
@@ -42,6 +41,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `9e0470d`
+- Last implementation commit: `7861a46`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

@@ -91,6 +91,20 @@ Auth failure decision tree (`auth_required`):
    - Verify CLI/MCP bridge is not dropping auth headers/tokens.
    - Confirm endpoint target matches expected environment mode.
 
+### Read/view gated-mode preflight checklist
+Run this preflight before `GET /v1/context/head`, `GET /v1/context/history`, or `POST /v1/views/evaluate` when using `optional-gated-read` or `strict-auth-all`:
+1. Mode confirmation:
+   - Confirm active mode is gated (`optional-gated-read` or `strict-auth-all`) in the target environment.
+   - Re-check endpoint class in the auth-mode endpoint matrix to avoid using mutate assumptions for read/view calls.
+2. Token propagation:
+   - Ensure `Authorization: Bearer <token>` is present from caller through CLI/MCP/API boundary.
+   - Validate token lifecycle status (active, non-revoked, non-expired in managed mode).
+3. Endpoint targeting:
+   - Verify request is sent to the intended environment/base URL with matching mode configuration.
+   - Confirm no intermediary route strips auth headers for read/view paths.
+4. Failure expectation:
+   - If any step fails in gated modes, expect `401 auth_required` and resolve mode/token propagation before retry.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
