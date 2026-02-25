@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 30
-updated_at: 2026-02-25T19:00:00Z
+iteration: 31
+updated_at: 2026-02-25T20:05:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,20 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-094` to add contract suite-name uniqueness regression coverage.
+- Start `TASK-20260225-095` to add default-output coverage for `context contract list`.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 1 todo, 0 blocked, 93 done
+- Tasks: 4 todo, 0 blocked, 94 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-094 — Add regression test for contract suite name uniqueness (B)
+- TASK-20260225-095 — Add contract test for context contract list default output mode (A)
+- TASK-20260225-096 — Add contract test for context contract run default output mode (A)
+- TASK-20260225-097 — Document default output-mode behavior for contract CLI commands (B)
+- TASK-20260225-098 — Add regression test for contract suite command prefix validity (B)
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.

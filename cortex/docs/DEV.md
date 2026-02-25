@@ -155,6 +155,7 @@ Rotation checklist:
 - Golden run-log helper fixture: `tests/integration/fixtures/runlog_helper_contract_golden.json`
 - Run-log helper contract suite: `go test ./tests/integration -run RunlogHelperContract`
 - Contract suite command-format guardrail: `go test ./tests/integration -run ContractSuiteCommandsFormatContract`
+- Contract suite name-uniqueness guardrail: `go test ./tests/integration -run ContractSuiteCommandsUniqueContract`
 - Contract fixture lint script suite: `go test ./tests/integration -run ContractFixtureLintScript`
 - Golden bootstrap-sync fixture: `tests/integration/fixtures/bootstrap_sync_contract_golden.json`
 - Bootstrap-sync contract suite: `go test ./tests/integration -run BootstrapSyncScript`

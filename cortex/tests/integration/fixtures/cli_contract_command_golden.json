@@ -1,5 +1,5 @@
 {
   "list_top_keys": ["count", "items"],
   "run_top_keys": ["executed", "count", "items"],
-  "ordered_suites": ["api", "api-errors", "audit", "metrics", "log-metrics", "readiness", "cli-health-summary", "cli-audit", "cli-contract-list-table", "cli-contract-run-dry-table", "cli-contract-run-table", "cli-contract-run-invalid-output", "cli-contract-run-unknown-suite", "smoke-invalid-token", "make-contract-cli-list", "make-contract-cli-run", "bootstrap-sync", "bootstrap-sync-no-log", "bootstrap-sync-idempotent", "make-bootstrap-report", "make-bootstrap-sync", "make-bootstrap-sync-alias", "make-smoke-invalid-token", "runlog-helper", "contract-suite-commands-format", "fixture-lint-script", "agents-boot-check"]
+  "ordered_suites": ["api", "api-errors", "audit", "metrics", "log-metrics", "readiness", "cli-health-summary", "cli-audit", "cli-contract-list-table", "cli-contract-run-dry-table", "cli-contract-run-table", "cli-contract-run-invalid-output", "cli-contract-run-unknown-suite", "smoke-invalid-token", "make-contract-cli-list", "make-contract-cli-run", "bootstrap-sync", "bootstrap-sync-no-log", "bootstrap-sync-idempotent", "make-bootstrap-report", "make-bootstrap-sync", "make-bootstrap-sync-alias", "make-smoke-invalid-token", "runlog-helper", "contract-suite-commands-format", "contract-suite-commands-unique", "fixture-lint-script", "agents-boot-check"]
 }

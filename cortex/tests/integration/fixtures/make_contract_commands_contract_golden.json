@@ -25,6 +25,7 @@
     "make-smoke-invalid-token",
     "runlog-helper",
     "contract-suite-commands-format",
+    "contract-suite-commands-unique",
     "fixture-lint-script",
     "agents-boot-check"
   ]

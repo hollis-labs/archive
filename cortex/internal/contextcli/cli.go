@@ -119,6 +119,7 @@ func contractSuites() []contractSuite {
 		{Name: "make-smoke-invalid-token", Command: "go test ./tests/integration -run MakeSmokeInvalidTokenContract -count=1"},
 		{Name: "runlog-helper", Command: "go test ./tests/integration -run RunlogHelperContract -count=1"},
 		{Name: "contract-suite-commands-format", Command: "go test ./tests/integration -run ContractSuiteCommandsFormatContract -count=1"},
+		{Name: "contract-suite-commands-unique", Command: "go test ./tests/integration -run ContractSuiteCommandsUniqueContract -count=1"},
 		{Name: "fixture-lint-script", Command: "go test ./tests/integration -run ContractFixtureLintScript -count=1"},
 		{Name: "agents-boot-check", Command: "go test ./tests/integration -run AgentsBootCheckContract -count=1"},
 	}
