@@ -2,7 +2,7 @@
 version: 1
 type: bootstrap
 iteration: 44
-updated_at: 2026-02-25T18:03:00Z
+updated_at: 2026-02-25T18:06:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-125` to add API/CLI actor-namespace contract matrix.
+- Start `TASK-20260225-126` to add MCP adapter spec note and cross-links.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 124 done
-- Last run log: `.volon/logs/run-iteration-045-2026-02-25.md`
+- Tasks: 1 todo, 0 blocked, 125 done
+- Last run log: `.volon/logs/run-iteration-046-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-125 — Add API/CLI actor-namespace contract matrix (B)
 - TASK-20260225-126 — Add MCP adapter spec note and cross-links (B)
 
 ### Blockers
@@ -40,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `fde9e5e`
+- Last implementation commit: `058daf2`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

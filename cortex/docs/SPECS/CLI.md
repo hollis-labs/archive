@@ -94,3 +94,4 @@ Flags:
 Consistency notes:
 - `context view` examples must use selector ordering compatible with `docs/SPECS/VIEWS.md`.
 - Promote flow requires `--actor user` and `--to-namespace user/*` to match API policy semantics.
+- Actor/namespace policy matrix: see `docs/SPECS/API.md#actor-namespace-contract-matrix`.

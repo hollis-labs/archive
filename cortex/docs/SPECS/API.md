@@ -36,6 +36,18 @@ Each mutating request carries:
 Server enforces namespace ownership rules independent of caller-provided namespace values.
 When namespace policy includes schema contract metadata (`required_keys`), write/promote payloads are validated and schema mismatches return `400` (`validation_error`).
 
+### Actor-namespace contract matrix
+
+| Actor | Read/view (`head/history/views`) | Write to `app/<client-id>/*` | Write to `user/*` | Promote to `user/*` |
+|---|---|---|---|---|
+| `user` | Allowed | Allowed only when policy grants match target app namespace | Direct write not default path; use promote policy model | Allowed (required actor for promote) |
+| `app:<client-id>` | Allowed | Allowed for owned app namespace | Denied by default | Denied (must be user actor) |
+| `system` | Allowed | Allowed only for explicit system-owned/maintenance policy scopes | Denied by default | Denied by default |
+
+Policy notes:
+- Namespace ownership policy is authoritative for write decisions.
+- `user/*` remains protected and is updated through explicit user promotion semantics.
+
 ## Endpoints
 
 ### POST `/v1/namespaces/register`
