@@ -48,6 +48,7 @@ Phase progression constraints:
 - Each phase must be releasable without changing deterministic behavior in prior phases.
 - Selector semantics remain evaluator-only in all phases (no processor behavior).
 - Capability expansion requires corresponding API/CLI contract documentation updates.
+- Selector capability discovery/negotiation follows `docs/SPECS/VIEWS.md#selector-capability-discovery-model`.
 
 ## References
 - API spec: [`docs/SPECS/API.md`](./API.md)

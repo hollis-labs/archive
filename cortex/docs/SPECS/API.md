@@ -165,6 +165,7 @@ Selector limits:
 - `limit`: defaults to 200 when omitted/zero, max 500
 - invalid selector complexity/shape returns `400` (`code: "validation_error"`)
 - selector extension/versioning policy reference: `docs/SPECS/VIEWS.md#selector-extension-and-versioning-policy`
+- selector capability discovery reference: `docs/SPECS/VIEWS.md#selector-capability-discovery-model`
 
 Deterministic ordering behavior:
 - If `selector.order` is omitted, server applies fallback sort `(namespace,key,revision)`.

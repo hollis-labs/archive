@@ -135,6 +135,20 @@ Deprecation policy:
 - During deprecation, normalization must map deprecated inputs to canonical equivalents without changing result ordering semantics.
 - Removal of deprecated fields is treated as a breaking change and requires explicit version transition notes.
 
+## Selector capability discovery model
+
+Discovery approach (current):
+- Capability negotiation is documentation-driven in MVP.
+- Clients should assume support only for fields listed in this spec and corresponding API/MCP docs.
+- Unknown selector fields remain hard errors (`validation_error`) when capability is not explicitly documented/supported.
+
+Integration notes:
+- API callers: see `docs/SPECS/API.md` `POST /v1/views/evaluate` validation notes.
+- MCP callers: adapter/tool metadata should expose supported selector capabilities for the active phase while preserving strict unknown-field handling.
+
+Future extension option:
+- A runtime capability descriptor may be added later, but must be additive and must not relax deterministic validation behavior for unsupported fields.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
