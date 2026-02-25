@@ -44,6 +44,14 @@ Views are not processors. They do not summarize, infer, merge, or mutate records
 3. Equivalent selector + identical store state => identical result ordering.
 4. Limit truncation is applied after deterministic sort.
 
+Determinism anti-patterns:
+- Anti-pattern: relying on implicit result order when selector order keys are omitted in client expectations.
+  - Recommendation: always reason against canonical fallback `(namespace,key,revision)` or provide explicit `order`.
+- Anti-pattern: sending unbounded broad selectors in automation and assuming stable subset sampling.
+  - Recommendation: set explicit `limit` and deterministic `order`, then paginate/iterate deterministically.
+- Anti-pattern: mixing unsupported/unknown selector fields and treating failures as transient.
+  - Recommendation: negotiate supported fields via documented capability model and treat `validation_error` as schema mismatch.
+
 Normalization example:
 ```json
 {
