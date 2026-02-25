@@ -310,6 +310,14 @@ Invalid selector examples (`400 validation_error`):
 }
 ```
 
+Selector validation error map (`POST /v1/views/evaluate`):
+
+| Failure category | Example cue | Expected error class | First remediation step |
+|---|---|---|---|
+| Unknown selector field | Request includes undocumented selector key | `400 validation_error` | Remove/rename field to documented schema and verify capability support. |
+| Limit bounds violation | Negative `limit` or `limit` above max bound | `400 validation_error` | Set `limit` within accepted range (default/`<=500`). |
+| Structural/shape mismatch | Wrong value type or malformed selector payload | `400 validation_error` | Normalize request to expected JSON object shape for selector fields. |
+
 ### GET `/v1/context/audit`
 Query:
 - `limit` (optional; default `50`, max `200`)
