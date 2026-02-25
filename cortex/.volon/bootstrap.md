@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 96
-updated_at: 2026-02-25T22:45:00Z
+iteration: 97
+updated_at: 2026-02-25T22:55:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-165` to add MCP phase-to-tool exposure matrix.
+- Start `TASK-20260225-166` to add outputs artifact ownership and review cadence note.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 164 done
-- Last run log: `.volon/logs/run-iteration-096-2026-02-25.md`
+- Tasks: 1 todo, 0 blocked, 165 done
+- Last run log: `.volon/logs/run-iteration-097-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-165 — Add MCP phase-to-tool exposure matrix (B)
 - TASK-20260225-166 — Add outputs artifact ownership and review cadence note (B)
 
 ### Blockers
@@ -40,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `c37afb0`
+- Last implementation commit: `f342855`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

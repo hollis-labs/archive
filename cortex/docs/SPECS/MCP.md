@@ -68,6 +68,20 @@ Alignment requirements:
 | `phase-2-namespace-admin` | `namespaces/register`, `namespaces/get` | Mutating calls require auth per server mode and must respect ownership schema validation. | Restrict to explicit admin/tool contexts; audit every mutation path. |
 | `phase-3-write-promote` | `context/write`, `context/promote` | Write requires namespace ownership grants; promote requires user actor semantics and protected `user/*` policy. | Enforce actor/namespace matrix, deterministic error envelopes, and explicit promote approval flow. |
 
+### Phase-to-tool exposure matrix
+
+| Phase | Tool surface | Default posture | Enablement rule |
+|---|---|---|---|
+| `phase-1-read-view` | `head`, `history`, `views/evaluate` | Default-enabled | Keep enabled by default while preserving deterministic read/view parity with API/CLI. |
+| `phase-2-namespace-admin` | `namespaces/get` | Explicitly-enabled | Enable for operators who need policy inspection in shared/team environments. |
+| `phase-2-namespace-admin` | `namespaces/register` | Explicitly-enabled (mutating) | Enable only for trusted admin identities after `phase-1 -> phase-2` gate criteria are met. |
+| `phase-3-write-promote` | `context/write` | Explicitly-enabled (mutating) | Enable only after actor/namespace policy checks and mutate token flow verification pass. |
+| `phase-3-write-promote` | `context/promote` | Explicitly-enabled (mutating) | Enable only when protected `user/*` promote semantics (`actor=user`) and audit visibility are verified. |
+
+Exposure guidance:
+- Keep mutating tool surfaces opt-in even after phase promotion; do not auto-enable in broad/shared operator contexts.
+- Validate explicit enablement decisions against phase gate criteria and environment adoption recommendations before widening access.
+
 Phase progression constraints:
 - Each phase must be releasable without changing deterministic behavior in prior phases.
 - Selector semantics remain evaluator-only in all phases (no processor behavior).
