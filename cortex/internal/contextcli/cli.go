@@ -105,6 +105,7 @@ func contractSuites() []contractSuite {
 		{Name: "cli-contract-list-default-output", Command: "go test ./tests/integration -run ContractListDefaultOutputContract -count=1"},
 		{Name: "cli-contract-list-invalid-output", Command: "go test ./tests/integration -run ContractListInvalidOutputErrorContract -count=1"},
 		{Name: "cli-contract-list-table", Command: "go test ./tests/integration -run ContractListTableContract -count=1"},
+		{Name: "cli-contract-list-table-count-parity", Command: "go test ./tests/integration -run ContractListTableCountParityContract -count=1"},
 		{Name: "cli-contract-run-all-default-output", Command: "go test ./tests/integration -run ContractRunAllDefaultOutputContract -count=1"},
 		{Name: "cli-contract-run-default-output", Command: "go test ./tests/integration -run ContractRunDefaultOutputContract -count=1"},
 		{Name: "cli-contract-run-dry-table", Command: "go test ./tests/integration -run ContractRunTableDryContract -count=1"},

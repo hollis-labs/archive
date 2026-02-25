@@ -11,6 +11,7 @@
     "cli-contract-list-default-output",
     "cli-contract-list-invalid-output",
     "cli-contract-list-table",
+    "cli-contract-list-table-count-parity",
     "cli-contract-run-all-default-output",
     "cli-contract-run-default-output",
     "cli-contract-run-dry-table",

@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-104` to add contract-list table row count parity coverage.
+- Start `TASK-20260225-105` to document the contract suite guardrail stack.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 3 todo, 0 blocked, 103 done
+- Tasks: 2 todo, 0 blocked, 104 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-104 — Add contract test for context contract list table row count parity (A)
 - TASK-20260225-105 — Document contract suite guardrail stack (B)
 - TASK-20260225-106 — Add regression test for contract list default output deterministic ordering (B)
 

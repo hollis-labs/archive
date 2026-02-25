@@ -16,6 +16,7 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/contract_list_default_output_golden.json` | CLI `context contract list` default-output JSON contract | `go test ./tests/integration -run ContractListDefaultOutputContract` |
 | `tests/integration/fixtures/contract_list_invalid_output_error_golden.json` | CLI invalid contract list output-mode error contract | `go test ./tests/integration -run ContractListInvalidOutputErrorContract` |
 | `tests/integration/fixtures/contract_list_table_golden.json` | CLI `context contract list --output table` contract | `go test ./tests/integration -run ContractListTableContract` |
+| `tests/integration/fixtures/contract_list_table_count_parity_golden.json` | CLI contract list table-vs-json count parity contract | `go test ./tests/integration -run ContractListTableCountParityContract` |
 | `tests/integration/fixtures/contract_run_all_default_output_golden.json` | CLI `context contract run --suite all` default-output JSON contract | `go test ./tests/integration -run ContractRunAllDefaultOutputContract` |
 | `tests/integration/fixtures/contract_run_default_output_golden.json` | CLI `context contract run` default-output JSON contract | `go test ./tests/integration -run ContractRunDefaultOutputContract` |
 | `tests/integration/fixtures/contract_run_table_dry_golden.json` | CLI `context contract run --output table` dry-mode contract | `go test ./tests/integration -run ContractRunTableDryContract` |
@@ -132,6 +133,7 @@ See also: `docs/DEV.md#contract-output-quick-reference`.
   - `go test ./tests/integration -run ContractListDefaultOutputContract`
   - `go test ./tests/integration -run ContractListInvalidOutputErrorContract`
   - `go test ./tests/integration -run ContractListTableContract`
+  - `go test ./tests/integration -run ContractListTableCountParityContract`
   - `go test ./tests/integration -run ContractRunAllDefaultOutputContract`
   - `go test ./tests/integration -run ContractRunDefaultOutputContract`
   - `go test ./tests/integration -run ContractRunTableDryContract`
