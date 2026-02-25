@@ -118,6 +118,8 @@ Rotation checklist:
 - Readiness contract suite: `go test ./tests/integration -run ReadinessContract`
 - Golden CLI health summary fixture: `tests/integration/fixtures/cli_health_summary_contract_golden.json`
 - CLI health summary contract suite: `go test ./tests/integration -run CLIHealthSummaryContract`
+- Golden CLI audit fixture: `tests/integration/fixtures/cli_audit_contract_golden.json`
+- CLI audit contract suite: `go test ./tests/integration -run CLIAuditContract`
 - Golden smoke invalid-token fixture: `tests/integration/fixtures/smoke_invalid_token_contract_golden.json`
 - Smoke invalid-token contract suite: `go test ./tests/integration -run SmokeInvalidTokenContract`
 - Golden run-log helper fixture: `tests/integration/fixtures/runlog_helper_contract_golden.json`
@@ -161,6 +163,8 @@ Rotation checklist:
 - Run smoke with auth token: `make smoke BASE_URL=http://127.0.0.1:8080 AUTH_MODE=static TOKEN=<token>`
 - Run smoke with metrics check enabled: `make smoke BASE_URL=http://127.0.0.1:8080 AUTH_MODE=managed TOKEN=<token> METRICS=1`
 - Run smoke with invalid-token precheck: `make smoke BASE_URL=http://127.0.0.1:8080 AUTH_MODE=managed TOKEN=<token> INVALID_TOKEN_CHECK=1`
+- Smoke invalid-token preset: `make smoke-invalid-token BASE_URL=http://127.0.0.1:8080 AUTH_MODE=managed TOKEN=<token>`
+- Contract fixture presence lint: `make contract-lint`
 - Run full local harness (boot + contracts + smoke + teardown):
   - `make e2e-local`
   - `AUTH_MODE=static make e2e-local`
@@ -175,6 +179,10 @@ Rotation checklist:
 - Make wrapper:
   - `make runlog-init ITERATION=47`
   - `make runlog-init ITERATION=47 RUN_DATE=2026-02-25 PROFILE=orchestrator RUNLOG_OUT=/tmp/runlog-047.md`
+- Overwrite safety:
+  - By default, existing run-log files are not overwritten.
+  - Use script-level force only when intentional:
+    - `scripts/volon-runlog-init.sh --iteration 47 --date 2026-02-25 --force`
 - Default output path pattern:
   - `.volon/logs/run-iteration-<NNN>-<YYYY-MM-DD>.md`
 - Quick validation sequence:

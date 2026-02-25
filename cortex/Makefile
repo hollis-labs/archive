@@ -1,4 +1,4 @@
-.PHONY: test contracts contract-api contract-errors contract-metrics smoke validate e2e-local e2e-managed runlog-init
+.PHONY: test contracts contract-api contract-errors contract-metrics smoke smoke-invalid-token validate e2e-local e2e-managed runlog-init contract-lint
 
 BASE_URL ?= http://127.0.0.1:8080
 TOKEN ?=
@@ -48,6 +48,11 @@ contracts: contract-api contract-errors contract-metrics
 smoke:
 	scripts/contextd-smoke.sh --base-url $(BASE_URL) --auth-mode $(AUTH_MODE) $(SMOKE_TOKEN_ARG) $(SMOKE_METRICS_ARG) $(SMOKE_INVALID_TOKEN_ARG)
 
+smoke-invalid-token:
+	@if [ "$(AUTH_MODE)" = "none" ]; then echo "AUTH_MODE must be static|managed for smoke-invalid-token"; exit 2; fi
+	@if [ -z "$(TOKEN)" ]; then echo "TOKEN is required for smoke-invalid-token"; exit 2; fi
+	$(MAKE) smoke AUTH_MODE=$(AUTH_MODE) TOKEN=$(TOKEN) METRICS=$(METRICS) INVALID_TOKEN_CHECK=1 INVALID_TOKEN=$(INVALID_TOKEN) BASE_URL=$(BASE_URL)
+
 validate: contracts
 	@echo "validate complete: contract suites passed"
 
@@ -64,3 +69,6 @@ runlog-init:
 	else \
 		scripts/volon-runlog-init.sh --iteration $(ITERATION) --date $(RUN_DATE) --profile $(PROFILE); \
 	fi
+
+contract-lint:
+	scripts/contract-fixture-lint.sh
