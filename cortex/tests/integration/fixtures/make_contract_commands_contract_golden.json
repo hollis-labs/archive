@@ -9,6 +9,7 @@
     "cli-health-summary",
     "cli-audit",
     "cli-contract-list-table",
+    "cli-contract-run-dry-table",
     "cli-contract-run-table",
     "cli-contract-run-unknown-suite",
     "smoke-invalid-token",
