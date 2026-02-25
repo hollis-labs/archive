@@ -135,6 +135,69 @@ Selector limits:
 - `limit`: defaults to 200 when omitted/zero, max 500
 - invalid selector complexity/shape returns `400` (`code: "validation_error"`)
 
+Deterministic ordering behavior:
+- If `selector.order` is omitted, server applies fallback sort `(namespace,key,revision)`.
+- `limit` truncation is applied after deterministic sort and reflected via `evaluation_meta.truncated`.
+
+Valid request example:
+```json
+{
+  "selector": {
+    "namespaces": ["user/*", "app/editor/*"],
+    "keys": ["goal", "summary"],
+    "revision_scope": "head",
+    "order": ["namespace", "key", "revision"]
+  },
+  "include_payload": false,
+  "limit": 50
+}
+```
+
+Valid response example:
+```json
+{
+  "items": [
+    {
+      "namespace": "app/editor/session",
+      "key": "goal",
+      "revision": 3
+    },
+    {
+      "namespace": "user/profile",
+      "key": "summary",
+      "revision": 8
+    }
+  ],
+  "evaluation_meta": {
+    "sort_keys": ["namespace", "key", "revision"],
+    "matched_count": 2,
+    "truncated": false
+  }
+}
+```
+
+Invalid selector examples (`400 validation_error`):
+- Unknown selector field:
+```json
+{
+  "selector": {
+    "namespaces": ["user/*"],
+    "order": ["namespace", "key", "revision"],
+    "unknown_field": true
+  }
+}
+```
+- Limit above allowed maximum:
+```json
+{
+  "selector": {
+    "namespaces": ["user/*"],
+    "order": ["namespace", "key", "revision"]
+  },
+  "limit": 1000
+}
+```
+
 ### GET `/v1/context/audit`
 Query:
 - `limit` (optional; default `50`, max `200`)
