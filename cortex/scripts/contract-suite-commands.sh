@@ -33,6 +33,7 @@ runlog-helper	go test ./tests/integration -run RunlogHelperContract -count=1
 contract-suite-commands-format	go test ./tests/integration -run ContractSuiteCommandsFormatContract -count=1
 contract-suite-commands-unique	go test ./tests/integration -run ContractSuiteCommandsUniqueContract -count=1
 contract-suite-commands-prefix	go test ./tests/integration -run ContractSuiteCommandsPrefixContract -count=1
+contract-suite-commands-deterministic	go test ./tests/integration -run ContractSuiteCommandsDeterministicContract -count=1
 fixture-lint-script	go test ./tests/integration -run ContractFixtureLintScript -count=1
 agents-boot-check	go test ./tests/integration -run AgentsBootCheckContract -count=1
 CMDS

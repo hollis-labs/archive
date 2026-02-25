@@ -31,6 +31,7 @@
     "contract-suite-commands-format",
     "contract-suite-commands-unique",
     "contract-suite-commands-prefix",
+    "contract-suite-commands-deterministic",
     "fixture-lint-script",
     "agents-boot-check"
   ]
