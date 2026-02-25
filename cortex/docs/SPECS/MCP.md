@@ -36,6 +36,30 @@ Define the MCP adapter as a thin transport mapping to existing Context Memory Se
 - Namespace ownership policy remains authoritative.
 - Protected `user/*` updates continue to require explicit user promotion semantics.
 
+## Threat assumptions and trust boundaries
+
+Deployment assumptions:
+- Default target is local-first usage on a trusted developer machine.
+- Shared-host or multi-user environments are treated as higher-risk and should enable stricter auth modes.
+
+Trust boundary model:
+- MCP client process boundary: requests may originate from tools with varying trust levels.
+- Adapter boundary: must enforce core API/CLI policy semantics; it is not an authorization bypass.
+- Core service boundary: remains the source of truth for auth, namespace ownership, and deterministic validation.
+
+Risk notes by environment:
+- Local-only host:
+  - Primary risk is accidental overexposure of mutating tools.
+  - Mitigation: keep write/promote tools explicit and auditable.
+- Shared host / team workstation:
+  - Elevated risk of unauthorized read/write access through exposed MCP surfaces.
+  - Mitigation: prefer gated read mode or strict-auth-all mode, restrict mutating capabilities to trusted operators.
+
+Alignment requirements:
+- Follow API auth roadmap (`mvp-open-read`, `optional-gated-read`, `strict-auth-all`) from `docs/SPECS/API.md`.
+- Preserve actor/namespace policy guarantees for all mutating operations.
+- Keep selector operations evaluator-only; no hidden processor/synthesis behavior.
+
 ## Phased capability model
 
 | Phase | Allowed operations | Auth/policy expectations | Risk controls |
