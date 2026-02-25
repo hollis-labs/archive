@@ -2,7 +2,7 @@
 version: 1
 type: bootstrap
 iteration: 69
-updated_at: 2026-02-25T19:51:00Z
+updated_at: 2026-02-25T19:55:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-145` to add MCP troubleshooting quick-reference.
+- Start `TASK-20260225-146` to add docs navigation pointers.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 144 done
-- Last run log: `.volon/logs/run-iteration-070-2026-02-25.md`
+- Tasks: 1 todo, 0 blocked, 145 done
+- Last run log: `.volon/logs/run-iteration-071-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-145 — Add MCP troubleshooting quick-reference (B)
 - TASK-20260225-146 — Add docs navigation pointers in root docs listing (B)
 
 ### Blockers
@@ -40,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `84300cf`
+- Last implementation commit: `8424666`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

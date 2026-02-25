@@ -94,6 +94,15 @@ Phase 3 (`write-promote`) checklist:
 3. Validate protected `user/*` behavior and deterministic error envelopes.
 4. Run end-to-end register/write/promote/audit verification flow before rollout.
 
+## Troubleshooting quick-reference
+
+| Symptom | Likely cause | Operator action |
+|---|---|---|
+| Read/view MCP calls fail with `auth_required` unexpectedly | Server running in `optional-gated-read` or `strict-auth-all` mode without token injection | Provide bearer token in MCP call path and verify active auth mode in API roadmap section. |
+| Selector evaluation returns `validation_error` for unknown field | Client sent selector field not in supported capability set | Remove unsupported field, align with `docs/SPECS/VIEWS.md`, and confirm capability discovery guidance. |
+| Write or promote returns `policy_denied` | Actor/namespace combination violates ownership matrix | Re-check actor identity and namespace policy; confirm promote uses `actor=user` for protected `user/*` targets. |
+| Promote succeeds in CLI but fails in MCP | MCP tool mapping omitted required promote fields or actor propagation | Compare MCP payload mapping to API/CLI contract fields and ensure full parity for `from_*`/`to_*`/actor parameters. |
+
 ## References
 - API spec: [`docs/SPECS/API.md`](./API.md)
 - CLI spec: [`docs/SPECS/CLI.md`](./CLI.md)
