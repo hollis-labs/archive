@@ -126,6 +126,8 @@ Rotation checklist:
 - Contract list default-output suite: `go test ./tests/integration -run ContractListDefaultOutputContract`
 - Golden contract list table fixture: `tests/integration/fixtures/contract_list_table_golden.json`
 - Contract list table suite: `go test ./tests/integration -run ContractListTableContract`
+- Golden contract run default-output fixture: `tests/integration/fixtures/contract_run_default_output_golden.json`
+- Contract run default-output suite: `go test ./tests/integration -run ContractRunDefaultOutputContract`
 - Golden contract run dry-table fixture: `tests/integration/fixtures/contract_run_table_dry_golden.json`
 - Contract run dry-table suite: `go test ./tests/integration -run ContractRunTableDryContract`
 - Golden contract run execute-table fixture: `tests/integration/fixtures/contract_run_execute_table_golden.json`

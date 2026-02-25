@@ -13,6 +13,7 @@ fixtures=(
   "tests/integration/fixtures/cli_contract_command_golden.json"
   "tests/integration/fixtures/contract_list_default_output_golden.json"
   "tests/integration/fixtures/contract_list_table_golden.json"
+  "tests/integration/fixtures/contract_run_default_output_golden.json"
   "tests/integration/fixtures/contract_run_table_dry_golden.json"
   "tests/integration/fixtures/contract_run_execute_table_golden.json"
   "tests/integration/fixtures/contract_run_invalid_output_error_golden.json"

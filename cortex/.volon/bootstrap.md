@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-096` to add default-output coverage for `context contract run`.
+- Start `TASK-20260225-097` to document default output-mode behavior for contract CLI commands.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 3 todo, 0 blocked, 95 done
+- Tasks: 2 todo, 0 blocked, 96 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-096 — Add contract test for context contract run default output mode (A)
 - TASK-20260225-097 — Document default output-mode behavior for contract CLI commands (B)
 - TASK-20260225-098 — Add regression test for contract suite command prefix validity (B)
 
