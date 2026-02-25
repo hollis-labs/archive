@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-079` to add make contract-commands ordering coverage.
+- Start `TASK-20260225-080` to add contract fixture lint failure-mode coverage.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 4 todo, 0 blocked, 78 done
+- Tasks: 3 todo, 0 blocked, 79 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-079 — Add contract test for make contract-commands output ordering (A)
 - TASK-20260225-080 — Add fallback behavior test for contract fixture lint missing file (A)
 - TASK-20260225-081 — Document contract suite ordering policy for CLI/script registries (B)
 - TASK-20260225-082 — Add bootstrap-sync apply idempotence regression test (B)

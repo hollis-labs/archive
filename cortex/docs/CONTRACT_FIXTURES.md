@@ -15,6 +15,7 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/cli_contract_command_golden.json` | CLI `context contract list/run` dry-mode contract | `go test ./tests/integration -run CLIContractCommand` |
 | `tests/integration/fixtures/make_contract_cli_list_contract_golden.json` | `make contract-cli-list` output marker contract | `go test ./tests/integration -run MakeContractCLIListContract` |
 | `tests/integration/fixtures/make_contract_cli_run_contract_golden.json` | `make contract-cli-run SUITE=<name>` output marker contract | `go test ./tests/integration -run MakeContractCLIRunContract` |
+| `tests/integration/fixtures/make_contract_commands_contract_golden.json` | `make contract-commands` suite-ordering wrapper contract | `go test ./tests/integration -run MakeContractCommandsContract` |
 | `tests/integration/fixtures/make_bootstrap_sync_contract_golden.json` | `make bootstrap-sync-report/apply` output + apply contract | `go test ./tests/integration -run MakeBootstrapSyncContract` |
 | `tests/integration/fixtures/contract_suite_commands_contract_golden.json` | `scripts/contract-suite-commands.sh` output ordering contract | `go test ./tests/integration -run ContractSuiteCommandsScript` |
 | `tests/integration/fixtures/contract_suite_registry_parity_golden.json` | CLI suite registry and script catalog parity contract | `go test ./tests/integration -run ContractSuiteRegistryParity` |
@@ -31,6 +32,7 @@ This index lists fixture files and their associated validation command.
 |---|---|---|
 | `tests/integration/fixtures/make_contract_cli_list_contract_golden.json` | `make contract-cli-list` | `go test ./tests/integration -run MakeContractCLIListContract` |
 | `tests/integration/fixtures/make_contract_cli_run_contract_golden.json` | `make contract-cli-run SUITE=<name>` | `go test ./tests/integration -run MakeContractCLIRunContract` |
+| `tests/integration/fixtures/make_contract_commands_contract_golden.json` | `make contract-commands` | `go test ./tests/integration -run MakeContractCommandsContract` |
 | `tests/integration/fixtures/make_bootstrap_sync_contract_golden.json` | `make bootstrap-sync-report` / `make bootstrap-sync-apply` | `go test ./tests/integration -run MakeBootstrapSyncContract` |
 | `tests/integration/fixtures/bootstrap_sync_contract_golden.json` | `scripts/bootstrap-sync.sh` | `go test ./tests/integration -run BootstrapSyncScript` |
 | `tests/integration/fixtures/bootstrap_sync_no_log_contract_golden.json` | `scripts/bootstrap-sync.sh` (empty `.volon/logs`) | `go test ./tests/integration -run BootstrapSyncNoLogContract` |
@@ -55,6 +57,7 @@ This index lists fixture files and their associated validation command.
   - `go test ./tests/integration -run MakeSmokeInvalidTokenContract`
   - `go test ./tests/integration -run MakeContractCLIListContract`
   - `go test ./tests/integration -run MakeContractCLIRunContract`
+  - `go test ./tests/integration -run MakeContractCommandsContract`
   - `go test ./tests/integration -run MakeBootstrapSyncContract`
 - Script command stability:
   - `go test ./tests/integration -run ContractSuiteCommandsScript`
