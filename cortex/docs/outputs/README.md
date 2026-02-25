@@ -71,6 +71,23 @@ Guidance:
 - If the artifact is intentionally stale pending canonical updates, mark it explicitly (for example: `Freshness: stale pending API spec update`).
 - Keep canonical-source precedence explicit in the artifact body (summary guidance must never override source specs/ADRs).
 
+## Ownership and review cadence
+Apply the same lightweight ownership model across both artifact sets:
+- `docs/outputs/*`
+- `docs/SPECS/outputs/*`
+
+Ownership guidance:
+- Each artifact should identify a default maintainer role in PR context (for example: API implementer, architect, or operator docs owner).
+- The maintainer role is responsible for freshness-note updates when canonical specs/ADRs change.
+
+Review cadence guidance:
+- Trigger review on any canonical spec/ADR change touching referenced behavior.
+- Run a periodic sweep at least once per release window to catch stale summary drift.
+- If ownership is unclear, treat the PR author modifying canonical behavior as temporary owner until reassigned.
+
+Canonical precedence:
+- Ownership and cadence controls exist to keep summaries aligned; they do not elevate outputs above canonical specs/ADRs.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
