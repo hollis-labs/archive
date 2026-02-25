@@ -13,6 +13,7 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/cli_health_summary_contract_golden.json` | CLI `context health --summary` contract | `go test ./tests/integration -run CLIHealthSummaryContract` |
 | `tests/integration/fixtures/cli_audit_contract_golden.json` | CLI `context audit` cursor/filter JSON contract | `go test ./tests/integration -run CLIAuditContract` |
 | `tests/integration/fixtures/cli_contract_command_golden.json` | CLI `context contract list/run` dry-mode contract | `go test ./tests/integration -run CLIContractCommand` |
+| `tests/integration/fixtures/contract_run_execute_table_golden.json` | CLI `context contract run --execute --output table` contract | `go test ./tests/integration -run ContractRunExecuteTableContract` |
 | `tests/integration/fixtures/make_contract_cli_list_contract_golden.json` | `make contract-cli-list` output marker contract | `go test ./tests/integration -run MakeContractCLIListContract` |
 | `tests/integration/fixtures/make_contract_cli_run_contract_golden.json` | `make contract-cli-run SUITE=<name>` output marker contract | `go test ./tests/integration -run MakeContractCLIRunContract` |
 | `tests/integration/fixtures/make_contract_commands_contract_golden.json` | `make contract-commands` suite-ordering wrapper contract | `go test ./tests/integration -run MakeContractCommandsContract` |
@@ -87,6 +88,7 @@ Update checklist:
 - Script command stability:
   - `go test ./tests/integration -run ContractSuiteCommandsScript`
   - `go test ./tests/integration -run ContractSuiteRegistryParity`
+  - `go test ./tests/integration -run ContractRunExecuteTableContract`
   - `go test ./tests/integration -run RunlogHelperContract`
   - `go test ./tests/integration -run ContractFixtureLintScript`
   - `go test ./tests/integration -run BootstrapSyncScript`

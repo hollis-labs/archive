@@ -8,6 +8,7 @@
     {"name": "readiness", "command": "go test ./tests/integration -run ReadinessContract -count=1"},
     {"name": "cli-health-summary", "command": "go test ./tests/integration -run CLIHealthSummaryContract -count=1"},
     {"name": "cli-audit", "command": "go test ./tests/integration -run CLIAuditContract -count=1"},
+    {"name": "cli-contract-run-table", "command": "go test ./tests/integration -run ContractRunExecuteTableContract -count=1"},
     {"name": "smoke-invalid-token", "command": "go test ./tests/integration -run SmokeInvalidTokenContract -count=1"},
     {"name": "make-contract-cli-list", "command": "go test ./tests/integration -run MakeContractCLIListContract -count=1"},
     {"name": "make-contract-cli-run", "command": "go test ./tests/integration -run MakeContractCLIRunContract -count=1"},

@@ -122,6 +122,8 @@ Rotation checklist:
 - CLI audit contract suite: `go test ./tests/integration -run CLIAuditContract`
 - Golden CLI contract command fixture: `tests/integration/fixtures/cli_contract_command_golden.json`
 - CLI contract command suite: `go test ./tests/integration -run CLIContractCommand`
+- Golden contract run execute-table fixture: `tests/integration/fixtures/contract_run_execute_table_golden.json`
+- Contract run execute-table suite: `go test ./tests/integration -run ContractRunExecuteTableContract`
 - Golden make contract-cli-list fixture: `tests/integration/fixtures/make_contract_cli_list_contract_golden.json`
 - Make contract-cli-list suite: `go test ./tests/integration -run MakeContractCLIListContract`
 - Golden make contract-cli-run fixture: `tests/integration/fixtures/make_contract_cli_run_contract_golden.json`

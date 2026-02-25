@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 28
-updated_at: 2026-02-25T16:45:00Z
+iteration: 29
+updated_at: 2026-02-25T18:05:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,20 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-086` to add contract table-output coverage for `context contract run --execute`.
+- Start `TASK-20260225-087` to add table-output coverage for `context contract list`.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 1 todo, 0 blocked, 85 done
+- Tasks: 4 todo, 0 blocked, 86 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-086 — Add table-output contract test for context contract run --execute (B)
+- TASK-20260225-087 — Add contract test for context contract list table output (A)
+- TASK-20260225-088 — Add contract test for unknown contract suite error output (A)
+- TASK-20260225-089 — Document contract suite naming conventions (B)
+- TASK-20260225-090 — Add regression test for contract-suite-commands line format (B)
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
