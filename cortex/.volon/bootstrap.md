@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 1
-updated_at: 2026-02-25T04:58:00Z
+iteration: 2
+updated_at: 2026-02-25T05:46:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,20 +18,20 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Create implementation tasks from the finalized specs (storage core, API handlers, CLI parity, and policy tests).
+- Create the next implementation batch from remaining open questions (auth posture, selector bounds, persistence hardening).
 
 ## Current state summary
 - volon.yaml: present
-- PCC: present (bootstrap skeleton)
-- Tasks: 0 todo, 0 blocked, 6 done
-- Last run log: `.volon/logs/run-iteration-001-2026-02-25.md`
+- PCC: present
+- Tasks: 0 todo, 0 blocked, 10 done
+- Last run log: `.volon/logs/run-iteration-002-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- None. Spec/planning task pack complete.
+- None in current batch.
 
 ### Blockers
-- Volon CLI executable (`volon`) not found in PATH; lifecycle transitions were tracked manually via task markdown.
+- Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
 
 ## Guardrails
 - Treat repository files as ground truth. Do not rely on chat memory.
@@ -39,8 +39,8 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Plan: `artifacts/plan/spec-tasks-execution-plan-2026-02-25.md`
-- Spec source: `SPEC-TASKS/`
-- Run log: `.volon/logs/run-iteration-001-2026-02-25.md`
-- Workflow contract: `docs/03_workflow-contracts.md`
-- Task model: `docs/04_task-model.md`
+- Storage implementation: `internal/contextstore/`
+- HTTP API implementation: `internal/contextapi/`
+- CLI implementation: `internal/contextcli/` and `cmd/contextd/main.go`
+- Integration tests: `tests/integration/policy_determinism_test.go`
+- CI test target: `scripts/ci-test-context-service.sh`

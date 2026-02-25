@@ -1,0 +1,290 @@
+package contextapi
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"strconv"
+	"strings"
+
+	"github.com/hollis-labs/volon-dev/internal/contextpolicy"
+	"github.com/hollis-labs/volon-dev/internal/contextstore"
+)
+
+// Server exposes HTTP handlers for the context API.
+type Server struct {
+	Store  *contextstore.Store
+	Policy *contextpolicy.Engine
+}
+
+// NewServer creates an API server.
+func NewServer(store *contextstore.Store, policy *contextpolicy.Engine) *Server {
+	if policy == nil {
+		policy = contextpolicy.New()
+	}
+	return &Server{Store: store, Policy: policy}
+}
+
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	switch {
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/namespaces/register":
+		s.handleNamespaceRegister(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/write":
+		s.handleWrite(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/promote":
+		s.handlePromote(w, r)
+	case r.Method == http.MethodGet && r.URL.Path == "/v1/context/head":
+		s.handleHead(w, r)
+	case r.Method == http.MethodGet && r.URL.Path == "/v1/context/history":
+		s.handleHistory(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/views/evaluate":
+		s.handleView(w, r)
+	default:
+		writeError(w, http.StatusNotFound, "not_found", "endpoint not found", nil)
+	}
+}
+
+type namespaceRegisterRequest struct {
+	Namespace string         `json:"namespace"`
+	OwnerType string         `json:"owner_type"`
+	OwnerID   string         `json:"owner_id"`
+	Policy    map[string]any `json:"policy"`
+}
+
+func (s *Server) handleNamespaceRegister(w http.ResponseWriter, r *http.Request) {
+	var req namespaceRegisterRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
+		return
+	}
+	if err := s.Policy.RegisterNamespace(req.Namespace, req.OwnerType, req.OwnerID, req.Policy); err != nil {
+		writeError(w, http.StatusBadRequest, "validation_error", err.Error(), nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"namespace":  req.Namespace,
+		"owner_type": req.OwnerType,
+		"owner_id":   req.OwnerID,
+	})
+}
+
+type writeRequest struct {
+	ClientID  string          `json:"client_id"`
+	Actor     string          `json:"actor"`
+	Namespace string          `json:"namespace"`
+	Key       string          `json:"key"`
+	Payload   json.RawMessage `json:"payload"`
+	Reason    string          `json:"reason"`
+}
+
+func (s *Server) handleWrite(w http.ResponseWriter, r *http.Request) {
+	var req writeRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
+		return
+	}
+	if err := s.Policy.CanWrite(req.ClientID, req.Actor, req.Namespace); err != nil {
+		writeError(w, http.StatusForbidden, "policy_denied", err.Error(), nil)
+		return
+	}
+	rec, err := s.Store.AppendRecord(r.Context(), contextstore.AppendInput{
+		Namespace: req.Namespace,
+		Key:       req.Key,
+		Actor:     req.Actor,
+		Payload:   req.Payload,
+	})
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "write_failed", err.Error(), nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"record_id":     rec.RecordID,
+		"revision":      rec.Revision,
+		"head_revision": rec.Revision,
+		"timestamp":     rec.CreatedAt,
+	})
+}
+
+type promoteRequest struct {
+	ClientID       string `json:"client_id"`
+	Actor          string `json:"actor"`
+	FromNamespace  string `json:"from_namespace"`
+	FromKey        string `json:"from_key"`
+	ToNamespace    string `json:"to_namespace"`
+	ToKey          string `json:"to_key"`
+	SourceRevision *int64 `json:"source_revision,omitempty"`
+}
+
+func (s *Server) handlePromote(w http.ResponseWriter, r *http.Request) {
+	var req promoteRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
+		return
+	}
+	if err := s.Policy.CanPromote(req.Actor, req.ToNamespace); err != nil {
+		writeError(w, http.StatusForbidden, "policy_denied", err.Error(), nil)
+		return
+	}
+
+	src, err := s.Store.Head(r.Context(), req.FromNamespace, req.FromKey)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusNotFound, "not_found", "source head not found", nil)
+			return
+		}
+		writeError(w, http.StatusBadRequest, "read_failed", err.Error(), nil)
+		return
+	}
+	if req.SourceRevision != nil && src.Revision != *req.SourceRevision {
+		writeError(w, http.StatusConflict, "revision_mismatch", "source revision does not match", nil)
+		return
+	}
+
+	if err := s.Policy.CanWrite(req.ClientID, req.Actor, req.ToNamespace); err != nil {
+		writeError(w, http.StatusForbidden, "policy_denied", err.Error(), nil)
+		return
+	}
+	out, err := s.Store.AppendRecord(r.Context(), contextstore.AppendInput{
+		Namespace: req.ToNamespace,
+		Key:       req.ToKey,
+		Actor:     req.Actor,
+		Payload:   src.Payload,
+	})
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "promote_failed", err.Error(), nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"promoted_record_id": out.RecordID,
+		"target_revision":    out.Revision,
+	})
+}
+
+func (s *Server) handleHead(w http.ResponseWriter, r *http.Request) {
+	namespace := strings.TrimSpace(r.URL.Query().Get("namespace"))
+	key := strings.TrimSpace(r.URL.Query().Get("key"))
+	if namespace == "" || key == "" {
+		writeError(w, http.StatusBadRequest, "validation_error", "namespace and key are required", nil)
+		return
+	}
+
+	rec, err := s.Store.Head(r.Context(), namespace, key)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusNotFound, "not_found", "head not found", nil)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "read_failed", err.Error(), nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"record": rec})
+}
+
+func (s *Server) handleHistory(w http.ResponseWriter, r *http.Request) {
+	namespace := strings.TrimSpace(r.URL.Query().Get("namespace"))
+	key := strings.TrimSpace(r.URL.Query().Get("key"))
+	if namespace == "" || key == "" {
+		writeError(w, http.StatusBadRequest, "validation_error", "namespace and key are required", nil)
+		return
+	}
+	limit := 0
+	if raw := strings.TrimSpace(r.URL.Query().Get("limit")); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 0 {
+			writeError(w, http.StatusBadRequest, "validation_error", "limit must be a non-negative integer", nil)
+			return
+		}
+		limit = n
+	}
+
+	items, err := s.Store.History(r.Context(), namespace, key, limit)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "read_failed", err.Error(), nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items, "next_cursor": nil})
+}
+
+type viewRequest struct {
+	Selector       contextstore.Selector `json:"selector"`
+	IncludePayload bool                  `json:"include_payload"`
+	Limit          int                   `json:"limit"`
+}
+
+func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
+	var req viewRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
+		return
+	}
+	if req.Limit > 0 {
+		req.Selector.Limit = req.Limit
+	}
+
+	items, err := s.Store.Select(r.Context(), req.Selector)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "validation_error", err.Error(), nil)
+		return
+	}
+	if !req.IncludePayload {
+		for i := range items {
+			items[i].Payload = nil
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"items": items,
+		"evaluation_meta": map[string]any{
+			"sort_keys":        req.Selector.Order,
+			"matched_count":    len(items),
+			"truncated":        req.Selector.Limit > 0 && len(items) >= req.Selector.Limit,
+			"normalized_scope": normalizedScope(req.Selector.RevisionScope),
+		},
+	})
+}
+
+func decodeJSON(r *http.Request, dst any) error {
+	defer r.Body.Close()
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(dst); err != nil {
+		return err
+	}
+	return nil
+}
+
+func writeJSON(w http.ResponseWriter, code int, value any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	_ = json.NewEncoder(w).Encode(value)
+}
+
+func writeError(w http.ResponseWriter, status int, code, message string, details map[string]any) {
+	writeJSON(w, status, map[string]any{
+		"code":    code,
+		"message": message,
+		"details": details,
+	})
+}
+
+func normalizedScope(scope string) string {
+	if strings.EqualFold(strings.TrimSpace(scope), "all") {
+		return "all"
+	}
+	return "head"
+}
+
+// Write is used by tests needing isolated request context timeouts.
+func (s *Server) Write(ctx context.Context, in writeRequest) (contextstore.Record, error) {
+	if err := s.Policy.CanWrite(in.ClientID, in.Actor, in.Namespace); err != nil {
+		return contextstore.Record{}, err
+	}
+	return s.Store.AppendRecord(ctx, contextstore.AppendInput{
+		Namespace: in.Namespace,
+		Key:       in.Key,
+		Actor:     in.Actor,
+		Payload:   in.Payload,
+	})
+}
