@@ -2,7 +2,7 @@
 version: 1
 type: bootstrap
 iteration: 36
-updated_at: 2026-02-25T23:55:00Z
+updated_at: 2026-02-25T17:14:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-116` to add contract run table-header stability coverage.
+- Start `TASK-20260225-117` to document the contract run mode matrix.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 3 todo, 0 blocked, 115 done
+- Tasks: 2 todo, 0 blocked, 116 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-116 — Add contract test for context contract run table header stability (A)
 - TASK-20260225-117 — Document contract run mode matrix (all/default/execute) (B)
 - TASK-20260225-118 — Add regression test for contract-suite-commands non-empty output (B)
 

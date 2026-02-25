@@ -21,6 +21,7 @@
     "cli-contract-run-all-execute-json",
     "cli-contract-run-default-output",
     "cli-contract-run-dry-table",
+    "cli-contract-run-table-header",
     "cli-contract-run-table",
     "cli-contract-run-invalid-output",
     "cli-contract-run-execute-invalid-output",
