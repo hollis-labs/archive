@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 27
-updated_at: 2026-02-25T16:00:00Z
+iteration: 28
+updated_at: 2026-02-25T16:45:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,20 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-082` to add bootstrap-sync apply idempotence regression coverage.
+- Start `TASK-20260225-083` to add make bootstrap-report alias contract coverage.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 1 todo, 0 blocked, 81 done
+- Tasks: 4 todo, 0 blocked, 82 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-082 — Add bootstrap-sync apply idempotence regression test (B)
+- TASK-20260225-083 — Add contract test for make bootstrap-report alias output (A)
+- TASK-20260225-084 — Add contract test for make bootstrap-sync alias output (A)
+- TASK-20260225-085 — Document contract fixture lint manifest override workflow (B)
+- TASK-20260225-086 — Add table-output contract test for context contract run --execute (B)
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.

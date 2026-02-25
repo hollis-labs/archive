@@ -13,6 +13,7 @@
     "make-contract-cli-run",
     "bootstrap-sync",
     "bootstrap-sync-no-log",
+    "bootstrap-sync-idempotent",
     "make-bootstrap-sync",
     "make-smoke-invalid-token",
     "runlog-helper",

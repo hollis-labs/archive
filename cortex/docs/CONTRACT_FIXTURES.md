@@ -24,6 +24,7 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/runlog_helper_contract_golden.json` | Run-log helper output skeleton contract | `go test ./tests/integration -run RunlogHelperContract` |
 | `tests/integration/fixtures/bootstrap_sync_contract_golden.json` | `scripts/bootstrap-sync.sh` report/apply contract | `go test ./tests/integration -run BootstrapSyncScript` |
 | `tests/integration/fixtures/bootstrap_sync_no_log_contract_golden.json` | `scripts/bootstrap-sync.sh` no-log report/apply contract | `go test ./tests/integration -run BootstrapSyncNoLogContract` |
+| `tests/integration/fixtures/bootstrap_sync_idempotent_contract_golden.json` | `scripts/bootstrap-sync.sh --apply` idempotence contract | `go test ./tests/integration -run BootstrapSyncIdempotentContract` |
 | `tests/integration/fixtures/agents_boot_check_contract_golden.json` | AGENTS boot drift check success-output contract | `go test ./tests/integration -run AgentsBootCheckContract` |
 
 ## Bootstrap And Make Fixture Index
@@ -36,6 +37,7 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/make_bootstrap_sync_contract_golden.json` | `make bootstrap-sync-report` / `make bootstrap-sync-apply` | `go test ./tests/integration -run MakeBootstrapSyncContract` |
 | `tests/integration/fixtures/bootstrap_sync_contract_golden.json` | `scripts/bootstrap-sync.sh` | `go test ./tests/integration -run BootstrapSyncScript` |
 | `tests/integration/fixtures/bootstrap_sync_no_log_contract_golden.json` | `scripts/bootstrap-sync.sh` (empty `.volon/logs`) | `go test ./tests/integration -run BootstrapSyncNoLogContract` |
+| `tests/integration/fixtures/bootstrap_sync_idempotent_contract_golden.json` | `scripts/bootstrap-sync.sh --apply` repeatability | `go test ./tests/integration -run BootstrapSyncIdempotentContract` |
 
 ## Suite Ordering Policy
 
@@ -83,6 +85,7 @@ Update checklist:
   - `go test ./tests/integration -run ContractFixtureLintScript`
   - `go test ./tests/integration -run BootstrapSyncScript`
   - `go test ./tests/integration -run BootstrapSyncNoLogContract`
+  - `go test ./tests/integration -run BootstrapSyncIdempotentContract`
   - `go test ./tests/integration -run AgentsBootCheckContract`
 
 ## Ownership And Update Policy

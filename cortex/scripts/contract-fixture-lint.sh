@@ -22,6 +22,7 @@ fixtures=(
   "tests/integration/fixtures/runlog_helper_contract_golden.json"
   "tests/integration/fixtures/bootstrap_sync_contract_golden.json"
   "tests/integration/fixtures/bootstrap_sync_no_log_contract_golden.json"
+  "tests/integration/fixtures/bootstrap_sync_idempotent_contract_golden.json"
   "tests/integration/fixtures/agents_boot_check_contract_golden.json"
 )
 
