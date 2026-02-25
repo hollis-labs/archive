@@ -108,6 +108,14 @@ Rotation checklist:
 - Suggested local baseline (see storage spec proposal):
   - `--keep-revisions 20`
   - `--keep-audit 10000`
+- Operational profile examples:
+  - `light` (minimal local footprint):
+    - `contextd context compact --keep-revisions 5 --keep-audit 2000 --output table`
+  - `standard` (recommended baseline):
+    - `contextd context compact --keep-revisions 20 --keep-audit 10000 --output table`
+  - `high-trace` (extended debugging/audit retention):
+    - `contextd context compact --keep-revisions 50 --keep-audit 50000 --output table`
+- Baseline rationale and tradeoffs: `docs/SPECS/STORAGE.md#retention-baseline-proposal-local-first-default`.
 
 ## API contract fixtures
 - Golden API contract fixture: `tests/integration/fixtures/api_contract_golden.json`
