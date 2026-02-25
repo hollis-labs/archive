@@ -103,6 +103,14 @@ Phase 3 (`write-promote`) checklist:
 | Write or promote returns `policy_denied` | Actor/namespace combination violates ownership matrix | Re-check actor identity and namespace policy; confirm promote uses `actor=user` for protected `user/*` targets. |
 | Promote succeeds in CLI but fails in MCP | MCP tool mapping omitted required promote fields or actor propagation | Compare MCP payload mapping to API/CLI contract fields and ensure full parity for `from_*`/`to_*`/actor parameters. |
 
+## Environment-based phase adoption recommendations
+
+| Environment | Recommended phase adoption | Suggested auth mode | Risk posture guidance |
+|---|---|---|---|
+| Single-user local workstation | `phase-1` -> `phase-2` -> `phase-3` as needed | `mvp-open-read` acceptable; mutate paths still token-gated | Lower risk; prioritize operator ergonomics while keeping mutate actions explicit and audited. |
+| Shared workstation | Start with `phase-1`; adopt `phase-2/3` only for trusted operators | `optional-gated-read` minimum | Medium risk; reduce accidental data exposure and require explicit token flow for shared contexts. |
+| Team-managed environment | Start with constrained `phase-1`, then staged rollout to `phase-2/3` with approvals | `strict-auth-all` preferred | Higher risk; enforce strong auth posture, ownership policy checks, and auditability before enabling mutating tools. |
+
 ## References
 - API spec: [`docs/SPECS/API.md`](./API.md)
 - CLI spec: [`docs/SPECS/CLI.md`](./CLI.md)

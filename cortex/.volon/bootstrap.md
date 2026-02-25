@@ -2,7 +2,7 @@
 version: 1
 type: bootstrap
 iteration: 74
-updated_at: 2026-02-25T20:13:00Z
+updated_at: 2026-02-25T20:17:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-149` to add MCP phase adoption recommendations by environment.
+- Start `TASK-20260225-150` to add outputs index quickstart guidance.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 148 done
-- Last run log: `.volon/logs/run-iteration-075-2026-02-25.md`
+- Tasks: 1 todo, 0 blocked, 149 done
+- Last run log: `.volon/logs/run-iteration-076-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-149 — Add MCP phase adoption recommendations by environment (B)
 - TASK-20260225-150 — Add outputs index quickstart section (B)
 
 ### Blockers
@@ -40,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `2f76607`
+- Last implementation commit: `8d705fc`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
