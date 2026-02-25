@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 36
-updated_at: 2026-02-25T17:27:00Z
+iteration: 39
+updated_at: 2026-02-25T17:35:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,20 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Generate next batch (`TASK-20260225-119` .. `TASK-20260225-122`) from remaining scope and start `TASK-20260225-119`.
+- Start `TASK-20260225-119` to expand API view selector validation examples.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 0 todo, 0 blocked, 118 done
-- Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
+- Tasks: 4 todo, 0 blocked, 118 done
+- Last run log: `.volon/logs/run-iteration-038-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- None currently queued; generate next batch.
+- TASK-20260225-119 — Expand API views/evaluate spec with deterministic validation examples (A)
+- TASK-20260225-120 — Add CLI spec examples for view selectors and multi-client usage (B)
+- TASK-20260225-121 — Harden VIEWS spec with selector normalization and complexity examples (B)
+- TASK-20260225-122 — Add pivot spec deliverable notes (api-diff and cli-examples) (B)
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
@@ -39,6 +42,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `2ec6c9d`
+- Last implementation commit: `e028621`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
