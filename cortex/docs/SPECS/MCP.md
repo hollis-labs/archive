@@ -74,6 +74,20 @@ Phase progression constraints:
 - Capability expansion requires corresponding API/CLI contract documentation updates.
 - Selector capability discovery/negotiation follows `docs/SPECS/VIEWS.md#selector-capability-discovery-model`.
 
+## Phase gate criteria
+
+Minimum criteria before promoting from one MCP phase to the next:
+
+| Gate transition | Auth readiness minimum | Policy check minimum | Observability readiness minimum |
+|---|---|---|---|
+| `phase-1-read-view` -> `phase-2-namespace-admin` | Mutating token enforcement validated end-to-end for namespace admin calls. | Namespace registration/get flows verified against API/CLI contract behavior. | Namespace mutation events are traceable in audit surfaces with operator attribution. |
+| `phase-2-namespace-admin` -> `phase-3-write-promote` | Token propagation validated for `write` and `promote` tool paths in target environment mode. | Actor/namespace matrix checks pass, including protected `user/*` promote semantics (`actor=user`). | Write/promote outcomes and failures (`auth_required`, `policy_denied`, `validation_error`) are observable and actionable in operator runbooks. |
+| Any phase promotion in team-managed environments | Auth mode aligned to environment guidance (`strict-auth-all` preferred for team-managed). | Preflight actor/policy checks completed for newly enabled mutate capabilities. | Rollout includes explicit rollback trigger and audit verification before widening access. |
+
+Gate alignment notes:
+- Apply these criteria together with the `Preflight checklist (team-managed / production-like)` before enabling new mutate capabilities.
+- Phase sequencing should follow `Environment-based phase adoption recommendations` so auth posture and risk controls stay aligned.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:

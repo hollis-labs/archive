@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 91
-updated_at: 2026-02-25T21:55:00Z
+iteration: 92
+updated_at: 2026-02-25T22:05:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-161` to add MCP phase gate criteria table.
+- Start `TASK-20260225-162` to add outputs artifact freshness note.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 160 done
-- Last run log: `.volon/logs/run-iteration-091-2026-02-25.md`
+- Tasks: 1 todo, 0 blocked, 161 done
+- Last run log: `.volon/logs/run-iteration-092-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-161 — Add MCP phase gate criteria table (B)
 - TASK-20260225-162 — Add outputs artifact freshness note (B)
 
 ### Blockers
@@ -40,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `5581470`
+- Last implementation commit: `1317f00`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
