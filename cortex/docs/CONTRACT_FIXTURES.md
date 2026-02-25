@@ -98,6 +98,8 @@ When to add a new suite ID:
 | `cli-contract-list-default-output` | `context contract list` defaults to JSON output. | `go test ./tests/integration -run ContractListDefaultOutputContract` |
 | `cli-contract-run-default-output` | `context contract run --suite <name>` defaults to JSON dry mode (`executed=false`). | `go test ./tests/integration -run ContractRunDefaultOutputContract` |
 
+See also: `docs/DEV.md#contract-output-quick-reference`.
+
 ## Full validation
 
 - `go test ./...`

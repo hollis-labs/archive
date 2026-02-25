@@ -199,6 +199,16 @@ Rotation checklist:
   - `make contract-cli-run SUITE=api-errors`
   - `make contract-commands`
 
+## Contract Output Quick Reference
+
+| Command mode | Behavior | Contract suite |
+|---|---|---|
+| `context contract list` | Default JSON output (`count`, `items`). | `go test ./tests/integration -run ContractListDefaultOutputContract` |
+| `context contract list --output table` | Table output with `SUITE/COMMAND` columns. | `go test ./tests/integration -run ContractListTableContract` |
+| `context contract run --suite api` | Default JSON dry mode (`executed=false`). | `go test ./tests/integration -run ContractRunDefaultOutputContract` |
+| `context contract run --suite api --output table` | Dry-run table output with `SUITE/COMMAND`. | `go test ./tests/integration -run ContractRunTableDryContract` |
+| `context contract run --suite api --execute --output table` | Executed table output with `SUITE/OK/COMMAND`. | `go test ./tests/integration -run ContractRunExecuteTableContract` |
+
 ## Contract fixture lint manifest override
 - Default behavior: `scripts/contract-fixture-lint.sh` validates the repository's built-in fixture list.
 - Optional override for isolated harness checks:
