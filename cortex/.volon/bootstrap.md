@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 26
-updated_at: 2026-02-25T15:05:00Z
+iteration: 27
+updated_at: 2026-02-25T16:00:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,20 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-078` to add no-log bootstrap-sync regression coverage.
+- Start `TASK-20260225-079` to add make contract-commands ordering coverage.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 1 todo, 0 blocked, 77 done
+- Tasks: 4 todo, 0 blocked, 78 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-078 — Add regression test for bootstrap-sync no-log behavior (B)
+- TASK-20260225-079 — Add contract test for make contract-commands output ordering (A)
+- TASK-20260225-080 — Add fallback behavior test for contract fixture lint missing file (A)
+- TASK-20260225-081 — Document contract suite ordering policy for CLI/script registries (B)
+- TASK-20260225-082 — Add bootstrap-sync apply idempotence regression test (B)
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.

@@ -140,6 +140,8 @@ Rotation checklist:
 - Run-log helper contract suite: `go test ./tests/integration -run RunlogHelperContract`
 - Golden bootstrap-sync fixture: `tests/integration/fixtures/bootstrap_sync_contract_golden.json`
 - Bootstrap-sync contract suite: `go test ./tests/integration -run BootstrapSyncScript`
+- Golden bootstrap-sync no-log fixture: `tests/integration/fixtures/bootstrap_sync_no_log_contract_golden.json`
+- Bootstrap-sync no-log suite: `go test ./tests/integration -run BootstrapSyncNoLogContract`
 - Golden AGENTS boot check fixture: `tests/integration/fixtures/agents_boot_check_contract_golden.json`
 - AGENTS boot check contract suite: `go test ./tests/integration -run AgentsBootCheckContract`
 - Full fixture inventory: `docs/CONTRACT_FIXTURES.md`
