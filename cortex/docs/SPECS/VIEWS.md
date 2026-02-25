@@ -115,6 +115,19 @@ Truncation example (deterministic):
 - Includes every matching revision in deterministic revision order for each `(namespace,key)`.
 - Does not collapse to heads; use `revision_scope=head` for current-head-only results.
 
+## Example naming/style conventions
+
+- Valid examples:
+  - Use labels ending in `selector example` (for example: `` `tags_any` selector example ``).
+  - Show only supported fields unless demonstrating fallback behavior explicitly.
+  - Include deterministic cues (`order`, `limit`, `revision_scope`) when behavior depends on them.
+- Invalid examples:
+  - Prefix with `Invalid ...` and include expected failure class (for example: `Invalid selector examples (400 validation_error)`).
+  - Keep examples minimal and focused on one failing constraint per block.
+- Formatting:
+  - Prefer compact JSON blocks with stable key ordering for readability.
+  - Place explanatory semantics immediately below the example when interpretation is non-obvious.
+
 ## Response envelope
 - `items`: ordered record references (and payloads if requested)
 - `evaluation_meta`:
