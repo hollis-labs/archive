@@ -113,6 +113,8 @@ Rotation checklist:
 ## Metrics contract checks
 - Golden metrics fixture: `tests/integration/fixtures/metrics_contract_golden.json`
 - Contract suite: `go test ./tests/integration -run MetricsContract`
+- Golden log/metrics mode fixture: `tests/integration/fixtures/log_metrics_contract_golden.json`
+- Log/metrics mode suite: `go test ./tests/integration -run LogMetricsContract`
 - Local query example: `curl -s http://127.0.0.1:8080/v1/metrics | jq .`
 - Correlation fields:
   - `routes[].status_counts` tracks per-status response counts.
