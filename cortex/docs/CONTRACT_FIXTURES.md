@@ -131,6 +131,8 @@ See also: `docs/DEV.md#contract-output-quick-reference`.
 | `cli-contract-run-all-default-output` | Ensure `contract run --suite all` item count aligns with list suite count. | `go test ./tests/integration -run ContractRunAllDefaultOutputContract` |
 | `cli-contract-run-all-table` | Ensure `contract run --suite all --output table` row count matches JSON run item count. | `go test ./tests/integration -run ContractRunAllTableContract` |
 
+See also: `docs/DEV.md#contract-quick-run-pack`.
+
 ## Full validation
 
 - `go test ./...`

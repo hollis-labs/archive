@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-113` to document guardrail/parity quick-run pack.
+- Start `TASK-20260225-114` to add contract suite command token-count guardrail coverage.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 112 done
+- Tasks: 1 todo, 0 blocked, 113 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-113 — Document contract guardrail and parity quick-run pack (B)
 - TASK-20260225-114 — Add regression test for contract suite command token count (B)
 
 ### Blockers

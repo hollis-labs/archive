@@ -224,6 +224,21 @@ Rotation checklist:
 | `context contract run --suite api --output table` | Dry-run table output with `SUITE/COMMAND`. | `go test ./tests/integration -run ContractRunTableDryContract` |
 | `context contract run --suite api --execute --output table` | Executed table output with `SUITE/OK/COMMAND`. | `go test ./tests/integration -run ContractRunExecuteTableContract` |
 
+## Contract Quick-Run Pack
+
+Guardrail pack:
+1. `go test ./tests/integration -run ContractSuiteCommandsFormatContract`
+2. `go test ./tests/integration -run ContractSuiteCommandsUniqueContract`
+3. `go test ./tests/integration -run ContractSuiteCommandsPrefixContract`
+4. `go test ./tests/integration -run ContractSuiteCommandsDeterministicContract`
+5. `go test ./tests/integration -run ContractSuiteCommandsSuffixContract`
+
+Parity pack:
+1. `go test ./tests/integration -run ContractListCountParityContract`
+2. `go test ./tests/integration -run ContractListTableCountParityContract`
+3. `go test ./tests/integration -run ContractRunAllDefaultOutputContract`
+4. `go test ./tests/integration -run ContractRunAllTableContract`
+
 ## Contract fixture lint manifest override
 - Default behavior: `scripts/contract-fixture-lint.sh` validates the repository's built-in fixture list.
 - Optional override for isolated harness checks:
