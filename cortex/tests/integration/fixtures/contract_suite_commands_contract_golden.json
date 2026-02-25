@@ -16,6 +16,7 @@
     "cli-contract-list-table-count-parity",
     "cli-contract-run-all-default-output",
     "cli-contract-run-all-table",
+    "cli-contract-run-all-execute-table",
     "cli-contract-run-default-output",
     "cli-contract-run-dry-table",
     "cli-contract-run-table",
