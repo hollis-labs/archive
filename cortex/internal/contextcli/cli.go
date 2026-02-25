@@ -102,6 +102,7 @@ func contractSuites() []contractSuite {
 		{Name: "readiness", Command: "go test ./tests/integration -run ReadinessContract -count=1"},
 		{Name: "cli-health-summary", Command: "go test ./tests/integration -run CLIHealthSummaryContract -count=1"},
 		{Name: "cli-audit", Command: "go test ./tests/integration -run CLIAuditContract -count=1"},
+		{Name: "cli-contract-list-default-output", Command: "go test ./tests/integration -run ContractListDefaultOutputContract -count=1"},
 		{Name: "cli-contract-list-table", Command: "go test ./tests/integration -run ContractListTableContract -count=1"},
 		{Name: "cli-contract-run-dry-table", Command: "go test ./tests/integration -run ContractRunTableDryContract -count=1"},
 		{Name: "cli-contract-run-table", Command: "go test ./tests/integration -run ContractRunExecuteTableContract -count=1"},

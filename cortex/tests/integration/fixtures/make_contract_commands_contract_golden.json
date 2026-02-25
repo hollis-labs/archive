@@ -8,6 +8,7 @@
     "readiness",
     "cli-health-summary",
     "cli-audit",
+    "cli-contract-list-default-output",
     "cli-contract-list-table",
     "cli-contract-run-dry-table",
     "cli-contract-run-table",

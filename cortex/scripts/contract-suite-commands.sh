@@ -10,6 +10,7 @@ log-metrics	go test ./tests/integration -run LogMetricsContract -count=1
 readiness	go test ./tests/integration -run ReadinessContract -count=1
 cli-health-summary	go test ./tests/integration -run CLIHealthSummaryContract -count=1
 cli-audit	go test ./tests/integration -run CLIAuditContract -count=1
+cli-contract-list-default-output	go test ./tests/integration -run ContractListDefaultOutputContract -count=1
 cli-contract-list-table	go test ./tests/integration -run ContractListTableContract -count=1
 cli-contract-run-dry-table	go test ./tests/integration -run ContractRunTableDryContract -count=1
 cli-contract-run-table	go test ./tests/integration -run ContractRunExecuteTableContract -count=1

@@ -11,6 +11,7 @@ fixtures=(
   "tests/integration/fixtures/cli_health_summary_contract_golden.json"
   "tests/integration/fixtures/cli_audit_contract_golden.json"
   "tests/integration/fixtures/cli_contract_command_golden.json"
+  "tests/integration/fixtures/contract_list_default_output_golden.json"
   "tests/integration/fixtures/contract_list_table_golden.json"
   "tests/integration/fixtures/contract_run_table_dry_golden.json"
   "tests/integration/fixtures/contract_run_execute_table_golden.json"
