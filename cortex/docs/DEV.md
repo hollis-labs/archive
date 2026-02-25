@@ -184,6 +184,7 @@ Rotation checklist:
 - Suite ordering policy: `docs/CONTRACT_FIXTURES.md#suite-ordering-policy`
 - Suite naming conventions: `docs/CONTRACT_FIXTURES.md#suite-naming-conventions`
 - CLI error-path suite matrix: `docs/CONTRACT_FIXTURES.md#cli-error-path-suite-matrix`
+- Guardrail suite stack: `docs/CONTRACT_FIXTURES.md#guardrail-suite-stack`
 - Fixture ownership/update policy: see `docs/CONTRACT_FIXTURES.md#ownership-and-update-policy`
 - Fixture quickstart: see `docs/CONTRACT_FIXTURES.md#quickstart`
 - Script-based suites: see `docs/CONTRACT_FIXTURES.md#script-based-suites`

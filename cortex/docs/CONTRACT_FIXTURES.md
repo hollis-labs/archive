@@ -94,6 +94,21 @@ When to add a new suite ID:
 | `cli-contract-run-unknown-suite` | Verify unknown suite errors are stable and actionable. | `go test ./tests/integration -run ContractRunUnknownSuiteErrorContract` |
 | `cli-contract-run-invalid-output` | Verify invalid `--output` mode errors remain stable. | `go test ./tests/integration -run ContractRunInvalidOutputErrorContract` |
 
+## Guardrail Suite Stack
+
+| Suite | Guardrail intent | Command |
+|---|---|---|
+| `contract-suite-commands-format` | Enforce `suite<TAB>command` line shape. | `go test ./tests/integration -run ContractSuiteCommandsFormatContract` |
+| `contract-suite-commands-unique` | Prevent duplicate suite names. | `go test ./tests/integration -run ContractSuiteCommandsUniqueContract` |
+| `contract-suite-commands-prefix` | Require integration-test command prefix validity. | `go test ./tests/integration -run ContractSuiteCommandsPrefixContract` |
+| `contract-suite-commands-deterministic` | Enforce stable output ordering across repeated runs. | `go test ./tests/integration -run ContractSuiteCommandsDeterministicContract` |
+
+Recommended run order:
+1. `go test ./tests/integration -run ContractSuiteCommandsFormatContract`
+2. `go test ./tests/integration -run ContractSuiteCommandsUniqueContract`
+3. `go test ./tests/integration -run ContractSuiteCommandsPrefixContract`
+4. `go test ./tests/integration -run ContractSuiteCommandsDeterministicContract`
+
 ## Default Output-Mode Suites
 
 | Suite | Command behavior | Targeted command |

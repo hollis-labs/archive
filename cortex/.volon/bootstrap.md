@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-105` to document the contract suite guardrail stack.
+- Start `TASK-20260225-106` to add list default-output deterministic ordering coverage.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 104 done
+- Tasks: 1 todo, 0 blocked, 105 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-105 — Document contract suite guardrail stack (B)
 - TASK-20260225-106 — Add regression test for contract list default output deterministic ordering (B)
 
 ### Blockers
