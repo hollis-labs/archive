@@ -9,6 +9,7 @@
     "cli-health-summary",
     "cli-audit",
     "cli-contract-list-default-output",
+    "cli-contract-list-invalid-output",
     "cli-contract-list-table",
     "cli-contract-run-all-default-output",
     "cli-contract-run-default-output",

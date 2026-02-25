@@ -11,6 +11,7 @@ readiness	go test ./tests/integration -run ReadinessContract -count=1
 cli-health-summary	go test ./tests/integration -run CLIHealthSummaryContract -count=1
 cli-audit	go test ./tests/integration -run CLIAuditContract -count=1
 cli-contract-list-default-output	go test ./tests/integration -run ContractListDefaultOutputContract -count=1
+cli-contract-list-invalid-output	go test ./tests/integration -run ContractListInvalidOutputErrorContract -count=1
 cli-contract-list-table	go test ./tests/integration -run ContractListTableContract -count=1
 cli-contract-run-all-default-output	go test ./tests/integration -run ContractRunAllDefaultOutputContract -count=1
 cli-contract-run-default-output	go test ./tests/integration -run ContractRunDefaultOutputContract -count=1

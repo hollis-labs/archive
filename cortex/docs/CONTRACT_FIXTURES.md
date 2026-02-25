@@ -14,6 +14,7 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/cli_audit_contract_golden.json` | CLI `context audit` cursor/filter JSON contract | `go test ./tests/integration -run CLIAuditContract` |
 | `tests/integration/fixtures/cli_contract_command_golden.json` | CLI `context contract list/run` dry-mode contract | `go test ./tests/integration -run CLIContractCommand` |
 | `tests/integration/fixtures/contract_list_default_output_golden.json` | CLI `context contract list` default-output JSON contract | `go test ./tests/integration -run ContractListDefaultOutputContract` |
+| `tests/integration/fixtures/contract_list_invalid_output_error_golden.json` | CLI invalid contract list output-mode error contract | `go test ./tests/integration -run ContractListInvalidOutputErrorContract` |
 | `tests/integration/fixtures/contract_list_table_golden.json` | CLI `context contract list --output table` contract | `go test ./tests/integration -run ContractListTableContract` |
 | `tests/integration/fixtures/contract_run_all_default_output_golden.json` | CLI `context contract run --suite all` default-output JSON contract | `go test ./tests/integration -run ContractRunAllDefaultOutputContract` |
 | `tests/integration/fixtures/contract_run_default_output_golden.json` | CLI `context contract run` default-output JSON contract | `go test ./tests/integration -run ContractRunDefaultOutputContract` |
@@ -86,6 +87,7 @@ When to add a new suite ID:
 
 | Suite | Intent | Targeted command |
 |---|---|---|
+| `cli-contract-list-invalid-output` | Verify invalid `context contract list --output` errors remain stable. | `go test ./tests/integration -run ContractListInvalidOutputErrorContract` |
 | `cli-contract-run-unknown-suite` | Verify unknown suite errors are stable and actionable. | `go test ./tests/integration -run ContractRunUnknownSuiteErrorContract` |
 | `cli-contract-run-invalid-output` | Verify invalid `--output` mode errors remain stable. | `go test ./tests/integration -run ContractRunInvalidOutputErrorContract` |
 
@@ -124,6 +126,7 @@ When to add a new suite ID:
   - `go test ./tests/integration -run ContractSuiteCommandsScript`
   - `go test ./tests/integration -run ContractSuiteRegistryParity`
   - `go test ./tests/integration -run ContractListDefaultOutputContract`
+  - `go test ./tests/integration -run ContractListInvalidOutputErrorContract`
   - `go test ./tests/integration -run ContractListTableContract`
   - `go test ./tests/integration -run ContractRunAllDefaultOutputContract`
   - `go test ./tests/integration -run ContractRunDefaultOutputContract`
