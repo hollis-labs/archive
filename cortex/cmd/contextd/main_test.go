@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/hollis-labs/volon-dev/internal/contextstore"
 )
@@ -18,6 +19,9 @@ func TestParseServeArgsDefaults(t *testing.T) {
 	if cfg.Addr != ":8080" || cfg.ManagedAuth || cfg.StaticToken != "" || cfg.EnableMetrics {
 		t.Fatalf("unexpected defaults: %+v", cfg)
 	}
+	if cfg.ShutdownTimeout != 5*time.Second {
+		t.Fatalf("unexpected default shutdown timeout: %s", cfg.ShutdownTimeout)
+	}
 }
 
 func TestParseServeArgsMetricsFlag(t *testing.T) {
@@ -27,6 +31,16 @@ func TestParseServeArgsMetricsFlag(t *testing.T) {
 	}
 	if !cfg.EnableMetrics {
 		t.Fatalf("expected metrics to be enabled")
+	}
+}
+
+func TestParseServeArgsShutdownTimeoutFlag(t *testing.T) {
+	cfg, err := parseServeArgs([]string{"--shutdown-timeout", "2s"})
+	if err != nil {
+		t.Fatalf("parse shutdown-timeout: %v", err)
+	}
+	if cfg.ShutdownTimeout != 2*time.Second {
+		t.Fatalf("unexpected shutdown-timeout: %s", cfg.ShutdownTimeout)
 	}
 }
 
@@ -99,6 +113,56 @@ func TestRunServeManagedAuthRequiresActiveToken(t *testing.T) {
 	}
 	if !bytes.Contains(buf.Bytes(), []byte("requires at least one active token")) {
 		t.Fatalf("unexpected stderr: %s", buf.String())
+	}
+}
+
+func TestRunServeGracefulShutdownOnContextCancel(t *testing.T) {
+	root := t.TempDir()
+	s, err := contextstore.Open(context.Background(), contextstore.Config{
+		RootDir:    root,
+		RecordsDir: filepath.Join(root, "data", "records"),
+		DBPath:     filepath.Join(root, "data", "index", "context.db"),
+	})
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	defer s.Close()
+
+	stderr, err := os.CreateTemp(t.TempDir(), "stderr-*.log")
+	if err != nil {
+		t.Fatalf("create stderr temp: %v", err)
+	}
+	defer stderr.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan int, 1)
+	go func() {
+		done <- runServe(ctx, s, stderr, serveConfig{
+			Addr:            "127.0.0.1:0",
+			ShutdownTimeout: 2 * time.Second,
+		})
+	}()
+	time.Sleep(50 * time.Millisecond)
+	cancel()
+
+	select {
+	case code := <-done:
+		if code != 0 {
+			t.Fatalf("expected graceful shutdown code 0, got %d", code)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatalf("timed out waiting for graceful shutdown")
+	}
+
+	if _, err := stderr.Seek(0, 0); err != nil {
+		t.Fatalf("seek stderr: %v", err)
+	}
+	buf := &bytes.Buffer{}
+	if _, err := buf.ReadFrom(stderr); err != nil {
+		t.Fatalf("read stderr: %v", err)
+	}
+	if !bytes.Contains(buf.Bytes(), []byte("shutdown complete")) {
+		t.Fatalf("expected shutdown log, got: %s", buf.String())
 	}
 }
 

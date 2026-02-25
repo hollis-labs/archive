@@ -7,8 +7,11 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/hollis-labs/volon-dev/internal/contextapi"
 	"github.com/hollis-labs/volon-dev/internal/contextcli"
@@ -17,14 +20,17 @@ import (
 )
 
 type serveConfig struct {
-	Addr          string
-	ManagedAuth   bool
-	StaticToken   string
-	EnableMetrics bool
+	Addr            string
+	ManagedAuth     bool
+	StaticToken     string
+	EnableMetrics   bool
+	ShutdownTimeout time.Duration
 }
 
 func main() {
-	os.Exit(run(context.Background(), os.Args[1:], os.Stdout, os.Stderr))
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	os.Exit(run(ctx, os.Args[1:], os.Stdout, os.Stderr))
 }
 
 func run(ctx context.Context, args []string, stdout, stderr *os.File) int {
@@ -69,6 +75,7 @@ func parseServeArgs(args []string) (serveConfig, error) {
 	managed := fs.Bool("managed-auth", false, "enable managed token auth")
 	static := fs.String("static-token", "", "static bearer token (legacy mode)")
 	metrics := fs.Bool("metrics", false, "enable /v1/metrics endpoint")
+	shutdownTimeout := fs.Duration("shutdown-timeout", 5*time.Second, "graceful shutdown timeout")
 	if err := fs.Parse(args); err != nil {
 		return serveConfig{}, err
 	}
@@ -76,10 +83,11 @@ func parseServeArgs(args []string) (serveConfig, error) {
 		return serveConfig{}, fmt.Errorf("managed-auth and static-token are mutually exclusive")
 	}
 	return serveConfig{
-		Addr:          *addr,
-		ManagedAuth:   *managed,
-		StaticToken:   strings.TrimSpace(*static),
-		EnableMetrics: *metrics,
+		Addr:            *addr,
+		ManagedAuth:     *managed,
+		StaticToken:     strings.TrimSpace(*static),
+		EnableMetrics:   *metrics,
+		ShutdownTimeout: *shutdownTimeout,
 	}, nil
 }
 
@@ -103,10 +111,30 @@ func runServe(ctx context.Context, store *contextstore.Store, stderr *os.File, c
 
 	httpServer := &http.Server{Addr: cfg.Addr, Handler: srv}
 	_, _ = stderr.WriteString("contextd serving on " + cfg.Addr + "\n")
-	if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		_, _ = stderr.WriteString("error: " + err.Error() + "\n")
-		return 1
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- httpServer.ListenAndServe()
+	}()
+
+	select {
+	case <-ctx.Done():
+		_, _ = stderr.WriteString("contextd shutdown requested\n")
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+		defer cancel()
+		if err := httpServer.Shutdown(shutdownCtx); err != nil {
+			_, _ = stderr.WriteString("error: graceful shutdown failed: " + err.Error() + "\n")
+			return 1
+		}
+		if err := <-errCh; err != nil && err != http.ErrServerClosed {
+			_, _ = stderr.WriteString("error: " + err.Error() + "\n")
+			return 1
+		}
+		_, _ = stderr.WriteString("contextd shutdown complete\n")
+	case err := <-errCh:
+		if err != nil && err != http.ErrServerClosed {
+			_, _ = stderr.WriteString("error: " + err.Error() + "\n")
+			return 1
+		}
 	}
-	_ = ctx
 	return 0
 }

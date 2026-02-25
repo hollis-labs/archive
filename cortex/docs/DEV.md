@@ -46,8 +46,10 @@ Rotation checklist:
 - Start with managed token auth: `contextd serve --managed-auth --addr :8080`
 - Start with legacy static token: `contextd serve --static-token <token> --addr :8080`
 - Enable local diagnostics endpoint: `contextd serve --metrics --addr :8080`
+- Configure graceful shutdown timeout: `contextd serve --shutdown-timeout 10s`
 - Managed auth guard: server startup fails if no active token exists.
 - Metrics endpoint: `GET /v1/metrics` (available only when `--metrics` is enabled).
+- Service lifecycle: `SIGINT`/`SIGTERM` trigger graceful shutdown and deterministic shutdown logs.
 
 ## Namespace schema contract operations
 - Register namespace: `contextd context namespace register --namespace app/editor/session --owner-type app --owner-id editor`
@@ -89,6 +91,24 @@ Rotation checklist:
 - Golden API contract fixture: `tests/integration/fixtures/api_contract_golden.json`
 - Contract suite: `go test ./tests/integration -run APIContract`
 - Update process: modify fixture intentionally alongside API shape changes and include rationale in commit message.
+
+## Metrics contract checks
+- Golden metrics fixture: `tests/integration/fixtures/metrics_contract_golden.json`
+- Contract suite: `go test ./tests/integration -run MetricsContract`
+- Local query example: `curl -s http://127.0.0.1:8080/v1/metrics | jq .`
+
+## Service smoke checks
+- Script: `scripts/contextd-smoke.sh`
+- No-auth server:
+  - `contextd serve --addr 127.0.0.1:8080`
+  - `scripts/contextd-smoke.sh --base-url http://127.0.0.1:8080`
+- Static auth server:
+  - `contextd serve --static-token local-dev-token --addr 127.0.0.1:8080`
+  - `scripts/contextd-smoke.sh --base-url http://127.0.0.1:8080 --token local-dev-token`
+- Managed auth server:
+  - `contextd context token issue --label local --ttl 24h --output table`
+  - `contextd serve --managed-auth --addr 127.0.0.1:8080 --metrics`
+  - `scripts/contextd-smoke.sh --base-url http://127.0.0.1:8080 --token <issued-token> --metrics`
 
 ## Repository conventions
 - Product specifications: `docs/SPECS/`

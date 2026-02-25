@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 7
-updated_at: 2026-02-25T09:24:00Z
+iteration: 8
+updated_at: 2026-02-25T10:12:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,20 +18,20 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-027` to add graceful shutdown and lifecycle handling for `contextd serve`.
+- Start `TASK-20260225-031` to add structured request logging and request ID propagation.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 4 todo, 0 blocked, 26 done
+- Tasks: 4 todo, 0 blocked, 30 done
 - Last run log: `.volon/logs/run-iteration-006-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-027 — Add graceful shutdown and lifecycle handling for contextd serve (A)
-- TASK-20260225-028 — Add end-to-end service mode integration coverage for auth modes (A)
-- TASK-20260225-029 — Add metrics contract tests and documentation for diagnostics (B)
-- TASK-20260225-030 — Add API readiness smoke script for local operational checks (B)
+- TASK-20260225-031 — Add structured request logging with request IDs in service mode (A)
+- TASK-20260225-032 — Add API error contract golden tests for common failure envelopes (A)
+- TASK-20260225-033 — Add bounded audit query filters and deterministic pagination behavior (B)
+- TASK-20260225-034 — Add make target(s) for smoke and contract validation workflow (B)
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
@@ -42,6 +42,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `ff1abc4`
+- Last implementation commit: `2b3e01d`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
