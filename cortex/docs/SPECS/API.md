@@ -144,6 +144,18 @@ Response:
 - `head_revision`
 - `timestamp`
 
+Policy-denied example (`403`):
+```json
+{
+  "code": "policy_denied",
+  "message": "actor app:editor-ui is not allowed to write namespace user/profile",
+  "details": {
+    "actor": "app:editor-ui",
+    "namespace": "user/profile"
+  }
+}
+```
+
 ### POST `/v1/context/promote`
 Promote a record into protected `user/*` with explicit approval semantics.
 
@@ -159,6 +171,18 @@ Request:
 Response:
 - `promoted_record_id`
 - `target_revision`
+
+Policy-denied example (`403`):
+```json
+{
+  "code": "policy_denied",
+  "message": "promote requires actor user for protected namespace transitions",
+  "details": {
+    "actor": "app:editor-ui",
+    "to_namespace": "user/profile"
+  }
+}
+```
 
 ### GET `/v1/context/head`
 Query:
