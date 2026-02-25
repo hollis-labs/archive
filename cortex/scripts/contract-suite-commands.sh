@@ -20,6 +20,7 @@ cli-contract-list-table-count-parity	go test ./tests/integration -run ContractLi
 cli-contract-run-all-default-output	go test ./tests/integration -run ContractRunAllDefaultOutputContract -count=1
 cli-contract-run-all-table	go test ./tests/integration -run ContractRunAllTableContract -count=1
 cli-contract-run-all-execute-table	go test ./tests/integration -run ContractRunAllExecuteTableContract -count=1
+cli-contract-run-all-execute-json	go test ./tests/integration -run ContractRunAllExecuteJSONContract -count=1
 cli-contract-run-default-output	go test ./tests/integration -run ContractRunDefaultOutputContract -count=1
 cli-contract-run-dry-table	go test ./tests/integration -run ContractRunTableDryContract -count=1
 cli-contract-run-table	go test ./tests/integration -run ContractRunExecuteTableContract -count=1

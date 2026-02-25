@@ -112,6 +112,7 @@ func contractSuites() []contractSuite {
 		{Name: "cli-contract-run-all-default-output", Command: "go test ./tests/integration -run ContractRunAllDefaultOutputContract -count=1"},
 		{Name: "cli-contract-run-all-table", Command: "go test ./tests/integration -run ContractRunAllTableContract -count=1"},
 		{Name: "cli-contract-run-all-execute-table", Command: "go test ./tests/integration -run ContractRunAllExecuteTableContract -count=1"},
+		{Name: "cli-contract-run-all-execute-json", Command: "go test ./tests/integration -run ContractRunAllExecuteJSONContract -count=1"},
 		{Name: "cli-contract-run-default-output", Command: "go test ./tests/integration -run ContractRunDefaultOutputContract -count=1"},
 		{Name: "cli-contract-run-dry-table", Command: "go test ./tests/integration -run ContractRunTableDryContract -count=1"},
 		{Name: "cli-contract-run-table", Command: "go test ./tests/integration -run ContractRunExecuteTableContract -count=1"},

@@ -20,6 +20,7 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/contract_run_all_default_output_golden.json` | CLI `context contract run --suite all` default-output JSON contract | `go test ./tests/integration -run ContractRunAllDefaultOutputContract` |
 | `tests/integration/fixtures/contract_run_all_table_golden.json` | CLI `context contract run --suite all --output table` contract | `go test ./tests/integration -run ContractRunAllTableContract` |
 | `tests/integration/fixtures/contract_run_all_execute_table_golden.json` | CLI `context contract run --suite all --execute --output table` contract | `go test ./tests/integration -run ContractRunAllExecuteTableContract` |
+| `tests/integration/fixtures/contract_run_all_execute_json_golden.json` | CLI `context contract run --suite all --execute` JSON contract | `go test ./tests/integration -run ContractRunAllExecuteJSONContract` |
 | `tests/integration/fixtures/contract_run_default_output_golden.json` | CLI `context contract run` default-output JSON contract | `go test ./tests/integration -run ContractRunDefaultOutputContract` |
 | `tests/integration/fixtures/contract_run_table_dry_golden.json` | CLI `context contract run --output table` dry-mode contract | `go test ./tests/integration -run ContractRunTableDryContract` |
 | `tests/integration/fixtures/contract_run_execute_table_golden.json` | CLI `context contract run --execute --output table` contract | `go test ./tests/integration -run ContractRunExecuteTableContract` |
@@ -172,6 +173,7 @@ See also: `docs/DEV.md#contract-quick-run-pack`.
   - `go test ./tests/integration -run ContractRunAllDefaultOutputContract`
   - `go test ./tests/integration -run ContractRunAllTableContract`
   - `go test ./tests/integration -run ContractRunAllExecuteTableContract`
+  - `go test ./tests/integration -run ContractRunAllExecuteJSONContract`
   - `go test ./tests/integration -run ContractRunDefaultOutputContract`
   - `go test ./tests/integration -run ContractRunTableDryContract`
   - `go test ./tests/integration -run ContractRunExecuteTableContract`

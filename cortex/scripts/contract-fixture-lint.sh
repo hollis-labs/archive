@@ -18,6 +18,7 @@ fixtures=(
   "tests/integration/fixtures/contract_run_all_default_output_golden.json"
   "tests/integration/fixtures/contract_run_all_table_golden.json"
   "tests/integration/fixtures/contract_run_all_execute_table_golden.json"
+  "tests/integration/fixtures/contract_run_all_execute_json_golden.json"
   "tests/integration/fixtures/contract_run_default_output_golden.json"
   "tests/integration/fixtures/contract_run_table_dry_golden.json"
   "tests/integration/fixtures/contract_run_execute_table_golden.json"

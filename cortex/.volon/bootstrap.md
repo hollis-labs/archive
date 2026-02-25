@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-115` to add suite-all execute JSON summary coverage.
+- Start `TASK-20260225-116` to add contract run table-header stability coverage.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 4 todo, 0 blocked, 114 done
+- Tasks: 3 todo, 0 blocked, 115 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-115 — Add contract test for context contract run --suite all execute JSON summary (A)
 - TASK-20260225-116 — Add contract test for context contract run table header stability (A)
 - TASK-20260225-117 — Document contract run mode matrix (all/default/execute) (B)
 - TASK-20260225-118 — Add regression test for contract-suite-commands non-empty output (B)
