@@ -30,5 +30,14 @@ This directory (and `docs/SPECS/outputs/`) contains generated pivot support note
     - [`docs/SPECS/API.md`](../SPECS/API.md)
     - [`docs/SPECS/VIEWS.md`](../SPECS/VIEWS.md)
 
+## Documentation history artifacts
+- [`pivot-changelog.md`](./pivot-changelog.md)
+  - Canonical sources:
+    - [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md)
+    - [`docs/SPECS/API.md`](../SPECS/API.md)
+    - [`docs/SPECS/CLI.md`](../SPECS/CLI.md)
+    - [`docs/SPECS/VIEWS.md`](../SPECS/VIEWS.md)
+    - [`docs/SPECS/MCP.md`](../SPECS/MCP.md)
+
 ## Usage note
 These artifacts are summaries and operator-facing guides. When conflicts appear, the canonical source specs/ADRs take precedence.
