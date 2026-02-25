@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-093` to document the CLI error-path suite matrix.
+- Start `TASK-20260225-094` to add contract suite-name uniqueness regression coverage.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 92 done
+- Tasks: 1 todo, 0 blocked, 93 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-093 — Document contract CLI error-path suite matrix (B)
 - TASK-20260225-094 — Add regression test for contract suite name uniqueness (B)
 
 ### Blockers

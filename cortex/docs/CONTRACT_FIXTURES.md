@@ -79,6 +79,13 @@ When to add a new suite ID:
 - Extend an existing suite when adding checks within the same command path and contract surface.
 - Prefer stable, descriptive IDs over implementation details; avoid embedding dates/iteration numbers in suite names.
 
+## CLI Error-Path Suite Matrix
+
+| Suite | Intent | Targeted command |
+|---|---|---|
+| `cli-contract-run-unknown-suite` | Verify unknown suite errors are stable and actionable. | `go test ./tests/integration -run ContractRunUnknownSuiteErrorContract` |
+| `cli-contract-run-invalid-output` | Verify invalid `--output` mode errors remain stable. | `go test ./tests/integration -run ContractRunInvalidOutputErrorContract` |
+
 ## Full validation
 
 - `go test ./...`
