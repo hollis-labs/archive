@@ -24,6 +24,15 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/bootstrap_sync_contract_golden.json` | `scripts/bootstrap-sync.sh` report/apply contract | `go test ./tests/integration -run BootstrapSyncScript` |
 | `tests/integration/fixtures/agents_boot_check_contract_golden.json` | AGENTS boot drift check success-output contract | `go test ./tests/integration -run AgentsBootCheckContract` |
 
+## Bootstrap And Make Fixture Index
+
+| Fixture | Source suite | Refresh command |
+|---|---|---|
+| `tests/integration/fixtures/make_contract_cli_list_contract_golden.json` | `make contract-cli-list` | `go test ./tests/integration -run MakeContractCLIListContract` |
+| `tests/integration/fixtures/make_contract_cli_run_contract_golden.json` | `make contract-cli-run SUITE=<name>` | `go test ./tests/integration -run MakeContractCLIRunContract` |
+| `tests/integration/fixtures/make_bootstrap_sync_contract_golden.json` | `make bootstrap-sync-report` / `make bootstrap-sync-apply` | `go test ./tests/integration -run MakeBootstrapSyncContract` |
+| `tests/integration/fixtures/bootstrap_sync_contract_golden.json` | `scripts/bootstrap-sync.sh` | `go test ./tests/integration -run BootstrapSyncScript` |
+
 ## Full validation
 
 - `go test ./...`

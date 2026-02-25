@@ -143,6 +143,7 @@ Rotation checklist:
 - Golden AGENTS boot check fixture: `tests/integration/fixtures/agents_boot_check_contract_golden.json`
 - AGENTS boot check contract suite: `go test ./tests/integration -run AgentsBootCheckContract`
 - Full fixture inventory: `docs/CONTRACT_FIXTURES.md`
+- Bootstrap/make fixture index: `docs/CONTRACT_FIXTURES.md#bootstrap-and-make-fixture-index`
 - Fixture ownership/update policy: see `docs/CONTRACT_FIXTURES.md#ownership-and-update-policy`
 - Fixture quickstart: see `docs/CONTRACT_FIXTURES.md#quickstart`
 - Script-based suites: see `docs/CONTRACT_FIXTURES.md#script-based-suites`

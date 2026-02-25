@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-077` to add grouped fixture index docs for bootstrap/make command suites.
+- Start `TASK-20260225-078` to add no-log bootstrap-sync regression coverage.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 76 done
+- Tasks: 1 todo, 0 blocked, 77 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-077 — Add contract fixture index section for bootstrap and make command suites (B)
 - TASK-20260225-078 — Add regression test for bootstrap-sync no-log behavior (B)
 
 ### Blockers
