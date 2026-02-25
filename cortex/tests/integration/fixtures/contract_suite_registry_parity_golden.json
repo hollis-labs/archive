@@ -10,6 +10,7 @@
     {"name": "cli-audit", "command": "go test ./tests/integration -run CLIAuditContract -count=1"},
     {"name": "cli-contract-list-default-output", "command": "go test ./tests/integration -run ContractListDefaultOutputContract -count=1"},
     {"name": "cli-contract-list-table", "command": "go test ./tests/integration -run ContractListTableContract -count=1"},
+    {"name": "cli-contract-run-all-default-output", "command": "go test ./tests/integration -run ContractRunAllDefaultOutputContract -count=1"},
     {"name": "cli-contract-run-default-output", "command": "go test ./tests/integration -run ContractRunDefaultOutputContract -count=1"},
     {"name": "cli-contract-run-dry-table", "command": "go test ./tests/integration -run ContractRunTableDryContract -count=1"},
     {"name": "cli-contract-run-table", "command": "go test ./tests/integration -run ContractRunExecuteTableContract -count=1"},

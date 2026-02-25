@@ -15,6 +15,7 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/cli_contract_command_golden.json` | CLI `context contract list/run` dry-mode contract | `go test ./tests/integration -run CLIContractCommand` |
 | `tests/integration/fixtures/contract_list_default_output_golden.json` | CLI `context contract list` default-output JSON contract | `go test ./tests/integration -run ContractListDefaultOutputContract` |
 | `tests/integration/fixtures/contract_list_table_golden.json` | CLI `context contract list --output table` contract | `go test ./tests/integration -run ContractListTableContract` |
+| `tests/integration/fixtures/contract_run_all_default_output_golden.json` | CLI `context contract run --suite all` default-output JSON contract | `go test ./tests/integration -run ContractRunAllDefaultOutputContract` |
 | `tests/integration/fixtures/contract_run_default_output_golden.json` | CLI `context contract run` default-output JSON contract | `go test ./tests/integration -run ContractRunDefaultOutputContract` |
 | `tests/integration/fixtures/contract_run_table_dry_golden.json` | CLI `context contract run --output table` dry-mode contract | `go test ./tests/integration -run ContractRunTableDryContract` |
 | `tests/integration/fixtures/contract_run_execute_table_golden.json` | CLI `context contract run --execute --output table` contract | `go test ./tests/integration -run ContractRunExecuteTableContract` |
@@ -124,6 +125,7 @@ When to add a new suite ID:
   - `go test ./tests/integration -run ContractSuiteRegistryParity`
   - `go test ./tests/integration -run ContractListDefaultOutputContract`
   - `go test ./tests/integration -run ContractListTableContract`
+  - `go test ./tests/integration -run ContractRunAllDefaultOutputContract`
   - `go test ./tests/integration -run ContractRunDefaultOutputContract`
   - `go test ./tests/integration -run ContractRunTableDryContract`
   - `go test ./tests/integration -run ContractRunExecuteTableContract`

@@ -10,6 +10,7 @@
     "cli-audit",
     "cli-contract-list-default-output",
     "cli-contract-list-table",
+    "cli-contract-run-all-default-output",
     "cli-contract-run-default-output",
     "cli-contract-run-dry-table",
     "cli-contract-run-table",

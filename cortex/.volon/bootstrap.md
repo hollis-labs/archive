@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-099` to add suite-all default-output coverage for `context contract run`.
+- Start `TASK-20260225-100` to add invalid-output error-path coverage for `context contract list`.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 4 todo, 0 blocked, 98 done
+- Tasks: 3 todo, 0 blocked, 99 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-099 — Add contract test for context contract run --suite all default output (A)
 - TASK-20260225-100 — Add contract test for context contract list invalid output error (A)
 - TASK-20260225-101 — Document contract CLI default vs table output quick reference (B)
 - TASK-20260225-102 — Add regression test for contract-suite-commands deterministic ordering (B)
