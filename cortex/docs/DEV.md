@@ -46,6 +46,7 @@ Rotation checklist:
 - Start with managed token auth: `contextd serve --managed-auth --addr :8080`
 - Start with legacy static token: `contextd serve --static-token <token> --addr :8080`
 - Enable local diagnostics endpoint: `contextd serve --metrics --addr :8080`
+- Enable structured request logging: `contextd serve --request-logs --addr :8080`
 - Configure graceful shutdown timeout: `contextd serve --shutdown-timeout 10s`
 - Managed auth guard: server startup fails if no active token exists.
 - Metrics endpoint: `GET /v1/metrics` (available only when `--metrics` is enabled).

@@ -5,10 +5,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/hollis-labs/volon-dev/internal/contextpolicy"
@@ -25,8 +28,14 @@ type Server struct {
 	ManagedAuth bool
 	// EnableMetrics exposes /v1/metrics and records per-route request/latency counters.
 	EnableMetrics bool
-	startupErr  error
-	metrics     *apiMetrics
+	// EnableRequestLogging emits one structured line per request.
+	EnableRequestLogging bool
+	// LogWriter is the destination for structured request logs when enabled.
+	LogWriter  io.Writer
+	startupErr error
+	metrics    *apiMetrics
+	requestSeq uint64
+	logMu      sync.Mutex
 }
 
 // NewServer creates an API server.
@@ -44,18 +53,27 @@ func NewServer(store *contextstore.Store, policy *contextpolicy.Engine) *Server 
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if s.EnableMetrics {
-		started := time.Now()
-		sw := &statusWriter{ResponseWriter: w}
-		defer func() {
-			status := sw.status
-			if status == 0 {
-				status = http.StatusOK
-			}
-			s.metrics.Record(r.Method, r.URL.Path, status, time.Since(started))
-		}()
-		w = sw
+	requestID := strings.TrimSpace(r.Header.Get("X-Request-Id"))
+	if requestID == "" {
+		requestID = s.nextRequestID()
 	}
+	w.Header().Set("X-Request-Id", requestID)
+
+	started := time.Now()
+	sw := &statusWriter{ResponseWriter: w}
+	defer func() {
+		status := sw.status
+		if status == 0 {
+			status = http.StatusOK
+		}
+		if s.EnableMetrics {
+			s.metrics.Record(r.Method, r.URL.Path, status, time.Since(started))
+		}
+		if s.EnableRequestLogging {
+			s.writeRequestLog(requestID, r.Method, r.URL.Path, status, time.Since(started))
+		}
+	}()
+	w = sw
 
 	if s.startupErr != nil {
 		writeError(w, http.StatusInternalServerError, "startup_failed", s.startupErr.Error(), nil)
@@ -105,6 +123,25 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeError(w, http.StatusNotFound, "not_found", "endpoint not found", nil)
 	}
+}
+
+func (s *Server) nextRequestID() string {
+	n := atomic.AddUint64(&s.requestSeq, 1)
+	return fmt.Sprintf("req-%012d", n)
+}
+
+func (s *Server) writeRequestLog(requestID, method, path string, status int, dur time.Duration) {
+	dest := s.LogWriter
+	if dest == nil {
+		return
+	}
+	line := fmt.Sprintf(
+		`{"event":"request","request_id":%q,"method":%q,"path":%q,"status":%d,"latency_ms":%d}`+"\n",
+		requestID, method, path, status, dur.Milliseconds(),
+	)
+	s.logMu.Lock()
+	defer s.logMu.Unlock()
+	_, _ = io.WriteString(dest, line)
 }
 
 func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {

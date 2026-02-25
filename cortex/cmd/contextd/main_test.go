@@ -16,7 +16,7 @@ func TestParseServeArgsDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse defaults: %v", err)
 	}
-	if cfg.Addr != ":8080" || cfg.ManagedAuth || cfg.StaticToken != "" || cfg.EnableMetrics {
+	if cfg.Addr != ":8080" || cfg.ManagedAuth || cfg.StaticToken != "" || cfg.EnableMetrics || cfg.EnableRequestLogs {
 		t.Fatalf("unexpected defaults: %+v", cfg)
 	}
 	if cfg.ShutdownTimeout != 5*time.Second {
@@ -41,6 +41,16 @@ func TestParseServeArgsShutdownTimeoutFlag(t *testing.T) {
 	}
 	if cfg.ShutdownTimeout != 2*time.Second {
 		t.Fatalf("unexpected shutdown-timeout: %s", cfg.ShutdownTimeout)
+	}
+}
+
+func TestParseServeArgsRequestLogsFlag(t *testing.T) {
+	cfg, err := parseServeArgs([]string{"--request-logs"})
+	if err != nil {
+		t.Fatalf("parse request-logs: %v", err)
+	}
+	if !cfg.EnableRequestLogs {
+		t.Fatalf("expected request logs to be enabled")
 	}
 }
 

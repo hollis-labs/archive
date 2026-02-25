@@ -20,11 +20,12 @@ import (
 )
 
 type serveConfig struct {
-	Addr            string
-	ManagedAuth     bool
-	StaticToken     string
-	EnableMetrics   bool
-	ShutdownTimeout time.Duration
+	Addr              string
+	ManagedAuth       bool
+	StaticToken       string
+	EnableMetrics     bool
+	EnableRequestLogs bool
+	ShutdownTimeout   time.Duration
 }
 
 func main() {
@@ -75,6 +76,7 @@ func parseServeArgs(args []string) (serveConfig, error) {
 	managed := fs.Bool("managed-auth", false, "enable managed token auth")
 	static := fs.String("static-token", "", "static bearer token (legacy mode)")
 	metrics := fs.Bool("metrics", false, "enable /v1/metrics endpoint")
+	requestLogs := fs.Bool("request-logs", false, "enable structured request logs")
 	shutdownTimeout := fs.Duration("shutdown-timeout", 5*time.Second, "graceful shutdown timeout")
 	if err := fs.Parse(args); err != nil {
 		return serveConfig{}, err
@@ -83,11 +85,12 @@ func parseServeArgs(args []string) (serveConfig, error) {
 		return serveConfig{}, fmt.Errorf("managed-auth and static-token are mutually exclusive")
 	}
 	return serveConfig{
-		Addr:            *addr,
-		ManagedAuth:     *managed,
-		StaticToken:     strings.TrimSpace(*static),
-		EnableMetrics:   *metrics,
-		ShutdownTimeout: *shutdownTimeout,
+		Addr:              *addr,
+		ManagedAuth:       *managed,
+		StaticToken:       strings.TrimSpace(*static),
+		EnableMetrics:     *metrics,
+		EnableRequestLogs: *requestLogs,
+		ShutdownTimeout:   *shutdownTimeout,
 	}, nil
 }
 
@@ -96,6 +99,8 @@ func runServe(ctx context.Context, store *contextstore.Store, stderr *os.File, c
 	srv.ManagedAuth = cfg.ManagedAuth
 	srv.AuthToken = cfg.StaticToken
 	srv.EnableMetrics = cfg.EnableMetrics
+	srv.EnableRequestLogging = cfg.EnableRequestLogs
+	srv.LogWriter = stderr
 
 	if cfg.ManagedAuth {
 		ok, err := store.HasActiveAuthTokens(ctx)

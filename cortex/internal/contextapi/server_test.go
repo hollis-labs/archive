@@ -493,6 +493,48 @@ func TestMetricsEndpointCapturesRouteCountersAndErrors(t *testing.T) {
 	}
 }
 
+func TestRequestIDPropagationFromHeader(t *testing.T) {
+	srv := newTestServer(t)
+	srv.EnableRequestLogging = true
+	logBuf := &bytes.Buffer{}
+	srv.LogWriter = logBuf
+
+	res := performJSONWithHeaders(t, srv, http.MethodGet, "/v1/health/readiness", nil, map[string]string{
+		"X-Request-Id": "req-from-client",
+	})
+	if res.Code != http.StatusOK {
+		t.Fatalf("readiness status=%d body=%s", res.Code, res.Body.String())
+	}
+	if got := res.Header().Get("X-Request-Id"); got != "req-from-client" {
+		t.Fatalf("expected request id to propagate, got %q", got)
+	}
+	if !bytes.Contains(logBuf.Bytes(), []byte(`"request_id":"req-from-client"`)) {
+		t.Fatalf("expected request id in log line, got: %s", logBuf.String())
+	}
+}
+
+func TestRequestIDGeneratedWhenMissing(t *testing.T) {
+	srv := newTestServer(t)
+	srv.EnableRequestLogging = true
+	logBuf := &bytes.Buffer{}
+	srv.LogWriter = logBuf
+
+	res := performJSON(t, srv, http.MethodGet, "/v1/health/readiness", nil)
+	if res.Code != http.StatusOK {
+		t.Fatalf("readiness status=%d body=%s", res.Code, res.Body.String())
+	}
+	got := res.Header().Get("X-Request-Id")
+	if got == "" {
+		t.Fatalf("expected generated request id header")
+	}
+	if !bytes.HasPrefix([]byte(got), []byte("req-")) {
+		t.Fatalf("unexpected generated request id: %q", got)
+	}
+	if !bytes.Contains(logBuf.Bytes(), []byte(`"event":"request"`)) {
+		t.Fatalf("expected structured request log, got: %s", logBuf.String())
+	}
+}
+
 func performJSON(t *testing.T, h http.Handler, method, path string, body any) *httptest.ResponseRecorder {
 	return performJSONWithHeaders(t, h, method, path, body, nil)
 }
