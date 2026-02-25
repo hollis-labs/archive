@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 64
-updated_at: 2026-02-25T19:38:00Z
+iteration: 69
+updated_at: 2026-02-25T19:43:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,20 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Generate next task batch (`TASK-20260225-143` .. `TASK-20260225-146`) and start `TASK-20260225-143`.
+- Start `TASK-20260225-143` to add selector determinism anti-pattern guidance.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 0 todo, 0 blocked, 142 done
-- Last run log: `.volon/logs/run-iteration-067-2026-02-25.md`
+- Tasks: 4 todo, 0 blocked, 142 done
+- Last run log: `.volon/logs/run-iteration-068-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- None currently queued; generate next batch.
+- TASK-20260225-143 — Add selector determinism anti-patterns section (A)
+- TASK-20260225-144 — Add API policy-denied example set for mutate endpoints (B)
+- TASK-20260225-145 — Add MCP troubleshooting quick-reference (B)
+- TASK-20260225-146 — Add docs navigation pointers in root docs listing (B)
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
@@ -39,6 +42,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `a56faec`
+- Last implementation commit: `4c52bbb`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
