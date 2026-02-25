@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 59
-updated_at: 2026-02-25T19:15:00Z
+iteration: 64
+updated_at: 2026-02-25T19:20:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,20 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Generate next task batch (`TASK-20260225-139` .. `TASK-20260225-142`) and start `TASK-20260225-139`.
+- Start `TASK-20260225-139` to add API endpoint auth-mode matrix.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 0 todo, 0 blocked, 138 done
-- Last run log: `.volon/logs/run-iteration-062-2026-02-25.md`
+- Tasks: 4 todo, 0 blocked, 138 done
+- Last run log: `.volon/logs/run-iteration-063-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- None currently queued; generate next batch.
+- TASK-20260225-139 — Add API endpoint auth-mode matrix (A)
+- TASK-20260225-140 — Expand VIEWS examples for tags_any and revision_scope all (B)
+- TASK-20260225-141 — Add MCP operator enablement checklist (B)
+- TASK-20260225-142 — Add pivot docs change-log summary (B)
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
@@ -39,6 +42,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `93c677a`
+- Last implementation commit: `2886a5c`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
