@@ -27,3 +27,11 @@ scripts/migrate-to-volon.sh
 ```
 
 This renames config/state to the Volon layout before you continue work.
+
+## Documentation navigation pointers
+
+- Specs index: [`docs/SPECS/README.md`](./SPECS/README.md)
+- Pivot/output artifacts index: [`docs/outputs/README.md`](./outputs/README.md)
+- Canonical architecture scope:
+  - [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md)
+  - [`docs/SCOPE.md`](./SCOPE.md)
