@@ -2,7 +2,7 @@
 version: 1
 type: bootstrap
 iteration: 64
-updated_at: 2026-02-25T19:24:00Z
+updated_at: 2026-02-25T19:29:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-140` to expand VIEWS selector examples.
+- Start `TASK-20260225-141` to add MCP operator enablement checklist.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 3 todo, 0 blocked, 139 done
-- Last run log: `.volon/logs/run-iteration-064-2026-02-25.md`
+- Tasks: 2 todo, 0 blocked, 140 done
+- Last run log: `.volon/logs/run-iteration-065-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-140 — Expand VIEWS examples for tags_any and revision_scope all (B)
 - TASK-20260225-141 — Add MCP operator enablement checklist (B)
 - TASK-20260225-142 — Add pivot docs change-log summary (B)
 
@@ -41,6 +40,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `0edb066`
+- Last implementation commit: `1402c76`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

@@ -217,6 +217,8 @@ Valid request example:
 }
 ```
 
+Additional selector examples (`tags_any`, `revision_scope=all`) are documented in `docs/SPECS/VIEWS.md`.
+
 Valid response example:
 ```json
 {

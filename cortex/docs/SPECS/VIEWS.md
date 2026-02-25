@@ -77,6 +77,36 @@ Truncation example (deterministic):
 }
 ```
 
+`tags_any` selector example:
+```json
+{
+  "selector": {
+    "namespaces": ["app/editor/*", "user/*"],
+    "tags_any": ["active", "session"],
+    "revision_scope": "head",
+    "order": ["namespace", "key", "revision"],
+    "limit": 100
+  }
+}
+```
+
+`revision_scope=all` selector example:
+```json
+{
+  "selector": {
+    "namespaces": ["app/editor/session"],
+    "keys": ["summary"],
+    "revision_scope": "all",
+    "order": ["namespace", "key", "revision"],
+    "limit": 50
+  }
+}
+```
+
+`revision_scope=all` result semantics:
+- Includes every matching revision in deterministic revision order for each `(namespace,key)`.
+- Does not collapse to heads; use `revision_scope=head` for current-head-only results.
+
 ## Response envelope
 - `items`: ordered record references (and payloads if requested)
 - `evaluation_meta`:
