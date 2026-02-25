@@ -187,6 +187,21 @@ Integration notes:
 Future extension option:
 - A runtime capability descriptor may be added later, but must be additive and must not relax deterministic validation behavior for unsupported fields.
 
+## Quick validation checklist
+
+Before adding/updating selector examples:
+1. Ordering:
+   - Ensure `order` is explicit or the example expectation uses fallback `(namespace,key,revision)`.
+2. Limits:
+   - Confirm `limit` is non-negative and within max bound (`<=500`), or omitted to use default behavior.
+3. Unknown fields:
+   - Verify no undocumented selector fields are present unless explicitly described as invalid examples.
+4. Revision scope:
+   - Use `revision_scope=head` for head-only expectations.
+   - Use `revision_scope=all` only when examples intentionally include full history semantics.
+5. API alignment:
+   - Cross-check `POST /v1/views/evaluate` validation notes in `docs/SPECS/API.md` for matching error/constraint behavior.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
