@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 15
-updated_at: 2026-02-25T12:56:00Z
+iteration: 16
+updated_at: 2026-02-25T13:09:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,20 +18,17 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-051` to add smoke invalid-token contract fixture coverage.
+- Generate next task batch (`TASK-20260225-055+`) for continued hardening.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 4 todo, 0 blocked, 50 done
+- Tasks: 0 todo, 0 blocked, 54 done
 - Last run log: `.volon/logs/run-iteration-006-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-051 — Add contract fixture for smoke invalid-token mode outputs (A)
-- TASK-20260225-052 — Add CLI audit query support for cursor/event filters (A)
-- TASK-20260225-053 — Add run-log helper test harness using golden template (B)
-- TASK-20260225-054 — Add docs index for contract fixture inventory (B)
+- None in current batch.
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
@@ -42,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `61342a9`
+- Last implementation commit: `a7cb80f`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

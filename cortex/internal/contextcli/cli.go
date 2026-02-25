@@ -359,22 +359,36 @@ func (c *CLI) runAudit(ctx context.Context, args []string) int {
 	fs := flag.NewFlagSet("audit", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	limit := fs.Int("limit", 50, "limit")
+	cursor := fs.Int64("cursor", 0, "pagination cursor")
+	namespace := fs.String("namespace", "", "namespace filter")
+	eventType := fs.String("event-type", "", "event type filter")
 	output := fs.String("output", "json", "json|table")
 	if err := fs.Parse(args); err != nil {
 		return c.fail(err.Error())
 	}
-	events, err := c.Store.ListAuditEvents(ctx, *limit)
+	if *cursor < 0 {
+		return c.fail("cursor must be a non-negative integer")
+	}
+	events, nextCursor, err := c.Store.QueryAuditEvents(ctx, contextstore.AuditQuery{
+		Limit:     *limit,
+		Cursor:    *cursor,
+		Namespace: strings.TrimSpace(*namespace),
+		EventType: strings.TrimSpace(*eventType),
+	})
 	if err != nil {
 		return c.fail(err.Error())
 	}
 	switch strings.TrimSpace(*output) {
 	case "json", "":
-		return c.writeJSON(map[string]any{"count": len(events), "items": events})
+		return c.writeJSON(map[string]any{"count": len(events), "items": events, "next_cursor": nextCursor})
 	case "table":
 		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
 		_, _ = fmt.Fprintln(w, "ID\tEVENT\tACTOR\tNAMESPACE\tKEY\tREVISION\tCREATED_AT")
 		for _, event := range events {
 			_, _ = fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%d\t%s\n", event.ID, event.EventType, event.Actor, event.Namespace, event.Key, event.Revision, event.CreatedAt)
+		}
+		if nextCursor != nil {
+			_, _ = fmt.Fprintf(w, "NEXT_CURSOR\t%d\t\t\t\t\t\n", *nextCursor)
 		}
 		_ = w.Flush()
 		return 0

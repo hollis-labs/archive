@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -195,6 +196,72 @@ func TestAuditCommandShowsWriteAndPromote(t *testing.T) {
 	table := out.String()
 	if !strings.Contains(table, "EVENT") || !strings.Contains(table, "write") || !strings.Contains(table, "promote") {
 		t.Fatalf("expected write/promote audit rows, got: %s", table)
+	}
+}
+
+func TestAuditCommandSupportsFiltersAndCursor(t *testing.T) {
+	cli, out, errOut, _ := newTestCLIWithRoot(t)
+
+	for i := 1; i <= 2; i++ {
+		if code := cli.Run(context.Background(), []string{
+			"context", "put",
+			"--client-id", "editor",
+			"--actor", "app:editor",
+			"--namespace", "app/editor/session",
+			"--key", "summary",
+			"--json", `{"v":` + string(rune('0'+i)) + `}`,
+		}); code != 0 {
+			t.Fatalf("put %d failed: %s", i, errOut.String())
+		}
+	}
+	if code := cli.Run(context.Background(), []string{
+		"context", "promote",
+		"--client-id", "editor",
+		"--actor", "user",
+		"--from-namespace", "app/editor/session",
+		"--from-key", "summary",
+		"--to-namespace", "user/notes",
+		"--to-key", "daily",
+	}); code != 0 {
+		t.Fatalf("promote failed: %s", errOut.String())
+	}
+
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{"context", "audit", "--limit", "1", "--output", "json"}); code != 0 {
+		t.Fatalf("audit page one failed: %s", errOut.String())
+	}
+	var pageOne struct {
+		Count      int                       `json:"count"`
+		Items      []contextstore.AuditEvent `json:"items"`
+		NextCursor *int64                    `json:"next_cursor"`
+	}
+	if err := json.Unmarshal(out.Bytes(), &pageOne); err != nil {
+		t.Fatalf("unmarshal page one: %v", err)
+	}
+	if pageOne.Count != 1 || pageOne.NextCursor == nil {
+		t.Fatalf("expected one item + next cursor, got %+v", pageOne)
+	}
+
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{
+		"context", "audit",
+		"--cursor", strconv.FormatInt(*pageOne.NextCursor, 10),
+		"--limit", "10",
+		"--namespace", "user/notes",
+		"--event-type", "promote",
+		"--output", "json",
+	}); code != 0 {
+		t.Fatalf("audit filtered failed: %s", errOut.String())
+	}
+	var filtered struct {
+		Count int                       `json:"count"`
+		Items []contextstore.AuditEvent `json:"items"`
+	}
+	if err := json.Unmarshal(out.Bytes(), &filtered); err != nil {
+		t.Fatalf("unmarshal filtered: %v", err)
+	}
+	if filtered.Count > 1 {
+		t.Fatalf("expected at most one filtered promote event, got %+v", filtered)
 	}
 }
 

@@ -71,6 +71,8 @@ Rotation checklist:
 
 ## Audit operations
 - CLI audit query: `contextd context audit --limit 50 --output table`
+- CLI filtered audit query: `contextd context audit --limit 50 --namespace user/notes --event-type promote --output json`
+- CLI cursor query: `contextd context audit --cursor <next_cursor> --limit 50 --output json`
 - API audit query: `GET /v1/context/audit?limit=50`
 - API filtered audit query: `GET /v1/context/audit?limit=50&event_type=write&namespace=app/editor/session`
 - Cursor pagination flow (fixture-aligned):
@@ -116,6 +118,11 @@ Rotation checklist:
 - Readiness contract suite: `go test ./tests/integration -run ReadinessContract`
 - Golden CLI health summary fixture: `tests/integration/fixtures/cli_health_summary_contract_golden.json`
 - CLI health summary contract suite: `go test ./tests/integration -run CLIHealthSummaryContract`
+- Golden smoke invalid-token fixture: `tests/integration/fixtures/smoke_invalid_token_contract_golden.json`
+- Smoke invalid-token contract suite: `go test ./tests/integration -run SmokeInvalidTokenContract`
+- Golden run-log helper fixture: `tests/integration/fixtures/runlog_helper_contract_golden.json`
+- Run-log helper contract suite: `go test ./tests/integration -run RunlogHelperContract`
+- Full fixture inventory: `docs/CONTRACT_FIXTURES.md`
 
 ## Metrics contract checks
 - Golden metrics fixture: `tests/integration/fixtures/metrics_contract_golden.json`
