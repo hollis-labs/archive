@@ -119,6 +119,15 @@ Recommended run order:
 
 See also: `docs/DEV.md#contract-output-quick-reference`.
 
+## List/Run Parity Suites
+
+| Suite | Parity intent | Targeted command |
+|---|---|---|
+| `cli-contract-list-table-count-parity` | Ensure `contract list --output table` row count matches JSON list item count. | `go test ./tests/integration -run ContractListTableCountParityContract` |
+| `cli-contract-list-count-parity` | Ensure `contract list` JSON `count` equals `len(items)`. | `go test ./tests/integration -run ContractListCountParityContract` |
+| `cli-contract-run-all-default-output` | Ensure `contract run --suite all` item count aligns with list suite count. | `go test ./tests/integration -run ContractRunAllDefaultOutputContract` |
+| `cli-contract-run-all-table` | Ensure `contract run --suite all --output table` row count matches JSON run item count. | `go test ./tests/integration -run ContractRunAllTableContract` |
+
 ## Full validation
 
 - `go test ./...`
