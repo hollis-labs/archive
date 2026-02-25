@@ -63,6 +63,20 @@ Update checklist:
 - Run `go test ./tests/integration -run ContractSuiteRegistryParity`.
 - Run `go test ./...`.
 
+## Suite Naming Conventions
+
+- `api` / `api-*`: HTTP API response and error envelope contracts.
+- `cli-*`: direct CLI output/error contracts that do not require make wrappers.
+- `make-*`: make-target wrapper contracts that validate command aliases and marker passthrough.
+- `bootstrap-*`: bootstrap sync script behavior variants (`report`, `no-log`, `idempotent`).
+- `smoke-*`: end-to-end smoke checks and auth guard regressions.
+- `*-script`: script-level contracts that validate helper script behavior directly.
+
+When to add a new suite ID:
+- Add a new suite when behavior has a distinct command path, output contract, or failure mode that should be independently selectable.
+- Extend an existing suite when adding checks within the same command path and contract surface.
+- Prefer stable, descriptive IDs over implementation details; avoid embedding dates/iteration numbers in suite names.
+
 ## Full validation
 
 - `go test ./...`

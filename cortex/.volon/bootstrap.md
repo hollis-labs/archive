@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-089` to document contract suite naming conventions.
+- Start `TASK-20260225-090` to add contract-suite-commands line-format regression coverage.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 88 done
+- Tasks: 1 todo, 0 blocked, 89 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-089 — Document contract suite naming conventions (B)
 - TASK-20260225-090 — Add regression test for contract-suite-commands line format (B)
 
 ### Blockers
