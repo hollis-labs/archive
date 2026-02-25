@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/hollis-labs/volon-dev/internal/contextpolicy"
@@ -22,7 +23,10 @@ type Server struct {
 	AuthToken string
 	// ManagedAuth enables token lifecycle validation using store-backed auth_tokens.
 	ManagedAuth bool
+	// EnableMetrics exposes /v1/metrics and records per-route request/latency counters.
+	EnableMetrics bool
 	startupErr  error
+	metrics     *apiMetrics
 }
 
 // NewServer creates an API server.
@@ -30,17 +34,40 @@ func NewServer(store *contextstore.Store, policy *contextpolicy.Engine) *Server 
 	if policy == nil {
 		policy = contextpolicy.New()
 	}
-	s := &Server{Store: store, Policy: policy}
+	s := &Server{
+		Store:   store,
+		Policy:  policy,
+		metrics: newAPIMetrics(),
+	}
 	s.startupErr = s.reloadPolicies(context.Background())
 	return s
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if s.EnableMetrics {
+		started := time.Now()
+		sw := &statusWriter{ResponseWriter: w}
+		defer func() {
+			status := sw.status
+			if status == 0 {
+				status = http.StatusOK
+			}
+			s.metrics.Record(r.Method, r.URL.Path, status, time.Since(started))
+		}()
+		w = sw
+	}
+
 	if s.startupErr != nil {
 		writeError(w, http.StatusInternalServerError, "startup_failed", s.startupErr.Error(), nil)
 		return
 	}
 	switch {
+	case r.Method == http.MethodGet && r.URL.Path == "/v1/metrics":
+		if !s.EnableMetrics {
+			writeError(w, http.StatusNotFound, "not_found", "endpoint not found", nil)
+			return
+		}
+		s.handleMetrics(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/namespaces/register":
 		if !s.authorizeMutatingRequest(w, r) {
 			return
@@ -78,6 +105,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeError(w, http.StatusNotFound, "not_found", "endpoint not found", nil)
 	}
+}
+
+func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	_ = r
+	writeJSON(w, http.StatusOK, s.metrics.Snapshot())
 }
 
 func (s *Server) authorizeMutatingRequest(w http.ResponseWriter, r *http.Request) bool {
@@ -543,4 +575,91 @@ func (s *Server) Write(ctx context.Context, in writeRequest) (contextstore.Recor
 		Actor:     in.Actor,
 		Payload:   in.Payload,
 	})
+}
+
+type statusWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (w *statusWriter) WriteHeader(code int) {
+	w.status = code
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *statusWriter) Write(b []byte) (int, error) {
+	if w.status == 0 {
+		w.status = http.StatusOK
+	}
+	return w.ResponseWriter.Write(b)
+}
+
+type apiMetrics struct {
+	mu     sync.Mutex
+	routes map[string]*routeMetric
+}
+
+type routeMetric struct {
+	Method         string `json:"method"`
+	Path           string `json:"path"`
+	Requests       int64  `json:"requests"`
+	Errors         int64  `json:"errors"`
+	LatencyNsTotal int64  `json:"latency_ns_total"`
+	LatencyNsAvg   int64  `json:"latency_ns_avg"`
+}
+
+func newAPIMetrics() *apiMetrics {
+	return &apiMetrics{
+		routes: make(map[string]*routeMetric),
+	}
+}
+
+func (m *apiMetrics) Record(method, path string, status int, dur time.Duration) {
+	key := method + " " + path
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	entry, ok := m.routes[key]
+	if !ok {
+		entry = &routeMetric{Method: method, Path: path}
+		m.routes[key] = entry
+	}
+	entry.Requests++
+	if status >= 400 {
+		entry.Errors++
+	}
+	entry.LatencyNsTotal += dur.Nanoseconds()
+	entry.LatencyNsAvg = entry.LatencyNsTotal / entry.Requests
+}
+
+func (m *apiMetrics) Snapshot() map[string]any {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	routes := make([]routeMetric, 0, len(m.routes))
+	var totalReq int64
+	var totalErr int64
+	for _, entry := range m.routes {
+		routes = append(routes, *entry)
+		totalReq += entry.Requests
+		totalErr += entry.Errors
+	}
+	sortRouteMetrics(routes)
+	return map[string]any{
+		"enabled": true,
+		"routes":  routes,
+		"totals": map[string]any{
+			"requests": totalReq,
+			"errors":   totalErr,
+		},
+	}
+}
+
+func sortRouteMetrics(items []routeMetric) {
+	for i := 0; i < len(items)-1; i++ {
+		for j := i + 1; j < len(items); j++ {
+			if items[j].Method < items[i].Method || (items[j].Method == items[i].Method && items[j].Path < items[i].Path) {
+				items[i], items[j] = items[j], items[i]
+			}
+		}
+	}
 }

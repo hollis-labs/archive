@@ -45,7 +45,9 @@ Rotation checklist:
 - Start API server (default `:8080`): `contextd serve`
 - Start with managed token auth: `contextd serve --managed-auth --addr :8080`
 - Start with legacy static token: `contextd serve --static-token <token> --addr :8080`
+- Enable local diagnostics endpoint: `contextd serve --metrics --addr :8080`
 - Managed auth guard: server startup fails if no active token exists.
+- Metrics endpoint: `GET /v1/metrics` (available only when `--metrics` is enabled).
 
 ## Namespace schema contract operations
 - Register namespace: `contextd context namespace register --namespace app/editor/session --owner-type app --owner-id editor`

@@ -411,6 +411,88 @@ func TestReadinessEndpoint(t *testing.T) {
 	}
 }
 
+func TestMetricsEndpointDisabledByDefault(t *testing.T) {
+	srv := newTestServer(t)
+	res := performJSON(t, srv, http.MethodGet, "/v1/metrics", nil)
+	if res.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 when metrics disabled, got %d body=%s", res.Code, res.Body.String())
+	}
+}
+
+func TestMetricsEndpointCapturesRouteCountersAndErrors(t *testing.T) {
+	srv := newTestServer(t)
+	srv.EnableMetrics = true
+
+	okWrite := performJSON(t, srv, http.MethodPost, "/v1/context/write", map[string]any{
+		"client_id": "editor",
+		"actor":     "app:editor",
+		"namespace": "app/editor/session",
+		"key":       "summary",
+		"payload":   map[string]any{"v": 1},
+	})
+	if okWrite.Code != http.StatusOK {
+		t.Fatalf("write status=%d body=%s", okWrite.Code, okWrite.Body.String())
+	}
+
+	badHead := performJSON(t, srv, http.MethodGet, "/v1/context/head?namespace=app/editor/session", nil)
+	if badHead.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid head request, got %d body=%s", badHead.Code, badHead.Body.String())
+	}
+
+	metrics := performJSON(t, srv, http.MethodGet, "/v1/metrics", nil)
+	if metrics.Code != http.StatusOK {
+		t.Fatalf("metrics status=%d body=%s", metrics.Code, metrics.Body.String())
+	}
+
+	var payload struct {
+		Enabled bool `json:"enabled"`
+		Routes  []struct {
+			Method         string `json:"method"`
+			Path           string `json:"path"`
+			Requests       int64  `json:"requests"`
+			Errors         int64  `json:"errors"`
+			LatencyNsTotal int64  `json:"latency_ns_total"`
+			LatencyNsAvg   int64  `json:"latency_ns_avg"`
+		} `json:"routes"`
+		Totals struct {
+			Requests int64 `json:"requests"`
+			Errors   int64 `json:"errors"`
+		} `json:"totals"`
+	}
+	if err := json.Unmarshal(metrics.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal metrics: %v", err)
+	}
+	if !payload.Enabled {
+		t.Fatalf("expected enabled=true")
+	}
+	if payload.Totals.Requests < 2 {
+		t.Fatalf("expected at least 2 requests counted, got %+v", payload.Totals)
+	}
+	if payload.Totals.Errors < 1 {
+		t.Fatalf("expected at least one error counted, got %+v", payload.Totals)
+	}
+
+	foundWrite := false
+	foundBadHead := false
+	for _, route := range payload.Routes {
+		if route.Method == http.MethodPost && route.Path == "/v1/context/write" {
+			foundWrite = true
+			if route.Requests < 1 || route.Errors != 0 {
+				t.Fatalf("unexpected write route metrics: %+v", route)
+			}
+		}
+		if route.Method == http.MethodGet && route.Path == "/v1/context/head" {
+			foundBadHead = true
+			if route.Errors < 1 {
+				t.Fatalf("expected head route to record errors: %+v", route)
+			}
+		}
+	}
+	if !foundWrite || !foundBadHead {
+		t.Fatalf("expected write/head route metrics, got %+v", payload.Routes)
+	}
+}
+
 func performJSON(t *testing.T, h http.Handler, method, path string, body any) *httptest.ResponseRecorder {
 	return performJSONWithHeaders(t, h, method, path, body, nil)
 }

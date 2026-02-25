@@ -159,6 +159,26 @@ Response:
 - `consistency_issues` (integer)
 - `generated_at` (RFC3339 UTC)
 
+### GET `/v1/metrics` (optional)
+Expose lightweight runtime request counters and latency aggregates.
+
+Behavior:
+- Endpoint is enabled only when service starts with metrics flag (`contextd serve --metrics`).
+- When disabled, endpoint returns `404`.
+
+Response:
+- `enabled` (boolean)
+- `routes` (array of route metrics sorted by `(method,path)`)
+  - `method`
+  - `path`
+  - `requests`
+  - `errors`
+  - `latency_ns_total`
+  - `latency_ns_avg`
+- `totals`
+  - `requests`
+  - `errors`
+
 ## Determinism requirements
 - Identical store state + identical request must produce identical item ordering.
 - Selector evaluation must use explicit sort keys; fallback sort is `(namespace,key,revision)`.

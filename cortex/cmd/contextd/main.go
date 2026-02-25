@@ -17,9 +17,10 @@ import (
 )
 
 type serveConfig struct {
-	Addr        string
-	ManagedAuth bool
-	StaticToken string
+	Addr          string
+	ManagedAuth   bool
+	StaticToken   string
+	EnableMetrics bool
 }
 
 func main() {
@@ -67,19 +68,26 @@ func parseServeArgs(args []string) (serveConfig, error) {
 	addr := fs.String("addr", ":8080", "listen address")
 	managed := fs.Bool("managed-auth", false, "enable managed token auth")
 	static := fs.String("static-token", "", "static bearer token (legacy mode)")
+	metrics := fs.Bool("metrics", false, "enable /v1/metrics endpoint")
 	if err := fs.Parse(args); err != nil {
 		return serveConfig{}, err
 	}
 	if *managed && strings.TrimSpace(*static) != "" {
 		return serveConfig{}, fmt.Errorf("managed-auth and static-token are mutually exclusive")
 	}
-	return serveConfig{Addr: *addr, ManagedAuth: *managed, StaticToken: strings.TrimSpace(*static)}, nil
+	return serveConfig{
+		Addr:          *addr,
+		ManagedAuth:   *managed,
+		StaticToken:   strings.TrimSpace(*static),
+		EnableMetrics: *metrics,
+	}, nil
 }
 
 func runServe(ctx context.Context, store *contextstore.Store, stderr *os.File, cfg serveConfig) int {
 	srv := contextapi.NewServer(store, contextpolicy.New())
 	srv.ManagedAuth = cfg.ManagedAuth
 	srv.AuthToken = cfg.StaticToken
+	srv.EnableMetrics = cfg.EnableMetrics
 
 	if cfg.ManagedAuth {
 		ok, err := store.HasActiveAuthTokens(ctx)

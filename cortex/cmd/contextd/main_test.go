@@ -15,8 +15,18 @@ func TestParseServeArgsDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse defaults: %v", err)
 	}
-	if cfg.Addr != ":8080" || cfg.ManagedAuth || cfg.StaticToken != "" {
+	if cfg.Addr != ":8080" || cfg.ManagedAuth || cfg.StaticToken != "" || cfg.EnableMetrics {
 		t.Fatalf("unexpected defaults: %+v", cfg)
+	}
+}
+
+func TestParseServeArgsMetricsFlag(t *testing.T) {
+	cfg, err := parseServeArgs([]string{"--metrics"})
+	if err != nil {
+		t.Fatalf("parse metrics flag: %v", err)
+	}
+	if !cfg.EnableMetrics {
+		t.Fatalf("expected metrics to be enabled")
 	}
 }
 
