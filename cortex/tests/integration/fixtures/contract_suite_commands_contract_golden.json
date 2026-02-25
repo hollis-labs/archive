@@ -16,6 +16,7 @@
     "make-bootstrap-sync",
     "make-smoke-invalid-token",
     "runlog-helper",
+    "fixture-lint-script",
     "agents-boot-check"
   ]
 }

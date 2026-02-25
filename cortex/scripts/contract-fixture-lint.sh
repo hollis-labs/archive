@@ -25,6 +25,17 @@ fixtures=(
   "tests/integration/fixtures/agents_boot_check_contract_golden.json"
 )
 
+if [[ -n "${CONTRACT_FIXTURE_LINT_MANIFEST:-}" ]]; then
+  fixtures=()
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    trimmed="$(echo "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+    if [[ -z "$trimmed" || "$trimmed" == \#* ]]; then
+      continue
+    fi
+    fixtures+=("$trimmed")
+  done < "$CONTRACT_FIXTURE_LINT_MANIFEST"
+fi
+
 missing=0
 for file in "${fixtures[@]}"; do
   if [[ ! -f "$file" ]]; then

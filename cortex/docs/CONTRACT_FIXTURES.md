@@ -63,6 +63,7 @@ This index lists fixture files and their associated validation command.
   - `go test ./tests/integration -run ContractSuiteCommandsScript`
   - `go test ./tests/integration -run ContractSuiteRegistryParity`
   - `go test ./tests/integration -run RunlogHelperContract`
+  - `go test ./tests/integration -run ContractFixtureLintScript`
   - `go test ./tests/integration -run BootstrapSyncScript`
   - `go test ./tests/integration -run BootstrapSyncNoLogContract`
   - `go test ./tests/integration -run AgentsBootCheckContract`
