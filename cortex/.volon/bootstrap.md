@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-088` to add unknown-suite error contract coverage.
+- Start `TASK-20260225-089` to document contract suite naming conventions.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 3 todo, 0 blocked, 87 done
+- Tasks: 2 todo, 0 blocked, 88 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-088 — Add contract test for unknown contract suite error output (A)
 - TASK-20260225-089 — Document contract suite naming conventions (B)
 - TASK-20260225-090 — Add regression test for contract-suite-commands line format (B)
 

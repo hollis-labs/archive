@@ -104,6 +104,7 @@ func contractSuites() []contractSuite {
 		{Name: "cli-audit", Command: "go test ./tests/integration -run CLIAuditContract -count=1"},
 		{Name: "cli-contract-list-table", Command: "go test ./tests/integration -run ContractListTableContract -count=1"},
 		{Name: "cli-contract-run-table", Command: "go test ./tests/integration -run ContractRunExecuteTableContract -count=1"},
+		{Name: "cli-contract-run-unknown-suite", Command: "go test ./tests/integration -run ContractRunUnknownSuiteErrorContract -count=1"},
 		{Name: "smoke-invalid-token", Command: "go test ./tests/integration -run SmokeInvalidTokenContract -count=1"},
 		{Name: "make-contract-cli-list", Command: "go test ./tests/integration -run MakeContractCLIListContract -count=1"},
 		{Name: "make-contract-cli-run", Command: "go test ./tests/integration -run MakeContractCLIRunContract -count=1"},

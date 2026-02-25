@@ -13,6 +13,7 @@ fixtures=(
   "tests/integration/fixtures/cli_contract_command_golden.json"
   "tests/integration/fixtures/contract_list_table_golden.json"
   "tests/integration/fixtures/contract_run_execute_table_golden.json"
+  "tests/integration/fixtures/contract_run_unknown_suite_error_golden.json"
   "tests/integration/fixtures/make_contract_cli_list_contract_golden.json"
   "tests/integration/fixtures/make_contract_cli_run_contract_golden.json"
   "tests/integration/fixtures/make_contract_commands_contract_golden.json"

@@ -126,6 +126,8 @@ Rotation checklist:
 - Contract list table suite: `go test ./tests/integration -run ContractListTableContract`
 - Golden contract run execute-table fixture: `tests/integration/fixtures/contract_run_execute_table_golden.json`
 - Contract run execute-table suite: `go test ./tests/integration -run ContractRunExecuteTableContract`
+- Golden contract run unknown-suite fixture: `tests/integration/fixtures/contract_run_unknown_suite_error_golden.json`
+- Contract run unknown-suite suite: `go test ./tests/integration -run ContractRunUnknownSuiteErrorContract`
 - Golden make contract-cli-list fixture: `tests/integration/fixtures/make_contract_cli_list_contract_golden.json`
 - Make contract-cli-list suite: `go test ./tests/integration -run MakeContractCLIListContract`
 - Golden make contract-cli-run fixture: `tests/integration/fixtures/make_contract_cli_run_contract_golden.json`
