@@ -8,3 +8,7 @@ Planned baseline specs:
 - `CLI.md`
 - `STORAGE.md`
 - `VIEWS.md`
+
+Output notes:
+- `outputs/api-diff.md`
+- `outputs/cli-examples.md`
