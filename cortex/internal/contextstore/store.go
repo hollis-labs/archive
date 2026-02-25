@@ -16,7 +16,13 @@ import (
 )
 
 const (
-	schemaVersion = 1
+	schemaVersion = 2
+	// DefaultSelectLimit bounds selector response size when no explicit limit is provided.
+	DefaultSelectLimit = 200
+	// MaxSelectLimit is the upper bound accepted for selector limits.
+	MaxSelectLimit        = 500
+	maxSelectorNamespaces = 32
+	maxSelectorKeys       = 128
 )
 
 var (
@@ -56,6 +62,30 @@ type Selector struct {
 	RevisionScope string   `json:"revision_scope,omitempty"` // head|all
 	Order         []string `json:"order,omitempty"`
 	Limit         int      `json:"limit,omitempty"`
+}
+
+// ConsistencyIssue reports a deterministic storage/index inconsistency finding.
+type ConsistencyIssue struct {
+	Type      string `json:"type"`
+	Namespace string `json:"namespace,omitempty"`
+	Key       string `json:"key,omitempty"`
+	RecordID  string `json:"record_id,omitempty"`
+	Revision  int64  `json:"revision,omitempty"`
+	FilePath  string `json:"file_path,omitempty"`
+	Detail    string `json:"detail,omitempty"`
+}
+
+// AuditEvent captures structured operation metadata for observability/audit queries.
+type AuditEvent struct {
+	ID        int64           `json:"id"`
+	EventType string          `json:"event_type"`
+	Actor     string          `json:"actor"`
+	Namespace string          `json:"namespace"`
+	Key       string          `json:"key"`
+	Revision  int64           `json:"revision"`
+	RecordID  string          `json:"record_id,omitempty"`
+	CreatedAt string          `json:"created_at"`
+	Metadata  json.RawMessage `json:"metadata,omitempty"`
 }
 
 // Open initializes schema and storage directories.
@@ -161,6 +191,24 @@ CREATE TABLE IF NOT EXISTS heads (
 			}
 
 			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_records_ns_key_rev ON records(namespace, key_name, revision)`); err != nil {
+				return err
+			}
+		case 2:
+			if _, err = tx.ExecContext(ctx, `
+CREATE TABLE IF NOT EXISTS audit_events (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	event_type TEXT NOT NULL,
+	actor TEXT NOT NULL,
+	namespace TEXT NOT NULL,
+	key_name TEXT NOT NULL,
+	revision INTEGER NOT NULL,
+	record_id TEXT,
+	created_at TEXT NOT NULL,
+	metadata_json TEXT
+)`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_audit_events_created ON audit_events(created_at, id)`); err != nil {
 				return err
 			}
 		}
@@ -355,21 +403,10 @@ ORDER BY revision ASC`
 
 // Select evaluates a deterministic selector over indexed records.
 func (s *Store) Select(ctx context.Context, sel Selector) ([]Record, error) {
+	if err := validateSelector(&sel); err != nil {
+		return nil, err
+	}
 	scope := normalizedScope(sel.RevisionScope)
-	if sel.Limit < 0 {
-		return nil, errors.New("limit must be >= 0")
-	}
-
-	if len(sel.Order) == 0 {
-		sel.Order = []string{"namespace", "key", "revision"}
-	}
-	for _, key := range sel.Order {
-		switch key {
-		case "namespace", "key", "revision":
-		default:
-			return nil, fmt.Errorf("unsupported order key %q", key)
-		}
-	}
 
 	query := `
 SELECT r.record_id, r.namespace, r.key_name, r.revision, r.actor, r.created_at, r.checksum, r.file_path
@@ -446,6 +483,279 @@ JOIN heads h ON h.head_record_id = r.record_id`
 	return out, nil
 }
 
+// ScanConsistency reports deterministic consistency findings between index rows and payload files.
+func (s *Store) ScanConsistency(ctx context.Context) ([]ConsistencyIssue, error) {
+	type recRow struct {
+		namespace string
+		key       string
+		revision  int64
+		recordID  string
+		filePath  string
+	}
+
+	rows, err := s.db.QueryContext(ctx, `
+SELECT namespace, key_name, revision, record_id, file_path
+FROM records
+ORDER BY namespace, key_name, revision ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	issues := make([]ConsistencyIssue, 0)
+	maxHeads := map[string]recRow{}
+	recordByID := map[string]recRow{}
+
+	for rows.Next() {
+		var rr recRow
+		if err := rows.Scan(&rr.namespace, &rr.key, &rr.revision, &rr.recordID, &rr.filePath); err != nil {
+			return nil, err
+		}
+		recordByID[rr.recordID] = rr
+
+		compoundKey := rr.namespace + "\x00" + rr.key
+		prev, ok := maxHeads[compoundKey]
+		if !ok || rr.revision > prev.revision {
+			maxHeads[compoundKey] = rr
+		}
+
+		abs := filepath.Join(s.recordsDir, rr.filePath)
+		payload, err := os.ReadFile(abs)
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				issues = append(issues, ConsistencyIssue{
+					Type:      "missing_payload",
+					Namespace: rr.namespace,
+					Key:       rr.key,
+					RecordID:  rr.recordID,
+					Revision:  rr.revision,
+					FilePath:  rr.filePath,
+					Detail:    "record index points to missing payload file",
+				})
+				continue
+			}
+			return nil, err
+		}
+		if !json.Valid(payload) {
+			issues = append(issues, ConsistencyIssue{
+				Type:      "invalid_payload_json",
+				Namespace: rr.namespace,
+				Key:       rr.key,
+				RecordID:  rr.recordID,
+				Revision:  rr.revision,
+				FilePath:  rr.filePath,
+				Detail:    "payload file is not valid JSON",
+			})
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	headRows, err := s.db.QueryContext(ctx, `
+SELECT namespace, key_name, head_revision, head_record_id
+FROM heads
+ORDER BY namespace, key_name ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer headRows.Close()
+
+	seenHeads := map[string]bool{}
+	for headRows.Next() {
+		var ns, key, headRecordID string
+		var headRev int64
+		if err := headRows.Scan(&ns, &key, &headRev, &headRecordID); err != nil {
+			return nil, err
+		}
+		compoundKey := ns + "\x00" + key
+		seenHeads[compoundKey] = true
+
+		maxRec, ok := maxHeads[compoundKey]
+		if !ok {
+			issues = append(issues, ConsistencyIssue{
+				Type:      "orphan_head",
+				Namespace: ns,
+				Key:       key,
+				Revision:  headRev,
+				RecordID:  headRecordID,
+				Detail:    "head exists but no records exist for namespace/key",
+			})
+			continue
+		}
+		if maxRec.recordID != headRecordID || maxRec.revision != headRev {
+			issues = append(issues, ConsistencyIssue{
+				Type:      "head_mismatch",
+				Namespace: ns,
+				Key:       key,
+				Revision:  headRev,
+				RecordID:  headRecordID,
+				Detail:    "head does not point to latest indexed revision",
+			})
+		}
+		if _, ok := recordByID[headRecordID]; !ok {
+			issues = append(issues, ConsistencyIssue{
+				Type:      "head_missing_record",
+				Namespace: ns,
+				Key:       key,
+				Revision:  headRev,
+				RecordID:  headRecordID,
+				Detail:    "head references a non-existent record_id",
+			})
+		}
+	}
+	if err := headRows.Err(); err != nil {
+		return nil, err
+	}
+
+	for compoundKey, rec := range maxHeads {
+		if !seenHeads[compoundKey] {
+			issues = append(issues, ConsistencyIssue{
+				Type:      "missing_head",
+				Namespace: rec.namespace,
+				Key:       rec.key,
+				Revision:  rec.revision,
+				RecordID:  rec.recordID,
+				Detail:    "records exist but no head entry found",
+			})
+		}
+	}
+
+	sort.SliceStable(issues, func(i, j int) bool {
+		a, b := issues[i], issues[j]
+		if a.Type != b.Type {
+			return a.Type < b.Type
+		}
+		if a.Namespace != b.Namespace {
+			return a.Namespace < b.Namespace
+		}
+		if a.Key != b.Key {
+			return a.Key < b.Key
+		}
+		if a.Revision != b.Revision {
+			return a.Revision < b.Revision
+		}
+		return a.RecordID < b.RecordID
+	})
+
+	return issues, nil
+}
+
+// RebuildHeads rebuilds heads from latest records for each namespace/key pair.
+func (s *Store) RebuildHeads(ctx context.Context) (int64, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	if _, err = tx.ExecContext(ctx, `DELETE FROM heads`); err != nil {
+		return 0, err
+	}
+	res, err := tx.ExecContext(ctx, `
+INSERT INTO heads (namespace, key_name, head_revision, head_record_id, updated_at)
+SELECT r.namespace, r.key_name, r.revision, r.record_id, ?
+FROM records r
+JOIN (
+	SELECT namespace, key_name, MAX(revision) AS max_revision
+	FROM records
+	GROUP BY namespace, key_name
+) latest
+ON latest.namespace = r.namespace AND latest.key_name = r.key_name AND latest.max_revision = r.revision
+`, time.Now().UTC().Format(time.RFC3339))
+	if err != nil {
+		return 0, err
+	}
+	if err = tx.Commit(); err != nil {
+		return 0, err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return 0, nil
+	}
+	return n, nil
+}
+
+// RecordAuditEvent stores structured metadata for operational audit queries.
+func (s *Store) RecordAuditEvent(ctx context.Context, event AuditEvent) error {
+	if strings.TrimSpace(event.EventType) == "" {
+		return errors.New("event_type required")
+	}
+	if strings.TrimSpace(event.Actor) == "" {
+		return errors.New("actor required")
+	}
+	if strings.TrimSpace(event.Namespace) == "" {
+		return errors.New("namespace required")
+	}
+	if strings.TrimSpace(event.Key) == "" {
+		return errors.New("key required")
+	}
+	if event.Revision <= 0 {
+		return errors.New("revision must be > 0")
+	}
+	if strings.TrimSpace(event.CreatedAt) == "" {
+		event.CreatedAt = time.Now().UTC().Format(time.RFC3339)
+	}
+	metadata := event.Metadata
+	if len(metadata) > 0 && !json.Valid(metadata) {
+		return errors.New("metadata must be valid JSON")
+	}
+	_, err := s.db.ExecContext(ctx, `
+INSERT INTO audit_events (event_type, actor, namespace, key_name, revision, record_id, created_at, metadata_json)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		event.EventType,
+		event.Actor,
+		event.Namespace,
+		event.Key,
+		event.Revision,
+		event.RecordID,
+		event.CreatedAt,
+		string(metadata),
+	)
+	return err
+}
+
+// ListAuditEvents returns newest-first audit events with deterministic ordering.
+func (s *Store) ListAuditEvents(ctx context.Context, limit int) ([]AuditEvent, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	if limit > 500 {
+		limit = 500
+	}
+
+	rows, err := s.db.QueryContext(ctx, `
+SELECT id, event_type, actor, namespace, key_name, revision, record_id, created_at, metadata_json
+FROM audit_events
+ORDER BY id DESC
+LIMIT ?`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]AuditEvent, 0, limit)
+	for rows.Next() {
+		var event AuditEvent
+		var metadata string
+		if err := rows.Scan(&event.ID, &event.EventType, &event.Actor, &event.Namespace, &event.Key, &event.Revision, &event.RecordID, &event.CreatedAt, &metadata); err != nil {
+			return nil, err
+		}
+		if strings.TrimSpace(metadata) != "" {
+			event.Metadata = json.RawMessage(metadata)
+		}
+		out = append(out, event)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func sanitizePathPart(in string) (string, error) {
 	trimmed := strings.TrimSpace(in)
 	if trimmed == "" {
@@ -482,6 +792,63 @@ func normalizedScope(scope string) string {
 		return "all"
 	}
 	return "head"
+}
+
+func validateSelector(sel *Selector) error {
+	if sel == nil {
+		return errors.New("selector required")
+	}
+	if len(sel.Namespaces) > maxSelectorNamespaces {
+		return fmt.Errorf("too many namespace patterns: max %d", maxSelectorNamespaces)
+	}
+	for i, pattern := range sel.Namespaces {
+		pattern = strings.TrimSpace(pattern)
+		if pattern == "" {
+			return fmt.Errorf("namespaces[%d] cannot be empty", i)
+		}
+		if _, err := filepath.Match(pattern, "x"); err != nil {
+			return fmt.Errorf("invalid namespaces[%d] pattern: %w", i, err)
+		}
+		sel.Namespaces[i] = pattern
+	}
+
+	if len(sel.Keys) > maxSelectorKeys {
+		return fmt.Errorf("too many keys: max %d", maxSelectorKeys)
+	}
+	for i, key := range sel.Keys {
+		key = strings.TrimSpace(key)
+		if key == "" {
+			return fmt.Errorf("keys[%d] cannot be empty", i)
+		}
+		sel.Keys[i] = key
+	}
+
+	if sel.Limit < 0 {
+		return errors.New("limit must be >= 0")
+	}
+	if sel.Limit == 0 {
+		sel.Limit = DefaultSelectLimit
+	}
+	if sel.Limit > MaxSelectLimit {
+		return fmt.Errorf("limit exceeds max %d", MaxSelectLimit)
+	}
+
+	if len(sel.Order) == 0 {
+		sel.Order = []string{"namespace", "key", "revision"}
+	}
+	seen := map[string]bool{}
+	for _, key := range sel.Order {
+		switch key {
+		case "namespace", "key", "revision":
+			if seen[key] {
+				return fmt.Errorf("duplicate order key %q", key)
+			}
+			seen[key] = true
+		default:
+			return fmt.Errorf("unsupported order key %q", key)
+		}
+	}
+	return nil
 }
 
 func matchNamespace(patterns []string, namespace string) bool {

@@ -17,6 +17,8 @@ import (
 type Server struct {
 	Store  *contextstore.Store
 	Policy *contextpolicy.Engine
+	// AuthToken enables bearer-token auth on mutating routes when non-empty.
+	AuthToken string
 }
 
 // NewServer creates an API server.
@@ -30,20 +32,55 @@ func NewServer(store *contextstore.Store, policy *contextpolicy.Engine) *Server 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/namespaces/register":
+		if !s.authorizeMutatingRequest(w, r) {
+			return
+		}
 		s.handleNamespaceRegister(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/write":
+		if !s.authorizeMutatingRequest(w, r) {
+			return
+		}
 		s.handleWrite(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/promote":
+		if !s.authorizeMutatingRequest(w, r) {
+			return
+		}
 		s.handlePromote(w, r)
 	case r.Method == http.MethodGet && r.URL.Path == "/v1/context/head":
 		s.handleHead(w, r)
 	case r.Method == http.MethodGet && r.URL.Path == "/v1/context/history":
 		s.handleHistory(w, r)
+	case r.Method == http.MethodGet && r.URL.Path == "/v1/context/audit":
+		s.handleAudit(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/views/evaluate":
 		s.handleView(w, r)
+	case r.Method == http.MethodGet && r.URL.Path == "/v1/context/consistency/scan":
+		s.handleConsistencyScan(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/consistency/repair":
+		if !s.authorizeMutatingRequest(w, r) {
+			return
+		}
+		s.handleConsistencyRepair(w, r)
 	default:
 		writeError(w, http.StatusNotFound, "not_found", "endpoint not found", nil)
 	}
+}
+
+func (s *Server) authorizeMutatingRequest(w http.ResponseWriter, r *http.Request) bool {
+	if strings.TrimSpace(s.AuthToken) == "" {
+		return true
+	}
+	authHeader := strings.TrimSpace(r.Header.Get("Authorization"))
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		writeError(w, http.StatusUnauthorized, "auth_required", "missing or invalid bearer token", nil)
+		return false
+	}
+	token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+	if token == "" || token != s.AuthToken {
+		writeError(w, http.StatusUnauthorized, "auth_required", "missing or invalid bearer token", nil)
+		return false
+	}
+	return true
 }
 
 type namespaceRegisterRequest struct {
@@ -99,6 +136,15 @@ func (s *Server) handleWrite(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "write_failed", err.Error(), nil)
 		return
 	}
+	_ = s.Store.RecordAuditEvent(r.Context(), contextstore.AuditEvent{
+		EventType: "write",
+		Actor:     req.Actor,
+		Namespace: req.Namespace,
+		Key:       req.Key,
+		Revision:  rec.Revision,
+		RecordID:  rec.RecordID,
+		Metadata:  json.RawMessage(`{"source":"http","reason":` + quoteJSON(req.Reason) + `}`),
+	})
 	writeJSON(w, http.StatusOK, map[string]any{
 		"record_id":     rec.RecordID,
 		"revision":      rec.Revision,
@@ -156,6 +202,15 @@ func (s *Server) handlePromote(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "promote_failed", err.Error(), nil)
 		return
 	}
+	_ = s.Store.RecordAuditEvent(r.Context(), contextstore.AuditEvent{
+		EventType: "promote",
+		Actor:     req.Actor,
+		Namespace: req.ToNamespace,
+		Key:       req.ToKey,
+		Revision:  out.Revision,
+		RecordID:  out.RecordID,
+		Metadata:  json.RawMessage(`{"source":"http","from_namespace":` + quoteJSON(req.FromNamespace) + `,"from_key":` + quoteJSON(req.FromKey) + `}`),
+	})
 	writeJSON(w, http.StatusOK, map[string]any{
 		"promoted_record_id": out.RecordID,
 		"target_revision":    out.Revision,
@@ -207,6 +262,27 @@ func (s *Server) handleHistory(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"items": items, "next_cursor": nil})
 }
 
+func (s *Server) handleAudit(w http.ResponseWriter, r *http.Request) {
+	limit := 50
+	if raw := strings.TrimSpace(r.URL.Query().Get("limit")); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 0 {
+			writeError(w, http.StatusBadRequest, "validation_error", "limit must be a non-negative integer", nil)
+			return
+		}
+		limit = n
+	}
+	events, err := s.Store.ListAuditEvents(r.Context(), limit)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "read_failed", err.Error(), nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"items": events,
+		"count": len(events),
+	})
+}
+
 type viewRequest struct {
 	Selector       contextstore.Selector `json:"selector"`
 	IncludePayload bool                  `json:"include_payload"`
@@ -221,6 +297,12 @@ func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Limit > 0 {
 		req.Selector.Limit = req.Limit
+	}
+	if req.Selector.Limit == 0 {
+		req.Selector.Limit = contextstore.DefaultSelectLimit
+	}
+	if len(req.Selector.Order) == 0 {
+		req.Selector.Order = []string{"namespace", "key", "revision"}
 	}
 
 	items, err := s.Store.Select(r.Context(), req.Selector)
@@ -239,9 +321,39 @@ func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
 		"evaluation_meta": map[string]any{
 			"sort_keys":        req.Selector.Order,
 			"matched_count":    len(items),
-			"truncated":        req.Selector.Limit > 0 && len(items) >= req.Selector.Limit,
+			"truncated":        len(items) >= req.Selector.Limit,
 			"normalized_scope": normalizedScope(req.Selector.RevisionScope),
 		},
+	})
+}
+
+func (s *Server) handleConsistencyScan(w http.ResponseWriter, r *http.Request) {
+	issues, err := s.Store.ScanConsistency(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "scan_failed", err.Error(), nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"issues": issues,
+		"count":  len(issues),
+	})
+}
+
+func (s *Server) handleConsistencyRepair(w http.ResponseWriter, r *http.Request) {
+	rebuilt, err := s.Store.RebuildHeads(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "repair_failed", err.Error(), nil)
+		return
+	}
+	issues, err := s.Store.ScanConsistency(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "scan_failed", err.Error(), nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"rebuilt_heads":    rebuilt,
+		"remaining_issues": len(issues),
+		"issues":           issues,
 	})
 }
 
@@ -274,6 +386,11 @@ func normalizedScope(scope string) string {
 		return "all"
 	}
 	return "head"
+}
+
+func quoteJSON(s string) string {
+	b, _ := json.Marshal(s)
+	return string(b)
 }
 
 // Write is used by tests needing isolated request context timeouts.

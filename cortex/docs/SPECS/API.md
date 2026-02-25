@@ -9,7 +9,17 @@ Status: pivot-aligned draft (Task 5)
 - Error shape:
   - `code` (string)
   - `message` (string)
-  - `details` (object, optional)
+- `details` (object, optional)
+
+## Local auth posture (MVP)
+- Mechanism: bearer token in `Authorization` header.
+- Scope: mutating endpoints (`POST /v1/namespaces/register`, `POST /v1/context/write`, `POST /v1/context/promote`).
+- Behavior:
+  - When server auth token is configured, mutating requests without a matching bearer token return `401`.
+  - Read endpoints (`head`, `history`, `views/evaluate`) remain side-effect free and do not require auth in MVP.
+- Error envelope for auth failures:
+  - `code: "auth_required"`
+  - `message: "missing or invalid bearer token"`
 
 ## Identity and namespace context
 Each mutating request carries:
@@ -97,6 +107,30 @@ Request:
 Response:
 - `items` (deterministically ordered)
 - `evaluation_meta` (`sort_keys`, `matched_count`, `truncated`)
+
+Selector limits:
+- `namespaces`: max 32 patterns
+- `keys`: max 128 entries
+- `limit`: defaults to 200 when omitted/zero, max 500
+- invalid selector complexity/shape returns `400` (`code: "validation_error"`)
+
+### GET `/v1/context/consistency/scan`
+Run a deterministic consistency scan across index rows and payload files.
+
+Response:
+- `count` (integer)
+- `issues` (array of typed findings such as `missing_payload`, `head_mismatch`, `missing_head`)
+
+### POST `/v1/context/consistency/repair`
+Rebuild `heads` from latest indexed revisions for each `(namespace,key)` pair.
+
+Auth:
+- Treated as mutating; requires bearer token when auth token is configured.
+
+Response:
+- `rebuilt_heads` (integer)
+- `remaining_issues` (integer)
+- `issues` (post-repair scan findings)
 
 ## Determinism requirements
 - Identical store state + identical request must produce identical item ordering.

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -100,6 +101,93 @@ func TestPolicyAndDeterminismEndToEnd(t *testing.T) {
 	}
 }
 
+func TestAuthGateForWriteAndPromote(t *testing.T) {
+	srv := newServer(t)
+	srv.AuthToken = "top-secret"
+
+	withoutToken := perform(t, srv, http.MethodPost, "/v1/context/write", map[string]any{
+		"client_id": "editor",
+		"actor":     "app:editor",
+		"namespace": "app/editor/session",
+		"key":       "summary",
+		"payload":   map[string]any{"v": 1},
+	})
+	if withoutToken.Code != http.StatusUnauthorized {
+		t.Fatalf("write without token expected 401 got %d body=%s", withoutToken.Code, withoutToken.Body.String())
+	}
+
+	withToken := performWithHeaders(t, srv, http.MethodPost, "/v1/context/write", map[string]any{
+		"client_id": "editor",
+		"actor":     "app:editor",
+		"namespace": "app/editor/session",
+		"key":       "summary",
+		"payload":   map[string]any{"v": 1},
+	}, map[string]string{"Authorization": "Bearer top-secret"})
+	if withToken.Code != http.StatusOK {
+		t.Fatalf("write with token expected 200 got %d body=%s", withToken.Code, withToken.Body.String())
+	}
+
+	promoteDenied := performWithHeaders(t, srv, http.MethodPost, "/v1/context/promote", map[string]any{
+		"client_id":      "editor",
+		"actor":          "user",
+		"from_namespace": "app/editor/session",
+		"from_key":       "summary",
+		"to_namespace":   "user/notes",
+		"to_key":         "daily",
+	}, map[string]string{"Authorization": "Bearer wrong"})
+	if promoteDenied.Code != http.StatusUnauthorized {
+		t.Fatalf("promote with wrong token expected 401 got %d body=%s", promoteDenied.Code, promoteDenied.Body.String())
+	}
+
+	promoteAllowed := performWithHeaders(t, srv, http.MethodPost, "/v1/context/promote", map[string]any{
+		"client_id":      "editor",
+		"actor":          "user",
+		"from_namespace": "app/editor/session",
+		"from_key":       "summary",
+		"to_namespace":   "user/notes",
+		"to_key":         "daily",
+	}, map[string]string{"Authorization": "Bearer top-secret"})
+	if promoteAllowed.Code != http.StatusOK {
+		t.Fatalf("promote with token expected 200 got %d body=%s", promoteAllowed.Code, promoteAllowed.Body.String())
+	}
+}
+
+func TestViewDefaultLimitIsBounded(t *testing.T) {
+	srv := newServer(t)
+	for i := 0; i < contextstore.DefaultSelectLimit+30; i++ {
+		got := perform(t, srv, http.MethodPost, "/v1/context/write", map[string]any{
+			"client_id": "editor",
+			"actor":     "app:editor",
+			"namespace": "app/editor/session",
+			"key":       fmt.Sprintf("k-%03d", i),
+			"payload":   map[string]any{"v": i},
+		})
+		if got.Code != http.StatusOK {
+			t.Fatalf("write %d expected 200 got %d body=%s", i, got.Code, got.Body.String())
+		}
+	}
+
+	view := perform(t, srv, http.MethodPost, "/v1/views/evaluate", map[string]any{
+		"selector": map[string]any{
+			"namespaces":     []string{"app/editor/*"},
+			"revision_scope": "all",
+		},
+	})
+	if view.Code != http.StatusOK {
+		t.Fatalf("view expected 200 got %d body=%s", view.Code, view.Body.String())
+	}
+
+	var payload struct {
+		Items []map[string]any `json:"items"`
+	}
+	if err := json.Unmarshal(view.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if len(payload.Items) != contextstore.DefaultSelectLimit {
+		t.Fatalf("expected default bounded result size %d got %d", contextstore.DefaultSelectLimit, len(payload.Items))
+	}
+}
+
 func newServer(t *testing.T) *contextapi.Server {
 	t.Helper()
 	s, err := contextstore.Open(context.Background(), contextstore.Config{RootDir: t.TempDir()})
@@ -111,6 +199,10 @@ func newServer(t *testing.T) *contextapi.Server {
 }
 
 func perform(t *testing.T, h http.Handler, method, path string, body any) *httptest.ResponseRecorder {
+	return performWithHeaders(t, h, method, path, body, nil)
+}
+
+func performWithHeaders(t *testing.T, h http.Handler, method, path string, body any, headers map[string]string) *httptest.ResponseRecorder {
 	t.Helper()
 	var payload []byte
 	if body != nil {
@@ -123,6 +215,9 @@ func perform(t *testing.T, h http.Handler, method, path string, body any) *httpt
 	req := httptest.NewRequest(method, path, bytes.NewReader(payload))
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
 	}
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, req)

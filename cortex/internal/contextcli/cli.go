@@ -57,6 +57,12 @@ func (c *CLI) Run(ctx context.Context, args []string) int {
 		return c.runView(ctx, args[2:])
 	case "promote":
 		return c.runPromote(ctx, args[2:])
+	case "doctor":
+		return c.runDoctor(ctx, args[2:])
+	case "repair-heads":
+		return c.runRepairHeads(ctx, args[2:])
+	case "audit":
+		return c.runAudit(ctx, args[2:])
 	default:
 		return c.fail("unknown subcommand: " + args[1])
 	}
@@ -103,6 +109,15 @@ func (c *CLI) runPut(ctx context.Context, args []string) int {
 	if err != nil {
 		return c.fail(err.Error())
 	}
+	_ = c.Store.RecordAuditEvent(ctx, contextstore.AuditEvent{
+		EventType: "write",
+		Actor:     *actor,
+		Namespace: *namespace,
+		Key:       *key,
+		Revision:  rec.Revision,
+		RecordID:  rec.RecordID,
+		Metadata:  json.RawMessage(`{"source":"cli"}`),
+	})
 	return c.writeJSON(rec)
 }
 
@@ -202,7 +217,111 @@ func (c *CLI) runPromote(ctx context.Context, args []string) int {
 	if err != nil {
 		return c.fail(err.Error())
 	}
+	_ = c.Store.RecordAuditEvent(ctx, contextstore.AuditEvent{
+		EventType: "promote",
+		Actor:     *actor,
+		Namespace: *toNamespace,
+		Key:       *toKey,
+		Revision:  out.Revision,
+		RecordID:  out.RecordID,
+		Metadata: json.RawMessage(func() []byte {
+			b, _ := json.Marshal(map[string]any{
+				"source":         "cli",
+				"from_namespace": *fromNamespace,
+				"from_key":       *fromKey,
+			})
+			return b
+		}()),
+	})
 	return c.writeJSON(map[string]any{"promoted_record_id": out.RecordID, "target_revision": out.Revision})
+}
+
+func (c *CLI) runDoctor(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("doctor", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	output := fs.String("output", "json", "json|table")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	issues, err := c.Store.ScanConsistency(ctx)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+
+	switch strings.TrimSpace(*output) {
+	case "json", "":
+		return c.writeJSON(map[string]any{"count": len(issues), "issues": issues})
+	case "table":
+		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
+		_, _ = fmt.Fprintln(w, "TYPE\tNAMESPACE\tKEY\tREVISION\tRECORD_ID\tDETAIL")
+		for _, issue := range issues {
+			_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%s\t%s\n", issue.Type, issue.Namespace, issue.Key, issue.Revision, issue.RecordID, issue.Detail)
+		}
+		_ = w.Flush()
+		return 0
+	default:
+		return c.fail("output must be json|table")
+	}
+}
+
+func (c *CLI) runRepairHeads(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("repair-heads", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	output := fs.String("output", "json", "json|table")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	rebuilt, err := c.Store.RebuildHeads(ctx)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+	issues, err := c.Store.ScanConsistency(ctx)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+	switch strings.TrimSpace(*output) {
+	case "json", "":
+		return c.writeJSON(map[string]any{
+			"rebuilt_heads":    rebuilt,
+			"remaining_issues": len(issues),
+		})
+	case "table":
+		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
+		_, _ = fmt.Fprintln(w, "REBUILT_HEADS\tREMAINING_ISSUES")
+		_, _ = fmt.Fprintf(w, "%d\t%d\n", rebuilt, len(issues))
+		_ = w.Flush()
+		return 0
+	default:
+		return c.fail("output must be json|table")
+	}
+}
+
+func (c *CLI) runAudit(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("audit", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	limit := fs.Int("limit", 50, "limit")
+	output := fs.String("output", "json", "json|table")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	events, err := c.Store.ListAuditEvents(ctx, *limit)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+	switch strings.TrimSpace(*output) {
+	case "json", "":
+		return c.writeJSON(map[string]any{"count": len(events), "items": events})
+	case "table":
+		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
+		_, _ = fmt.Fprintln(w, "ID\tEVENT\tACTOR\tNAMESPACE\tKEY\tREVISION\tCREATED_AT")
+		for _, event := range events {
+			_, _ = fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%d\t%s\n", event.ID, event.EventType, event.Actor, event.Namespace, event.Key, event.Revision, event.CreatedAt)
+		}
+		_ = w.Flush()
+		return 0
+	default:
+		return c.fail("output must be json|table")
+	}
 }
 
 func (c *CLI) writeRecords(recs []contextstore.Record, output string) int {

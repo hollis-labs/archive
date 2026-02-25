@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 2
-updated_at: 2026-02-25T05:46:00Z
+iteration: 3
+updated_at: 2026-02-25T06:56:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,17 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Create the next implementation batch from remaining open questions (auth posture, selector bounds, persistence hardening).
+- Create the next implementation batch from remaining product and operational gaps.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 0 todo, 0 blocked, 10 done
-- Last run log: `.volon/logs/run-iteration-002-2026-02-25.md`
+- Tasks: 0 todo, 0 blocked, 14 done
+- Last run log: `.volon/logs/run-iteration-003-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- None in current batch.
+- None in current queue.
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
@@ -39,8 +39,7 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Storage implementation: `internal/contextstore/`
-- HTTP API implementation: `internal/contextapi/`
-- CLI implementation: `internal/contextcli/` and `cmd/contextd/main.go`
-- Integration tests: `tests/integration/policy_determinism_test.go`
-- CI test target: `scripts/ci-test-context-service.sh`
+- API implementation: `internal/contextapi/`
+- CLI implementation: `internal/contextcli/`
+- Store implementation: `internal/contextstore/`
+- Integration tests: `tests/integration/`

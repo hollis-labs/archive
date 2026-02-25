@@ -30,6 +30,14 @@ Views are not processors. They do not summarize, infer, merge, or mutate records
 - `order`: explicit stable sort keys. Required for deterministic behavior.
 - `limit`: optional bounded result size.
 
+## Complexity guardrails (MVP)
+- Max `namespaces` patterns: `32`
+- Max `keys` entries: `128`
+- `limit` behavior:
+  - default when omitted/zero: `200`
+  - maximum accepted: `500`
+- `order` keys allowed: `namespace`, `key`, `revision` (no duplicates)
+
 ## Determinism rules
 1. Selector parsing is pure and side-effect free.
 2. Missing `order` defaults to `(namespace,key,revision)`.
@@ -48,7 +56,9 @@ Views are not processors. They do not summarize, infer, merge, or mutate records
 ## Validation rules
 - Reject unknown selector fields.
 - Reject non-deterministic order directives.
-- Reject negative or zero limits.
+- Reject invalid namespace glob patterns.
+- Reject negative limits.
+- Reject limits above max bound.
 
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`

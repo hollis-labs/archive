@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -115,5 +116,157 @@ func TestMissingPayloadReturnsConsistencyFault(t *testing.T) {
 	}
 	if !errors.Is(err, ErrConsistencyFault) {
 		t.Fatalf("expected ErrConsistencyFault, got %v", err)
+	}
+}
+
+func TestSelectValidationAndLimits(t *testing.T) {
+	dir := t.TempDir()
+	s, err := Open(context.Background(), Config{RootDir: dir})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	for i := 0; i < DefaultSelectLimit+20; i++ {
+		if _, err := s.AppendRecord(context.Background(), AppendInput{
+			Namespace: "app/editor/session",
+			Key:       fmt.Sprintf("k-%03d", i),
+			Actor:     "app:editor",
+			Payload:   json.RawMessage(`{"ok":true}`),
+		}); err != nil {
+			t.Fatalf("append %d: %v", i, err)
+		}
+	}
+
+	// Limit=0 should apply the default bound.
+	rows, err := s.Select(context.Background(), Selector{
+		Namespaces:    []string{"app/editor/*"},
+		RevisionScope: "all",
+	})
+	if err != nil {
+		t.Fatalf("select default limit: %v", err)
+	}
+	if len(rows) != DefaultSelectLimit {
+		t.Fatalf("expected default limit %d rows, got %d", DefaultSelectLimit, len(rows))
+	}
+
+	_, err = s.Select(context.Background(), Selector{
+		Namespaces: []string{"app/editor/*"},
+		Limit:      MaxSelectLimit + 1,
+	})
+	if err == nil {
+		t.Fatalf("expected limit validation error")
+	}
+
+	_, err = s.Select(context.Background(), Selector{
+		Namespaces: []string{"["},
+	})
+	if err == nil {
+		t.Fatalf("expected namespace pattern validation error")
+	}
+}
+
+func BenchmarkSelectRepresentativeWorkload(b *testing.B) {
+	dir := b.TempDir()
+	s, err := Open(context.Background(), Config{RootDir: dir})
+	if err != nil {
+		b.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	for i := 0; i < 600; i++ {
+		ns := "app/editor/session"
+		if i%2 == 0 {
+			ns = "user/goals"
+		}
+		if _, err := s.AppendRecord(context.Background(), AppendInput{
+			Namespace: ns,
+			Key:       fmt.Sprintf("k-%03d", i),
+			Actor:     "user",
+			Payload:   json.RawMessage(`{"v":1}`),
+		}); err != nil {
+			b.Fatalf("append %d: %v", i, err)
+		}
+	}
+
+	sel := Selector{
+		Namespaces:    []string{"app/editor/*", "user/*"},
+		RevisionScope: "all",
+		Order:         []string{"namespace", "key", "revision"},
+		Limit:         300,
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		rows, err := s.Select(context.Background(), sel)
+		if err != nil {
+			b.Fatalf("select: %v", err)
+		}
+		if len(rows) > sel.Limit {
+			b.Fatalf("expected bounded results <= %d, got %d", sel.Limit, len(rows))
+		}
+	}
+}
+
+func TestScanConsistencyAndRepairHeads(t *testing.T) {
+	dir := t.TempDir()
+	s, err := Open(context.Background(), Config{RootDir: dir})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	if _, err := s.AppendRecord(context.Background(), AppendInput{
+		Namespace: "app/editor/session",
+		Key:       "summary",
+		Actor:     "app:editor",
+		Payload:   json.RawMessage(`{"v":1}`),
+	}); err != nil {
+		t.Fatalf("append: %v", err)
+	}
+	if _, err := s.AppendRecord(context.Background(), AppendInput{
+		Namespace: "app/editor/session",
+		Key:       "summary",
+		Actor:     "app:editor",
+		Payload:   json.RawMessage(`{"v":2}`),
+	}); err != nil {
+		t.Fatalf("append: %v", err)
+	}
+
+	// Force a head mismatch for repair verification.
+	if _, err := s.db.Exec(`UPDATE heads SET head_revision = 1`); err != nil {
+		t.Fatalf("tamper head: %v", err)
+	}
+
+	issues, err := s.ScanConsistency(context.Background())
+	if err != nil {
+		t.Fatalf("scan: %v", err)
+	}
+	foundHeadMismatch := false
+	for _, issue := range issues {
+		if issue.Type == "head_mismatch" {
+			foundHeadMismatch = true
+		}
+	}
+	if !foundHeadMismatch {
+		t.Fatalf("expected head_mismatch issue, got %+v", issues)
+	}
+
+	rebuilt, err := s.RebuildHeads(context.Background())
+	if err != nil {
+		t.Fatalf("rebuild heads: %v", err)
+	}
+	if rebuilt != 1 {
+		t.Fatalf("expected one rebuilt head, got %d", rebuilt)
+	}
+
+	issuesAfter, err := s.ScanConsistency(context.Background())
+	if err != nil {
+		t.Fatalf("scan after repair: %v", err)
+	}
+	for _, issue := range issuesAfter {
+		if issue.Type == "head_mismatch" {
+			t.Fatalf("expected head mismatch repaired, still present: %+v", issue)
+		}
 	}
 }
