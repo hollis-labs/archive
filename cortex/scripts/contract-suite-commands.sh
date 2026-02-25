@@ -39,6 +39,7 @@ contract-suite-commands-format	go test ./tests/integration -run ContractSuiteCom
 contract-suite-commands-unique	go test ./tests/integration -run ContractSuiteCommandsUniqueContract -count=1
 contract-suite-commands-prefix	go test ./tests/integration -run ContractSuiteCommandsPrefixContract -count=1
 contract-suite-commands-deterministic	go test ./tests/integration -run ContractSuiteCommandsDeterministicContract -count=1
+contract-suite-commands-suffix	go test ./tests/integration -run ContractSuiteCommandsSuffixContract -count=1
 fixture-lint-script	go test ./tests/integration -run ContractFixtureLintScript -count=1
 agents-boot-check	go test ./tests/integration -run AgentsBootCheckContract -count=1
 CMDS

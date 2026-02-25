@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 34
-updated_at: 2026-02-25T22:45:00Z
+iteration: 35
+updated_at: 2026-02-25T23:20:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,20 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-110` to add contract suite command-suffix guardrail coverage.
+- Start `TASK-20260225-111` to add suite-all execute-table summary coverage.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 1 todo, 0 blocked, 109 done
+- Tasks: 4 todo, 0 blocked, 110 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-110 — Add regression test for contract suite command suffix validity (B)
+- TASK-20260225-111 — Add contract test for context contract run --suite all execute table summary (A)
+- TASK-20260225-112 — Add contract test for context contract list table header stability (A)
+- TASK-20260225-113 — Document contract guardrail and parity quick-run pack (B)
+- TASK-20260225-114 — Add regression test for contract suite command token count (B)
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.

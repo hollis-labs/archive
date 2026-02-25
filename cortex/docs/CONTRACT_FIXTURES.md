@@ -103,12 +103,14 @@ When to add a new suite ID:
 | `contract-suite-commands-unique` | Prevent duplicate suite names. | `go test ./tests/integration -run ContractSuiteCommandsUniqueContract` |
 | `contract-suite-commands-prefix` | Require integration-test command prefix validity. | `go test ./tests/integration -run ContractSuiteCommandsPrefixContract` |
 | `contract-suite-commands-deterministic` | Enforce stable output ordering across repeated runs. | `go test ./tests/integration -run ContractSuiteCommandsDeterministicContract` |
+| `contract-suite-commands-suffix` | Enforce `-count=1` command suffix consistency. | `go test ./tests/integration -run ContractSuiteCommandsSuffixContract` |
 
 Recommended run order:
 1. `go test ./tests/integration -run ContractSuiteCommandsFormatContract`
 2. `go test ./tests/integration -run ContractSuiteCommandsUniqueContract`
 3. `go test ./tests/integration -run ContractSuiteCommandsPrefixContract`
 4. `go test ./tests/integration -run ContractSuiteCommandsDeterministicContract`
+5. `go test ./tests/integration -run ContractSuiteCommandsSuffixContract`
 
 ## Default Output-Mode Suites
 
@@ -174,6 +176,7 @@ See also: `docs/DEV.md#contract-output-quick-reference`.
   - `go test ./tests/integration -run ContractSuiteCommandsUniqueContract`
   - `go test ./tests/integration -run ContractSuiteCommandsPrefixContract`
   - `go test ./tests/integration -run ContractSuiteCommandsDeterministicContract`
+  - `go test ./tests/integration -run ContractSuiteCommandsSuffixContract`
   - `go test ./tests/integration -run ContractFixtureLintScript`
   - `go test ./tests/integration -run BootstrapSyncScript`
   - `go test ./tests/integration -run BootstrapSyncNoLogContract`
