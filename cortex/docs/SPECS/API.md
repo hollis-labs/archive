@@ -77,6 +77,20 @@ Content-Type: application/json
 }
 ```
 
+Auth failure decision tree (`auth_required`):
+1. Identify endpoint class:
+   - If mutating endpoint: token is always required.
+   - If read/view endpoint: check whether mode is `mvp-open-read` vs gated modes.
+2. Confirm active auth mode:
+   - `mvp-open-read`: read/view should not require token.
+   - `optional-gated-read` or `strict-auth-all`: token required for read/view.
+3. Validate token propagation:
+   - Ensure `Authorization: Bearer <token>` header is present at call boundary.
+   - Confirm token is active (not revoked/expired in managed mode).
+4. Re-check caller/tool path:
+   - Verify CLI/MCP bridge is not dropping auth headers/tokens.
+   - Confirm endpoint target matches expected environment mode.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
