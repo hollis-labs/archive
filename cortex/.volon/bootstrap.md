@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-084` to add make bootstrap-sync alias contract coverage.
+- Start `TASK-20260225-085` to document contract fixture lint manifest override usage.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 3 todo, 0 blocked, 83 done
+- Tasks: 2 todo, 0 blocked, 84 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-084 — Add contract test for make bootstrap-sync alias output (A)
 - TASK-20260225-085 — Document contract fixture lint manifest override workflow (B)
 - TASK-20260225-086 — Add table-output contract test for context contract run --execute (B)
 

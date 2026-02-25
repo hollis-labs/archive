@@ -16,6 +16,7 @@ fixtures=(
   "tests/integration/fixtures/make_contract_commands_contract_golden.json"
   "tests/integration/fixtures/make_bootstrap_report_contract_golden.json"
   "tests/integration/fixtures/make_bootstrap_sync_contract_golden.json"
+  "tests/integration/fixtures/make_bootstrap_sync_alias_contract_golden.json"
   "tests/integration/fixtures/contract_suite_commands_contract_golden.json"
   "tests/integration/fixtures/contract_suite_registry_parity_golden.json"
   "tests/integration/fixtures/smoke_invalid_token_contract_golden.json"

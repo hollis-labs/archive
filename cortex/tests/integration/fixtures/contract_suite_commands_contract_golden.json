@@ -16,6 +16,7 @@
     "bootstrap-sync-idempotent",
     "make-bootstrap-report",
     "make-bootstrap-sync",
+    "make-bootstrap-sync-alias",
     "make-smoke-invalid-token",
     "runlog-helper",
     "fixture-lint-script",

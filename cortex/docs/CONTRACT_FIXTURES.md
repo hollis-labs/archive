@@ -18,6 +18,7 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/make_contract_commands_contract_golden.json` | `make contract-commands` suite-ordering wrapper contract | `go test ./tests/integration -run MakeContractCommandsContract` |
 | `tests/integration/fixtures/make_bootstrap_report_contract_golden.json` | `make bootstrap-report` alias output marker contract | `go test ./tests/integration -run MakeBootstrapReportContract` |
 | `tests/integration/fixtures/make_bootstrap_sync_contract_golden.json` | `make bootstrap-sync-report/apply` output + apply contract | `go test ./tests/integration -run MakeBootstrapSyncContract` |
+| `tests/integration/fixtures/make_bootstrap_sync_alias_contract_golden.json` | `make bootstrap-sync` alias output + apply contract | `go test ./tests/integration -run MakeBootstrapSyncAliasContract` |
 | `tests/integration/fixtures/contract_suite_commands_contract_golden.json` | `scripts/contract-suite-commands.sh` output ordering contract | `go test ./tests/integration -run ContractSuiteCommandsScript` |
 | `tests/integration/fixtures/contract_suite_registry_parity_golden.json` | CLI suite registry and script catalog parity contract | `go test ./tests/integration -run ContractSuiteRegistryParity` |
 | `tests/integration/fixtures/smoke_invalid_token_contract_golden.json` | Smoke invalid-token marker sequence contract | `go test ./tests/integration -run SmokeInvalidTokenContract` |
@@ -37,6 +38,7 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/make_contract_commands_contract_golden.json` | `make contract-commands` | `go test ./tests/integration -run MakeContractCommandsContract` |
 | `tests/integration/fixtures/make_bootstrap_report_contract_golden.json` | `make bootstrap-report` | `go test ./tests/integration -run MakeBootstrapReportContract` |
 | `tests/integration/fixtures/make_bootstrap_sync_contract_golden.json` | `make bootstrap-sync-report` / `make bootstrap-sync-apply` | `go test ./tests/integration -run MakeBootstrapSyncContract` |
+| `tests/integration/fixtures/make_bootstrap_sync_alias_contract_golden.json` | `make bootstrap-sync` | `go test ./tests/integration -run MakeBootstrapSyncAliasContract` |
 | `tests/integration/fixtures/bootstrap_sync_contract_golden.json` | `scripts/bootstrap-sync.sh` | `go test ./tests/integration -run BootstrapSyncScript` |
 | `tests/integration/fixtures/bootstrap_sync_no_log_contract_golden.json` | `scripts/bootstrap-sync.sh` (empty `.volon/logs`) | `go test ./tests/integration -run BootstrapSyncNoLogContract` |
 | `tests/integration/fixtures/bootstrap_sync_idempotent_contract_golden.json` | `scripts/bootstrap-sync.sh --apply` repeatability | `go test ./tests/integration -run BootstrapSyncIdempotentContract` |
@@ -81,6 +83,7 @@ Update checklist:
   - `go test ./tests/integration -run MakeContractCommandsContract`
   - `go test ./tests/integration -run MakeBootstrapReportContract`
   - `go test ./tests/integration -run MakeBootstrapSyncContract`
+  - `go test ./tests/integration -run MakeBootstrapSyncAliasContract`
 - Script command stability:
   - `go test ./tests/integration -run ContractSuiteCommandsScript`
   - `go test ./tests/integration -run ContractSuiteRegistryParity`

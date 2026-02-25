@@ -132,6 +132,8 @@ Rotation checklist:
 - Make bootstrap-report suite: `go test ./tests/integration -run MakeBootstrapReportContract`
 - Golden make bootstrap-sync fixture: `tests/integration/fixtures/make_bootstrap_sync_contract_golden.json`
 - Make bootstrap-sync suite: `go test ./tests/integration -run MakeBootstrapSyncContract`
+- Golden make bootstrap-sync alias fixture: `tests/integration/fixtures/make_bootstrap_sync_alias_contract_golden.json`
+- Make bootstrap-sync alias suite: `go test ./tests/integration -run MakeBootstrapSyncAliasContract`
 - Golden contract-suite-commands fixture: `tests/integration/fixtures/contract_suite_commands_contract_golden.json`
 - Contract-suite-commands suite: `go test ./tests/integration -run ContractSuiteCommandsScript`
 - Golden suite-registry parity fixture: `tests/integration/fixtures/contract_suite_registry_parity_golden.json`
