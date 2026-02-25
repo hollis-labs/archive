@@ -2,7 +2,7 @@
 version: 1
 type: bootstrap
 iteration: 39
-updated_at: 2026-02-25T17:44:00Z
+updated_at: 2026-02-25T17:47:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-121` to harden VIEWS selector normalization and complexity examples.
+- Start `TASK-20260225-122` to add pivot API/CLI deliverable notes.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 120 done
-- Last run log: `.volon/logs/run-iteration-040-2026-02-25.md`
+- Tasks: 1 todo, 0 blocked, 121 done
+- Last run log: `.volon/logs/run-iteration-041-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-121 — Harden VIEWS spec with selector normalization and complexity examples (B)
 - TASK-20260225-122 — Add pivot spec deliverable notes (api-diff and cli-examples) (B)
 
 ### Blockers
@@ -40,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `c4968af`
+- Last implementation commit: `3cfd80f`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

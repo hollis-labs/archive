@@ -44,6 +44,39 @@ Views are not processors. They do not summarize, infer, merge, or mutate records
 3. Equivalent selector + identical store state => identical result ordering.
 4. Limit truncation is applied after deterministic sort.
 
+Normalization example:
+```json
+{
+  "input_selector": {
+    "namespaces": ["user/*"],
+    "limit": 0
+  },
+  "normalized_selector": {
+    "namespaces": ["user/*"],
+    "revision_scope": "head",
+    "order": ["namespace", "key", "revision"],
+    "limit": 200
+  }
+}
+```
+
+Truncation example (deterministic):
+```json
+{
+  "sorted_items": [
+    {"namespace": "app/editor/session", "key": "goal", "revision": 1},
+    {"namespace": "app/editor/session", "key": "summary", "revision": 1},
+    {"namespace": "user/profile", "key": "goal", "revision": 3}
+  ],
+  "limit": 2,
+  "returned_items": [
+    {"namespace": "app/editor/session", "key": "goal", "revision": 1},
+    {"namespace": "app/editor/session", "key": "summary", "revision": 1}
+  ],
+  "truncated": true
+}
+```
+
 ## Response envelope
 - `items`: ordered record references (and payloads if requested)
 - `evaluation_meta`:
@@ -59,6 +92,26 @@ Views are not processors. They do not summarize, infer, merge, or mutate records
 - Reject invalid namespace glob patterns.
 - Reject negative limits.
 - Reject limits above max bound.
+
+Complexity rejection examples:
+- Too many namespaces (max 32):
+```json
+{
+  "selector": {
+    "namespaces": ["user/*", "... more than 32 entries ..."],
+    "order": ["namespace", "key", "revision"]
+  }
+}
+```
+- Too many keys (max 128):
+```json
+{
+  "selector": {
+    "keys": ["k1", "k2", "... more than 128 entries ..."],
+    "order": ["namespace", "key", "revision"]
+  }
+}
+```
 
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
