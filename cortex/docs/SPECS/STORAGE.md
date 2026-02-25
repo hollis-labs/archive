@@ -47,3 +47,19 @@ Hybrid local storage:
 - History ordering: ascending `revision`.
 - Head resolution: single row in `heads`.
 - Selector results: stable explicit sort key sequence, default `(namespace,key,revision)`.
+
+## Retention baseline proposal (local-first default)
+
+Recommended default baseline:
+- Keep latest `20` revisions per `(namespace,key)` during compaction.
+- Keep latest `10,000` audit events globally.
+- Run compaction as an explicit maintenance action (not on every write path).
+
+Rationale:
+- Traceability: retaining multiple revisions preserves operator/debug context and promotion provenance.
+- Storage growth control: bounded revision/audit windows prevent unbounded local disk growth.
+- Determinism: compaction trims only older history while preserving current heads and stable read ordering.
+
+Compaction linkage:
+- Runtime/CLI compaction should preserve head invariants and deterministic selector behavior.
+- Baseline values should be treated as defaults; operators may increase/decrease based on local retention requirements.

@@ -105,6 +105,9 @@ Rotation checklist:
 - Compact revisions + trim audit events:
   - `contextd context compact --keep-revisions 5 --keep-audit 5000 --output table`
 - Compaction preserves latest heads per `(namespace,key)` and rebuilds head pointers deterministically.
+- Suggested local baseline (see storage spec proposal):
+  - `--keep-revisions 20`
+  - `--keep-audit 10000`
 
 ## API contract fixtures
 - Golden API contract fixture: `tests/integration/fixtures/api_contract_golden.json`
