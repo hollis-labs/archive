@@ -8,6 +8,7 @@
     "readiness",
     "cli-health-summary",
     "cli-audit",
+    "cli-contract-list-table",
     "cli-contract-run-table",
     "smoke-invalid-token",
     "make-contract-cli-list",

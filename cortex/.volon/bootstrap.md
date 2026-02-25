@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-087` to add table-output coverage for `context contract list`.
+- Start `TASK-20260225-088` to add unknown-suite error contract coverage.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 4 todo, 0 blocked, 86 done
+- Tasks: 3 todo, 0 blocked, 87 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-087 — Add contract test for context contract list table output (A)
 - TASK-20260225-088 — Add contract test for unknown contract suite error output (A)
 - TASK-20260225-089 — Document contract suite naming conventions (B)
 - TASK-20260225-090 — Add regression test for contract-suite-commands line format (B)
