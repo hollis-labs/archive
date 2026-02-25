@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 95
-updated_at: 2026-02-25T22:35:00Z
+iteration: 96
+updated_at: 2026-02-25T22:45:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-164` to add VIEWS selector deprecation example set.
+- Start `TASK-20260225-165` to add MCP phase-to-tool exposure matrix.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 3 todo, 0 blocked, 163 done
-- Last run log: `.volon/logs/run-iteration-095-2026-02-25.md`
+- Tasks: 2 todo, 0 blocked, 164 done
+- Last run log: `.volon/logs/run-iteration-096-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-164 — Add VIEWS selector deprecation example set (B)
 - TASK-20260225-165 — Add MCP phase-to-tool exposure matrix (B)
 - TASK-20260225-166 — Add outputs artifact ownership and review cadence note (B)
 
@@ -41,6 +40,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `7861a46`
+- Last implementation commit: `c37afb0`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

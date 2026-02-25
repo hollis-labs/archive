@@ -186,6 +186,33 @@ Deprecation policy:
 - During deprecation, normalization must map deprecated inputs to canonical equivalents without changing result ordering semantics.
 - Removal of deprecated fields is treated as a breaking change and requires explicit version transition notes.
 
+Deprecation normalization examples:
+- Deprecated field accepted during release window:
+```json
+{
+  "input_selector": {
+    "namespaces": ["user/*"],
+    "sort": ["namespace", "key", "revision"],
+    "revision_scope": "head"
+  },
+  "normalized_selector": {
+    "namespaces": ["user/*"],
+    "order": ["namespace", "key", "revision"],
+    "revision_scope": "head",
+    "limit": 200
+  },
+  "deprecation_note": "`sort` is deprecated and normalized to canonical `order`"
+}
+```
+- Ordering remains stable after normalization:
+```json
+{
+  "input_ordering_field": "sort",
+  "normalized_ordering_field": "order",
+  "ordering_guarantee": "result ordering remains `(namespace,key,revision)` for equivalent selector intent"
+}
+```
+
 ## Selector capability discovery model
 
 Discovery approach (current):
