@@ -12,6 +12,7 @@ cli-health-summary	go test ./tests/integration -run CLIHealthSummaryContract -co
 cli-audit	go test ./tests/integration -run CLIAuditContract -count=1
 cli-contract-list-default-output	go test ./tests/integration -run ContractListDefaultOutputContract -count=1
 cli-contract-list-deterministic-order	go test ./tests/integration -run ContractListDefaultOutputDeterministicContract -count=1
+cli-contract-list-count-parity	go test ./tests/integration -run ContractListCountParityContract -count=1
 cli-contract-list-invalid-output	go test ./tests/integration -run ContractListInvalidOutputErrorContract -count=1
 cli-contract-list-table	go test ./tests/integration -run ContractListTableContract -count=1
 cli-contract-list-table-count-parity	go test ./tests/integration -run ContractListTableCountParityContract -count=1
