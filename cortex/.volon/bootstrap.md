@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-107` to add suite-all table-output coverage for contract run.
+- Start `TASK-20260225-108` to add contract list count-field parity coverage.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 4 todo, 0 blocked, 106 done
+- Tasks: 3 todo, 0 blocked, 107 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-107 — Add contract test for context contract run --suite all table output (A)
 - TASK-20260225-108 — Add contract test for context contract list count field parity (A)
 - TASK-20260225-109 — Document contract list/run parity checks (B)
 - TASK-20260225-110 — Add regression test for contract suite command suffix validity (B)

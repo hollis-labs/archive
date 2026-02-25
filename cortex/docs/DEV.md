@@ -133,6 +133,8 @@ Rotation checklist:
 - Contract list table count-parity suite: `go test ./tests/integration -run ContractListTableCountParityContract`
 - Golden contract run suite-all default-output fixture: `tests/integration/fixtures/contract_run_all_default_output_golden.json`
 - Contract run suite-all default-output suite: `go test ./tests/integration -run ContractRunAllDefaultOutputContract`
+- Golden contract run suite-all table fixture: `tests/integration/fixtures/contract_run_all_table_golden.json`
+- Contract run suite-all table suite: `go test ./tests/integration -run ContractRunAllTableContract`
 - Golden contract run default-output fixture: `tests/integration/fixtures/contract_run_default_output_golden.json`
 - Contract run default-output suite: `go test ./tests/integration -run ContractRunDefaultOutputContract`
 - Golden contract run dry-table fixture: `tests/integration/fixtures/contract_run_table_dry_golden.json`
