@@ -53,6 +53,10 @@ Rotation checklist:
 - Managed auth guard: server startup fails if no active token exists.
 - Metrics endpoint: `GET /v1/metrics` (available only when `--metrics` is enabled).
 - Service lifecycle: `SIGINT`/`SIGTERM` trigger graceful shutdown and deterministic shutdown logs.
+- Request-log security posture:
+  - Default to `--request-log-mode redacted` in shared/dev-team environments.
+  - Use `--request-log-mode full` only for short local debugging sessions.
+  - Avoid `full` mode when tokens/session IDs may appear in query strings.
 
 ## Namespace schema contract operations
 - Register namespace: `contextd context namespace register --namespace app/editor/session --owner-type app --owner-id editor`
@@ -110,6 +114,8 @@ Rotation checklist:
 - Error contract suite: `go test ./tests/integration -run APIErrorContract`
 - Golden readiness contract fixture: `tests/integration/fixtures/readiness_contract_golden.json`
 - Readiness contract suite: `go test ./tests/integration -run ReadinessContract`
+- Golden CLI health summary fixture: `tests/integration/fixtures/cli_health_summary_contract_golden.json`
+- CLI health summary contract suite: `go test ./tests/integration -run CLIHealthSummaryContract`
 
 ## Metrics contract checks
 - Golden metrics fixture: `tests/integration/fixtures/metrics_contract_golden.json`
@@ -138,6 +144,8 @@ Rotation checklist:
   - `contextd serve --managed-auth --addr 127.0.0.1:8080 --metrics`
   - `scripts/contextd-smoke.sh --base-url http://127.0.0.1:8080 --auth-mode managed --token <issued-token> --metrics`
 - In `static`/`managed` mode, smoke pre-checks mutating auth guard by asserting unauthenticated writes return `401`.
+- Optional invalid-token negative check:
+  - `scripts/contextd-smoke.sh --base-url http://127.0.0.1:8080 --auth-mode managed --token <valid-token> --assert-invalid-token`
 
 ## Make targets
 - Run all tests: `make test`
@@ -145,6 +153,7 @@ Rotation checklist:
 - Run smoke against active server: `make smoke BASE_URL=http://127.0.0.1:8080`
 - Run smoke with auth token: `make smoke BASE_URL=http://127.0.0.1:8080 AUTH_MODE=static TOKEN=<token>`
 - Run smoke with metrics check enabled: `make smoke BASE_URL=http://127.0.0.1:8080 AUTH_MODE=managed TOKEN=<token> METRICS=1`
+- Run smoke with invalid-token precheck: `make smoke BASE_URL=http://127.0.0.1:8080 AUTH_MODE=managed TOKEN=<token> INVALID_TOKEN_CHECK=1`
 - Run full local harness (boot + contracts + smoke + teardown):
   - `make e2e-local`
   - `AUTH_MODE=static make e2e-local`
@@ -156,6 +165,9 @@ Rotation checklist:
 - Script: `scripts/volon-runlog-init.sh`
 - Example:
   - `scripts/volon-runlog-init.sh --iteration 47 --date 2026-02-25 --profile orchestrator`
+- Make wrapper:
+  - `make runlog-init ITERATION=47`
+  - `make runlog-init ITERATION=47 RUN_DATE=2026-02-25 PROFILE=orchestrator RUNLOG_OUT=/tmp/runlog-047.md`
 - Default output path pattern:
   - `.volon/logs/run-iteration-<NNN>-<YYYY-MM-DD>.md`
 - Quick validation sequence:

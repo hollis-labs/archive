@@ -1,9 +1,15 @@
-.PHONY: test contracts contract-api contract-errors contract-metrics smoke validate e2e-local e2e-managed
+.PHONY: test contracts contract-api contract-errors contract-metrics smoke validate e2e-local e2e-managed runlog-init
 
 BASE_URL ?= http://127.0.0.1:8080
 TOKEN ?=
 METRICS ?= 0
 AUTH_MODE ?= none
+INVALID_TOKEN_CHECK ?= 0
+INVALID_TOKEN ?= invalid-token
+ITERATION ?=
+RUN_DATE ?= $(shell date +%F)
+PROFILE ?= orchestrator
+RUNLOG_OUT ?=
 
 TEST ?= go test ./...
 
@@ -17,6 +23,12 @@ ifeq ($(METRICS),1)
 SMOKE_METRICS_ARG := --metrics
 else
 SMOKE_METRICS_ARG :=
+endif
+
+ifeq ($(INVALID_TOKEN_CHECK),1)
+SMOKE_INVALID_TOKEN_ARG := --assert-invalid-token --invalid-token $(INVALID_TOKEN)
+else
+SMOKE_INVALID_TOKEN_ARG :=
 endif
 
 test:
@@ -34,7 +46,7 @@ contract-metrics:
 contracts: contract-api contract-errors contract-metrics
 
 smoke:
-	scripts/contextd-smoke.sh --base-url $(BASE_URL) --auth-mode $(AUTH_MODE) $(SMOKE_TOKEN_ARG) $(SMOKE_METRICS_ARG)
+	scripts/contextd-smoke.sh --base-url $(BASE_URL) --auth-mode $(AUTH_MODE) $(SMOKE_TOKEN_ARG) $(SMOKE_METRICS_ARG) $(SMOKE_INVALID_TOKEN_ARG)
 
 validate: contracts
 	@echo "validate complete: contract suites passed"
@@ -44,3 +56,11 @@ e2e-local:
 
 e2e-managed:
 	AUTH_MODE=managed scripts/contextd-e2e-local.sh
+
+runlog-init:
+	@if [ -z "$(ITERATION)" ]; then echo "ITERATION is required"; exit 2; fi
+	@if [ -n "$(RUNLOG_OUT)" ]; then \
+		scripts/volon-runlog-init.sh --iteration $(ITERATION) --date $(RUN_DATE) --profile $(PROFILE) --out $(RUNLOG_OUT); \
+	else \
+		scripts/volon-runlog-init.sh --iteration $(ITERATION) --date $(RUN_DATE) --profile $(PROFILE); \
+	fi
