@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 84
-updated_at: 2026-02-25T21:08:00Z
+iteration: 87
+updated_at: 2026-02-25T21:16:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-157` to add MCP error-to-action matrix.
+- Start `TASK-20260225-158` to add outputs README maintenance checklist.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 156 done
-- Last run log: `.volon/logs/run-iteration-085-2026-02-25.md`
+- Tasks: 1 todo, 0 blocked, 157 done
+- Last run log: `.volon/logs/run-iteration-086-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-157 — Add MCP error-to-action matrix (B)
 - TASK-20260225-158 — Add outputs README maintenance checklist (B)
 
 ### Blockers
@@ -40,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `f485ca6`
+- Last implementation commit: `4106a01`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

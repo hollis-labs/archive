@@ -103,6 +103,14 @@ Phase 3 (`write-promote`) checklist:
 | Write or promote returns `policy_denied` | Actor/namespace combination violates ownership matrix | Re-check actor identity and namespace policy; confirm promote uses `actor=user` for protected `user/*` targets. |
 | Promote succeeds in CLI but fails in MCP | MCP tool mapping omitted required promote fields or actor propagation | Compare MCP payload mapping to API/CLI contract fields and ensure full parity for `from_*`/`to_*`/actor parameters. |
 
+## Error-to-action matrix
+
+| Error class | Typical MCP phase context | First response action |
+|---|---|---|
+| `auth_required` | Any phase when endpoint/mode requires token | Verify auth mode expectations, then confirm bearer token propagation and token lifecycle status. |
+| `policy_denied` | `phase-2`/`phase-3` mutate paths | Re-check actor-to-namespace mapping and policy grants, especially protected `user/*` promote constraints. |
+| `validation_error` | Selector evaluation or malformed mutate payload | Normalize payload/selector shape to documented schema and remove unsupported fields. |
+
 ## Environment-based phase adoption recommendations
 
 | Environment | Recommended phase adoption | Suggested auth mode | Risk posture guidance |
