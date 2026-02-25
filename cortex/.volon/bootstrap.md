@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 100
-updated_at: 2026-02-25T23:25:00Z
+iteration: 101
+updated_at: 2026-02-25T23:35:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-168` to add VIEWS selector examples consistency checklist.
+- Start `TASK-20260225-169` to add MCP phase promotion evidence checklist.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 3 todo, 0 blocked, 167 done
-- Last run log: `.volon/logs/run-iteration-100-2026-02-25.md`
+- Tasks: 2 todo, 0 blocked, 168 done
+- Last run log: `.volon/logs/run-iteration-101-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-168 — Add VIEWS selector examples consistency checklist (B)
 - TASK-20260225-169 — Add MCP phase promotion evidence checklist (B)
 - TASK-20260225-170 — Add outputs stale-artifact triage note (B)
 
@@ -41,6 +40,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `07b91f5`
+- Last implementation commit: `23aff04`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

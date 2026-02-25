@@ -282,6 +282,18 @@ Use this during VIEWS doc review after the quick validation checklist has passed
    - Check that capability negotiation guidance stays documentation-driven for MVP.
    - Verify API/MCP cross-references remain aligned with selector capability and validation behavior.
 
+## Selector examples consistency checklist
+
+Use this when editing multiple selector example sections in one PR:
+1. Fallback ordering consistency:
+   - Ensure compatibility, deprecation, and validation examples all preserve canonical fallback `(namespace,key,revision)` semantics.
+2. Normalization consistency:
+   - Confirm normalized selector outputs use canonical fields (`order`, `revision_scope`, `limit`) across all example blocks.
+3. Unknown-field outcome consistency:
+   - Keep unsupported-field outcomes aligned to `validation_error` and avoid mixed error-class wording for equivalent cases.
+4. Cross-section drift check:
+   - Reconcile deprecation examples with capability examples so no field is simultaneously shown as both unsupported and baseline without an explicit assumption.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
