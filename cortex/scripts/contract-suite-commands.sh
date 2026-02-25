@@ -18,6 +18,7 @@ cli-contract-run-default-output	go test ./tests/integration -run ContractRunDefa
 cli-contract-run-dry-table	go test ./tests/integration -run ContractRunTableDryContract -count=1
 cli-contract-run-table	go test ./tests/integration -run ContractRunExecuteTableContract -count=1
 cli-contract-run-invalid-output	go test ./tests/integration -run ContractRunInvalidOutputErrorContract -count=1
+cli-contract-run-execute-invalid-output	go test ./tests/integration -run ContractRunExecuteInvalidOutputErrorContract -count=1
 cli-contract-run-unknown-suite	go test ./tests/integration -run ContractRunUnknownSuiteErrorContract -count=1
 smoke-invalid-token	go test ./tests/integration -run SmokeInvalidTokenContract -count=1
 make-contract-cli-list	go test ./tests/integration -run MakeContractCLIListContract -count=1

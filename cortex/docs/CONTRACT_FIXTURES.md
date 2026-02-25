@@ -20,6 +20,7 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/contract_run_default_output_golden.json` | CLI `context contract run` default-output JSON contract | `go test ./tests/integration -run ContractRunDefaultOutputContract` |
 | `tests/integration/fixtures/contract_run_table_dry_golden.json` | CLI `context contract run --output table` dry-mode contract | `go test ./tests/integration -run ContractRunTableDryContract` |
 | `tests/integration/fixtures/contract_run_execute_table_golden.json` | CLI `context contract run --execute --output table` contract | `go test ./tests/integration -run ContractRunExecuteTableContract` |
+| `tests/integration/fixtures/contract_run_execute_invalid_output_error_golden.json` | CLI invalid execute-mode output-mode error contract | `go test ./tests/integration -run ContractRunExecuteInvalidOutputErrorContract` |
 | `tests/integration/fixtures/contract_run_invalid_output_error_golden.json` | CLI invalid contract run output-mode error contract | `go test ./tests/integration -run ContractRunInvalidOutputErrorContract` |
 | `tests/integration/fixtures/contract_run_unknown_suite_error_golden.json` | CLI unknown contract suite error contract | `go test ./tests/integration -run ContractRunUnknownSuiteErrorContract` |
 | `tests/integration/fixtures/make_contract_cli_list_contract_golden.json` | `make contract-cli-list` output marker contract | `go test ./tests/integration -run MakeContractCLIListContract` |
@@ -88,6 +89,7 @@ When to add a new suite ID:
 | Suite | Intent | Targeted command |
 |---|---|---|
 | `cli-contract-list-invalid-output` | Verify invalid `context contract list --output` errors remain stable. | `go test ./tests/integration -run ContractListInvalidOutputErrorContract` |
+| `cli-contract-run-execute-invalid-output` | Verify invalid `context contract run --execute --output` errors remain stable. | `go test ./tests/integration -run ContractRunExecuteInvalidOutputErrorContract` |
 | `cli-contract-run-unknown-suite` | Verify unknown suite errors are stable and actionable. | `go test ./tests/integration -run ContractRunUnknownSuiteErrorContract` |
 | `cli-contract-run-invalid-output` | Verify invalid `--output` mode errors remain stable. | `go test ./tests/integration -run ContractRunInvalidOutputErrorContract` |
 
@@ -134,6 +136,7 @@ See also: `docs/DEV.md#contract-output-quick-reference`.
   - `go test ./tests/integration -run ContractRunDefaultOutputContract`
   - `go test ./tests/integration -run ContractRunTableDryContract`
   - `go test ./tests/integration -run ContractRunExecuteTableContract`
+  - `go test ./tests/integration -run ContractRunExecuteInvalidOutputErrorContract`
   - `go test ./tests/integration -run ContractRunInvalidOutputErrorContract`
   - `go test ./tests/integration -run ContractRunUnknownSuiteErrorContract`
   - `go test ./tests/integration -run RunlogHelperContract`

@@ -18,6 +18,7 @@ fixtures=(
   "tests/integration/fixtures/contract_run_default_output_golden.json"
   "tests/integration/fixtures/contract_run_table_dry_golden.json"
   "tests/integration/fixtures/contract_run_execute_table_golden.json"
+  "tests/integration/fixtures/contract_run_execute_invalid_output_error_golden.json"
   "tests/integration/fixtures/contract_run_invalid_output_error_golden.json"
   "tests/integration/fixtures/contract_run_unknown_suite_error_golden.json"
   "tests/integration/fixtures/make_contract_cli_list_contract_golden.json"

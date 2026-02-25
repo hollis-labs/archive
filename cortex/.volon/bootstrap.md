@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-103` to add execute-mode invalid output error coverage for contract run.
+- Start `TASK-20260225-104` to add contract-list table row count parity coverage.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 4 todo, 0 blocked, 102 done
+- Tasks: 3 todo, 0 blocked, 103 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-103 — Add contract test for context contract run unknown output on --execute table (A)
 - TASK-20260225-104 — Add contract test for context contract list table row count parity (A)
 - TASK-20260225-105 — Document contract suite guardrail stack (B)
 - TASK-20260225-106 — Add regression test for contract list default output deterministic ordering (B)
