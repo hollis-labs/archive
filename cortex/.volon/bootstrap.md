@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 99
-updated_at: 2026-02-25T23:15:00Z
+iteration: 100
+updated_at: 2026-02-25T23:25:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-167` to add API auth mode troubleshooting matrix.
+- Start `TASK-20260225-168` to add VIEWS selector examples consistency checklist.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 4 todo, 0 blocked, 166 done
-- Last run log: `.volon/logs/run-iteration-099-2026-02-25.md`
+- Tasks: 3 todo, 0 blocked, 167 done
+- Last run log: `.volon/logs/run-iteration-100-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-167 — Add API auth mode troubleshooting matrix (A)
 - TASK-20260225-168 — Add VIEWS selector examples consistency checklist (B)
 - TASK-20260225-169 — Add MCP phase promotion evidence checklist (B)
 - TASK-20260225-170 — Add outputs stale-artifact triage note (B)
@@ -42,6 +41,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `cba9b67`
+- Last implementation commit: `07b91f5`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

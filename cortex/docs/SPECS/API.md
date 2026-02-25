@@ -105,6 +105,20 @@ Run this preflight before `GET /v1/context/head`, `GET /v1/context/history`, or 
 4. Failure expectation:
    - If any step fails in gated modes, expect `401 auth_required` and resolve mode/token propagation before retry.
 
+### Auth mode troubleshooting matrix
+
+Use this when observed auth behavior differs from expectation:
+
+| Endpoint class | Expected token behavior by mode | Common mismatch symptom | First troubleshooting action |
+|---|---|---|---|
+| Read/view (`head`, `history`, `views/evaluate`) | `mvp-open-read`: token optional; `optional-gated-read`/`strict-auth-all`: token required | Read/view returns `401` in environments assumed to be open-read | Confirm active mode, then verify read/view request path includes bearer token when mode is gated. |
+| Mutating (`namespaces/register`, `context/write`, `context/promote`, `consistency/repair`) | Token required in all modes | Mutating call succeeds in one tool path and fails with `401` in another | Compare token propagation across CLI/MCP/API boundaries and validate token lifecycle status. |
+| Operational read (`context/audit`, `consistency/scan`, `health/readiness`) | `mvp-open-read`: token optional; `optional-gated-read`/`strict-auth-all`: token required | Operational reads unexpectedly reject unauthenticated calls after rollout | Re-check environment mode and endpoint targeting, then align operator scripts with current mode policy. |
+
+Matrix usage notes:
+- Classify the request first using the auth-mode endpoint matrix, then follow the `auth_required` decision tree.
+- If endpoint class assumptions are wrong, fix routing/targeting before rotating tokens or changing policy settings.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
