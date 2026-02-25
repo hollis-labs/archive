@@ -57,3 +57,12 @@ This directory (and `docs/SPECS/outputs/`) contains generated pivot support note
 
 ## Usage note
 These artifacts are summaries and operator-facing guides. When conflicts appear, the canonical source specs/ADRs take precedence.
+
+## Maintenance checklist
+1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
+2. Validate links for both:
+   - `docs/outputs/*` artifacts (architecture/open-questions/changelog)
+   - `docs/SPECS/outputs/*` artifacts (API/CLI summary notes)
+3. If an artifact becomes stale, update the summary text and keep canonical references explicit.
+4. Confirm role-based and quickstart entry points still route to the most useful current artifacts.
+5. Preserve canonical-source precedence language when editing this index.
