@@ -112,6 +112,14 @@ Policy notes:
 - `user/*` remains protected and is updated through explicit user promotion semantics.
 - Policy schema evolution options reference: `docs/SPECS/STORAGE.md#policy-schema-evolution-options`.
 
+### Mutate error quick-reference
+
+| Error code | Typical endpoint context | Common trigger | Operator action |
+|---|---|---|---|
+| `auth_required` (`401`) | Any mutating endpoint (`namespaces/register`, `context/write`, `context/promote`, `consistency/repair`) | Missing/invalid bearer token, revoked/expired managed token | Verify auth mode and token propagation, then re-issue/rotate token if needed. |
+| `policy_denied` (`403`) | `context/write`, `context/promote` | Actor/namespace ownership mismatch or protected `user/*` transition without required actor semantics | Re-check actor identity, namespace ownership policy, and promote constraints in actor/namespace matrix. |
+| `validation_error` (`400`) | `namespaces/register`, `context/write`, `context/promote` | Invalid payload schema (e.g., `required_keys`) or malformed request fields | Fix request shape/schema mismatch; align payload with namespace policy contract before retry. |
+
 ## Endpoints
 
 ### POST `/v1/namespaces/register`
