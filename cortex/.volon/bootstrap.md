@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 54
-updated_at: 2026-02-25T18:52:00Z
+iteration: 59
+updated_at: 2026-02-25T18:58:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,20 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Generate next task batch (`TASK-20260225-135` .. `TASK-20260225-138`) and start `TASK-20260225-135`.
+- Start `TASK-20260225-135` to add MCP threat assumptions and trust boundaries.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 0 todo, 0 blocked, 134 done
-- Last run log: `.volon/logs/run-iteration-057-2026-02-25.md`
+- Tasks: 4 todo, 0 blocked, 134 done
+- Last run log: `.volon/logs/run-iteration-058-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- None currently queued; generate next batch.
+- TASK-20260225-135 — Add MCP threat assumptions and trust boundaries section (A)
+- TASK-20260225-136 — Add API examples for optional-gated read/view mode (B)
+- TASK-20260225-137 — Add CLI operator quick-reference for policy and promote flows (B)
+- TASK-20260225-138 — Index spec output artifacts from SPECS README (B)
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
@@ -39,6 +42,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `a108946`
+- Last implementation commit: `fc450c2`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
