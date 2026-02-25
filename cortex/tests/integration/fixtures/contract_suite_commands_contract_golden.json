@@ -22,6 +22,7 @@
     "make-bootstrap-sync-alias",
     "make-smoke-invalid-token",
     "runlog-helper",
+    "contract-suite-commands-format",
     "fixture-lint-script",
     "agents-boot-check"
   ]

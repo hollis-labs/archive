@@ -150,6 +150,7 @@ Rotation checklist:
 - Make smoke-invalid-token contract suite: `go test ./tests/integration -run MakeSmokeInvalidTokenContract`
 - Golden run-log helper fixture: `tests/integration/fixtures/runlog_helper_contract_golden.json`
 - Run-log helper contract suite: `go test ./tests/integration -run RunlogHelperContract`
+- Contract suite command-format guardrail: `go test ./tests/integration -run ContractSuiteCommandsFormatContract`
 - Contract fixture lint script suite: `go test ./tests/integration -run ContractFixtureLintScript`
 - Golden bootstrap-sync fixture: `tests/integration/fixtures/bootstrap_sync_contract_golden.json`
 - Bootstrap-sync contract suite: `go test ./tests/integration -run BootstrapSyncScript`

@@ -108,6 +108,7 @@ When to add a new suite ID:
   - `go test ./tests/integration -run ContractRunExecuteTableContract`
   - `go test ./tests/integration -run ContractRunUnknownSuiteErrorContract`
   - `go test ./tests/integration -run RunlogHelperContract`
+  - `go test ./tests/integration -run ContractSuiteCommandsFormatContract`
   - `go test ./tests/integration -run ContractFixtureLintScript`
   - `go test ./tests/integration -run BootstrapSyncScript`
   - `go test ./tests/integration -run BootstrapSyncNoLogContract`

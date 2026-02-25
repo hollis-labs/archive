@@ -24,6 +24,7 @@ make-bootstrap-sync	go test ./tests/integration -run MakeBootstrapSyncContract -
 make-bootstrap-sync-alias	go test ./tests/integration -run MakeBootstrapSyncAliasContract -count=1
 make-smoke-invalid-token	go test ./tests/integration -run MakeSmokeInvalidTokenContract -count=1
 runlog-helper	go test ./tests/integration -run RunlogHelperContract -count=1
+contract-suite-commands-format	go test ./tests/integration -run ContractSuiteCommandsFormatContract -count=1
 fixture-lint-script	go test ./tests/integration -run ContractFixtureLintScript -count=1
 agents-boot-check	go test ./tests/integration -run AgentsBootCheckContract -count=1
 CMDS
