@@ -74,6 +74,26 @@ Phase progression constraints:
 - Capability expansion requires corresponding API/CLI contract documentation updates.
 - Selector capability discovery/negotiation follows `docs/SPECS/VIEWS.md#selector-capability-discovery-model`.
 
+## Operator enablement checklist
+
+Phase 1 (`read-view`) checklist:
+1. Confirm intended auth mode in API roadmap (`mvp-open-read` or gated variants).
+2. Expose only read/view MCP tools (`head`, `history`, `views/evaluate`).
+3. Verify deterministic ordering parity with API/CLI for identical selector inputs.
+4. Validate unknown selector fields fail with `validation_error`.
+
+Phase 2 (`namespace-admin`) checklist:
+1. Enable mutating namespace tools only for trusted operators.
+2. Verify bearer-token enforcement for mutating calls.
+3. Validate namespace policy registration/get flows mirror CLI/API behavior.
+4. Confirm admin actions are auditable.
+
+Phase 3 (`write-promote`) checklist:
+1. Enable `write`/`promote` tools only after policy matrix review.
+2. Verify actor constraints (`promote` requires user actor).
+3. Validate protected `user/*` behavior and deterministic error envelopes.
+4. Run end-to-end register/write/promote/audit verification flow before rollout.
+
 ## References
 - API spec: [`docs/SPECS/API.md`](./API.md)
 - CLI spec: [`docs/SPECS/CLI.md`](./CLI.md)
