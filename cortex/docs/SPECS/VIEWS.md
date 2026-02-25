@@ -113,6 +113,28 @@ Complexity rejection examples:
 }
 ```
 
+## Selector extension and versioning policy
+
+Current compatibility mode:
+- Selector schema is strict by default.
+- Unknown selector fields are rejected with `validation_error`.
+
+Extension path for new fields:
+1. Add field behind an explicit server capability gate.
+2. Document normalization + determinism impact before enabling by default.
+3. Keep default behavior stable for clients that only send existing fields.
+4. Promote field to baseline only after API/CLI docs and contract tests are updated.
+
+Versioning expectations:
+- MVP operates under an implicit `v1` selector contract.
+- Future breaking selector changes require an explicit version key or endpoint version bump.
+- Additive, non-breaking fields may be introduced only when strict unknown-field behavior can still be preserved for non-opted-in clients.
+
+Deprecation policy:
+- Deprecated selector fields remain accepted for at least one documented release window.
+- During deprecation, normalization must map deprecated inputs to canonical equivalents without changing result ordering semantics.
+- Removal of deprecated fields is treated as a breaking change and requires explicit version transition notes.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`

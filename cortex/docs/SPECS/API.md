@@ -164,6 +164,7 @@ Selector limits:
 - `keys`: max 128 entries
 - `limit`: defaults to 200 when omitted/zero, max 500
 - invalid selector complexity/shape returns `400` (`code: "validation_error"`)
+- selector extension/versioning policy reference: `docs/SPECS/VIEWS.md#selector-extension-and-versioning-policy`
 
 Deterministic ordering behavior:
 - If `selector.order` is omitted, server applies fallback sort `(namespace,key,revision)`.
