@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/hollis-labs/volon-dev/internal/contextpolicy"
 	"github.com/hollis-labs/volon-dev/internal/contextstore"
@@ -289,6 +290,124 @@ func TestAuditEndpointIncludesWriteAndPromoteEvents(t *testing.T) {
 	}
 	if !foundWrite || !foundPromote {
 		t.Fatalf("expected write+promote audit events, got %+v", payload.Items)
+	}
+}
+
+func TestManagedAuthRejectsRevokedAndExpiredTokens(t *testing.T) {
+	srv := newTestServer(t)
+	srv.ManagedAuth = true
+
+	activeToken, _, err := srv.Store.IssueAuthToken(context.Background(), "active", time.Hour)
+	if err != nil {
+		t.Fatalf("issue active token: %v", err)
+	}
+	expiredToken, _, err := srv.Store.IssueAuthToken(context.Background(), "expired", time.Nanosecond)
+	if err != nil {
+		t.Fatalf("issue expired token: %v", err)
+	}
+	time.Sleep(2 * time.Millisecond)
+	revokedToken, _, err := srv.Store.IssueAuthToken(context.Background(), "revoked", time.Hour)
+	if err != nil {
+		t.Fatalf("issue revoked token: %v", err)
+	}
+	if err := srv.Store.RevokeAuthToken(context.Background(), revokedToken); err != nil {
+		t.Fatalf("revoke token: %v", err)
+	}
+
+	reqBody := map[string]any{
+		"client_id": "editor",
+		"actor":     "app:editor",
+		"namespace": "app/editor/session",
+		"key":       "summary",
+		"payload":   map[string]any{"v": 1},
+	}
+
+	ok := performJSONWithHeaders(t, srv, http.MethodPost, "/v1/context/write", reqBody, map[string]string{
+		"Authorization": "Bearer " + activeToken,
+	})
+	if ok.Code != http.StatusOK {
+		t.Fatalf("active token expected 200 got %d body=%s", ok.Code, ok.Body.String())
+	}
+
+	expired := performJSONWithHeaders(t, srv, http.MethodPost, "/v1/context/write", reqBody, map[string]string{
+		"Authorization": "Bearer " + expiredToken,
+	})
+	if expired.Code != http.StatusUnauthorized {
+		t.Fatalf("expired token expected 401 got %d body=%s", expired.Code, expired.Body.String())
+	}
+
+	revoked := performJSONWithHeaders(t, srv, http.MethodPost, "/v1/context/write", reqBody, map[string]string{
+		"Authorization": "Bearer " + revokedToken,
+	})
+	if revoked.Code != http.StatusUnauthorized {
+		t.Fatalf("revoked token expected 401 got %d body=%s", revoked.Code, revoked.Body.String())
+	}
+}
+
+func TestNamespaceSchemaRegistrationRetrievalAndWriteValidation(t *testing.T) {
+	srv := newTestServer(t)
+	reg := performJSON(t, srv, http.MethodPost, "/v1/namespaces/register", map[string]any{
+		"namespace":  "app/editor/session",
+		"owner_type": "app",
+		"owner_id":   "editor",
+		"policy": map[string]any{
+			"required_keys": []string{"title", "summary"},
+		},
+	})
+	if reg.Code != http.StatusOK {
+		t.Fatalf("register status=%d body=%s", reg.Code, reg.Body.String())
+	}
+
+	get := performJSON(t, srv, http.MethodGet, "/v1/namespaces/get?namespace=app/editor/session", nil)
+	if get.Code != http.StatusOK {
+		t.Fatalf("get status=%d body=%s", get.Code, get.Body.String())
+	}
+
+	invalid := performJSON(t, srv, http.MethodPost, "/v1/context/write", map[string]any{
+		"client_id": "editor",
+		"actor":     "app:editor",
+		"namespace": "app/editor/session",
+		"key":       "summary",
+		"payload":   map[string]any{"title": "only-title"},
+	})
+	if invalid.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for schema mismatch got %d body=%s", invalid.Code, invalid.Body.String())
+	}
+
+	valid := performJSON(t, srv, http.MethodPost, "/v1/context/write", map[string]any{
+		"client_id": "editor",
+		"actor":     "app:editor",
+		"namespace": "app/editor/session",
+		"key":       "summary",
+		"payload":   map[string]any{"title": "t", "summary": "s"},
+	})
+	if valid.Code != http.StatusOK {
+		t.Fatalf("expected 200 for schema-valid payload got %d body=%s", valid.Code, valid.Body.String())
+	}
+}
+
+func TestReadinessEndpoint(t *testing.T) {
+	srv := newTestServer(t)
+	if _, err := srv.Store.AppendRecord(context.Background(), contextstore.AppendInput{
+		Namespace: "app/editor/session",
+		Key:       "summary",
+		Actor:     "app:editor",
+		Payload:   json.RawMessage(`{"v":1}`),
+	}); err != nil {
+		t.Fatalf("append: %v", err)
+	}
+	res := performJSON(t, srv, http.MethodGet, "/v1/health/readiness", nil)
+	if res.Code != http.StatusOK {
+		t.Fatalf("readiness status=%d body=%s", res.Code, res.Body.String())
+	}
+	var report struct {
+		Healthy bool `json:"healthy"`
+	}
+	if err := json.Unmarshal(res.Body.Bytes(), &report); err != nil {
+		t.Fatalf("unmarshal readiness: %v", err)
+	}
+	if !report.Healthy {
+		t.Fatalf("expected healthy readiness")
 	}
 }
 

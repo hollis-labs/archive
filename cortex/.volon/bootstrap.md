@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 3
-updated_at: 2026-02-25T06:56:00Z
+iteration: 4
+updated_at: 2026-02-25T08:01:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,13 +18,13 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Create the next implementation batch from remaining product and operational gaps.
+- Create the next implementation batch from remaining hardening and operational gaps.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 0 todo, 0 blocked, 14 done
-- Last run log: `.volon/logs/run-iteration-003-2026-02-25.md`
+- Tasks: 0 todo, 0 blocked, 18 done
+- Last run log: `.volon/logs/run-iteration-004-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
@@ -39,7 +39,7 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- API implementation: `internal/contextapi/`
-- CLI implementation: `internal/contextcli/`
-- Store implementation: `internal/contextstore/`
+- API: `internal/contextapi/`
+- CLI: `internal/contextcli/`
+- Store: `internal/contextstore/`
 - Integration tests: `tests/integration/`

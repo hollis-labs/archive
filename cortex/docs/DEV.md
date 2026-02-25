@@ -23,6 +23,18 @@ Status: active draft
   - HTTP `401`
   - `{"code":"auth_required","message":"missing or invalid bearer token","details":null}`
 
+### Managed token lifecycle (local admin path)
+- Issue token: `contextd context token issue --label admin --ttl 24h`
+- Rotate token: `contextd context token rotate --token <old-token> --label admin --ttl 24h`
+- Revoke token: `contextd context token revoke --token <token>`
+- List token metadata: `contextd context token list --output table`
+- In managed mode, revoked/expired tokens are rejected for mutating API endpoints.
+
+## Namespace schema contract operations
+- Register namespace: `contextd context namespace register --namespace app/editor/session --owner-type app --owner-id editor`
+- Show namespace policy: `contextd context namespace show --namespace app/editor/session`
+- Use `required_keys` policy to enforce top-level payload keys for writes/promotions.
+
 ## Consistency operations
 - CLI scan report: `contextd context doctor --output json`
 - CLI head rebuild + report: `contextd context repair-heads --output table`
@@ -32,6 +44,16 @@ Status: active draft
 ## Audit operations
 - CLI audit query: `contextd context audit --limit 50 --output table`
 - API audit query: `GET /v1/context/audit?limit=50`
+
+## Backup and restore
+- Export snapshot: `contextd context backup export --out /path/to/backup.json`
+- Restore snapshot: `contextd context backup restore --in /path/to/backup.json`
+- Expected behavior: deterministic record/history parity and restored audit/token metadata.
+
+## Readiness checks
+- CLI readiness report: `contextd context health --output table`
+- API readiness report: `GET /v1/health/readiness`
+- Readiness includes storage-path status, schema version, and consistency issue count.
 
 ## Repository conventions
 - Product specifications: `docs/SPECS/`

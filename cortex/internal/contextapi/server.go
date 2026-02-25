@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/hollis-labs/volon-dev/internal/contextpolicy"
 	"github.com/hollis-labs/volon-dev/internal/contextstore"
@@ -19,6 +20,8 @@ type Server struct {
 	Policy *contextpolicy.Engine
 	// AuthToken enables bearer-token auth on mutating routes when non-empty.
 	AuthToken string
+	// ManagedAuth enables token lifecycle validation using store-backed auth_tokens.
+	ManagedAuth bool
 }
 
 // NewServer creates an API server.
@@ -36,6 +39,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.handleNamespaceRegister(w, r)
+	case r.Method == http.MethodGet && r.URL.Path == "/v1/namespaces/get":
+		s.handleNamespaceGet(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/write":
 		if !s.authorizeMutatingRequest(w, r) {
 			return
@@ -50,6 +55,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.handleHead(w, r)
 	case r.Method == http.MethodGet && r.URL.Path == "/v1/context/history":
 		s.handleHistory(w, r)
+	case r.Method == http.MethodGet && r.URL.Path == "/v1/health/readiness":
+		s.handleReadiness(w, r)
 	case r.Method == http.MethodGet && r.URL.Path == "/v1/context/audit":
 		s.handleAudit(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/views/evaluate":
@@ -67,6 +74,35 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) authorizeMutatingRequest(w http.ResponseWriter, r *http.Request) bool {
+	if s.ManagedAuth {
+		authHeader := strings.TrimSpace(r.Header.Get("Authorization"))
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			writeError(w, http.StatusUnauthorized, "auth_required", "missing or invalid bearer token", nil)
+			return false
+		}
+		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+		if token == "" {
+			writeError(w, http.StatusUnauthorized, "auth_required", "missing or invalid bearer token", nil)
+			return false
+		}
+		err := s.Store.ValidateAuthToken(r.Context(), token)
+		if err == nil {
+			return true
+		}
+		switch {
+		case errors.Is(err, contextstore.ErrAuthTokenInvalid),
+			errors.Is(err, contextstore.ErrAuthTokenRevoked),
+			errors.Is(err, contextstore.ErrAuthTokenExpired):
+			writeError(w, http.StatusUnauthorized, "auth_required", "missing or invalid bearer token", map[string]any{
+				"reason": err.Error(),
+			})
+			return false
+		default:
+			writeError(w, http.StatusInternalServerError, "auth_failed", err.Error(), nil)
+			return false
+		}
+	}
+
 	if strings.TrimSpace(s.AuthToken) == "" {
 		return true
 	}
@@ -81,6 +117,37 @@ func (s *Server) authorizeMutatingRequest(w http.ResponseWriter, r *http.Request
 		return false
 	}
 	return true
+}
+
+type issueTokenRequest struct {
+	Label string `json:"label"`
+	TTL   string `json:"ttl"`
+}
+
+func (s *Server) handleIssueToken(w http.ResponseWriter, r *http.Request) {
+	var req issueTokenRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
+		return
+	}
+	var ttl time.Duration
+	if strings.TrimSpace(req.TTL) != "" {
+		parsed, err := time.ParseDuration(req.TTL)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "validation_error", "ttl must be a valid duration", nil)
+			return
+		}
+		ttl = parsed
+	}
+	token, meta, err := s.Store.IssueAuthToken(r.Context(), req.Label, ttl)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "auth_failed", err.Error(), nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"token": token,
+		"meta":  meta,
+	})
 }
 
 type namespaceRegisterRequest struct {
@@ -104,6 +171,26 @@ func (s *Server) handleNamespaceRegister(w http.ResponseWriter, r *http.Request)
 		"namespace":  req.Namespace,
 		"owner_type": req.OwnerType,
 		"owner_id":   req.OwnerID,
+		"policy":     req.Policy,
+	})
+}
+
+func (s *Server) handleNamespaceGet(w http.ResponseWriter, r *http.Request) {
+	namespace := strings.TrimSpace(r.URL.Query().Get("namespace"))
+	if namespace == "" {
+		writeError(w, http.StatusBadRequest, "validation_error", "namespace is required", nil)
+		return
+	}
+	owner, ok := s.Policy.GetNamespace(namespace)
+	if !ok {
+		writeError(w, http.StatusNotFound, "not_found", "namespace not registered", nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"namespace":  namespace,
+		"owner_type": owner.OwnerType,
+		"owner_id":   owner.OwnerID,
+		"policy":     owner.Policy,
 	})
 }
 
@@ -124,6 +211,10 @@ func (s *Server) handleWrite(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := s.Policy.CanWrite(req.ClientID, req.Actor, req.Namespace); err != nil {
 		writeError(w, http.StatusForbidden, "policy_denied", err.Error(), nil)
+		return
+	}
+	if err := s.Policy.ValidatePayload(req.Namespace, req.Payload); err != nil {
+		writeError(w, http.StatusBadRequest, "validation_error", err.Error(), nil)
 		return
 	}
 	rec, err := s.Store.AppendRecord(r.Context(), contextstore.AppendInput{
@@ -190,6 +281,10 @@ func (s *Server) handlePromote(w http.ResponseWriter, r *http.Request) {
 
 	if err := s.Policy.CanWrite(req.ClientID, req.Actor, req.ToNamespace); err != nil {
 		writeError(w, http.StatusForbidden, "policy_denied", err.Error(), nil)
+		return
+	}
+	if err := s.Policy.ValidatePayload(req.ToNamespace, src.Payload); err != nil {
+		writeError(w, http.StatusBadRequest, "validation_error", err.Error(), nil)
 		return
 	}
 	out, err := s.Store.AppendRecord(r.Context(), contextstore.AppendInput{
@@ -281,6 +376,15 @@ func (s *Server) handleAudit(w http.ResponseWriter, r *http.Request) {
 		"items": events,
 		"count": len(events),
 	})
+}
+
+func (s *Server) handleReadiness(w http.ResponseWriter, r *http.Request) {
+	report, err := s.Store.Readiness(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "readiness_failed", err.Error(), nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, report)
 }
 
 type viewRequest struct {

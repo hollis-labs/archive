@@ -197,3 +197,115 @@ func TestAuditCommandShowsWriteAndPromote(t *testing.T) {
 		t.Fatalf("expected write/promote audit rows, got: %s", table)
 	}
 }
+
+func TestTokenLifecycleCommands(t *testing.T) {
+	cli, out, errOut, _ := newTestCLIWithRoot(t)
+
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{"context", "token", "issue", "--label", "admin", "--ttl", "1h", "--output", "json"}); code != 0 {
+		t.Fatalf("token issue failed: %s", errOut.String())
+	}
+	var issuePayload struct {
+		Token string `json:"token"`
+		Meta  struct {
+			TokenID string `json:"token_id"`
+		} `json:"meta"`
+	}
+	if err := json.Unmarshal(out.Bytes(), &issuePayload); err != nil {
+		t.Fatalf("unmarshal issue: %v", err)
+	}
+	if issuePayload.Token == "" || issuePayload.Meta.TokenID == "" {
+		t.Fatalf("expected issued token + metadata")
+	}
+
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{"context", "token", "list", "--output", "table"}); code != 0 {
+		t.Fatalf("token list failed: %s", errOut.String())
+	}
+	if !strings.Contains(out.String(), "TOKEN_ID") {
+		t.Fatalf("unexpected token list output: %s", out.String())
+	}
+
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{"context", "token", "rotate", "--token", issuePayload.Token, "--label", "admin-rotated", "--ttl", "1h", "--output", "json"}); code != 0 {
+		t.Fatalf("token rotate failed: %s", errOut.String())
+	}
+	var rotatePayload struct {
+		Token string `json:"token"`
+	}
+	if err := json.Unmarshal(out.Bytes(), &rotatePayload); err != nil {
+		t.Fatalf("unmarshal rotate: %v", err)
+	}
+	if rotatePayload.Token == "" || rotatePayload.Token == issuePayload.Token {
+		t.Fatalf("expected rotated token distinct from original")
+	}
+
+	if code := cli.Run(context.Background(), []string{"context", "token", "revoke", "--token", rotatePayload.Token}); code != 0 {
+		t.Fatalf("token revoke failed: %s", errOut.String())
+	}
+}
+
+func TestNamespaceSchemaShowAndPutValidation(t *testing.T) {
+	cli, out, errOut, _ := newTestCLIWithRoot(t)
+
+	if code := cli.Run(context.Background(), []string{
+		"context", "namespace", "register",
+		"--namespace", "app/editor/session",
+		"--owner-type", "app",
+		"--owner-id", "editor",
+	}); code != 0 {
+		t.Fatalf("namespace register failed: %s", errOut.String())
+	}
+
+	// Directly update policy with schema-required keys for this test.
+	if err := cli.Policy.RegisterNamespace("app/editor/session", "app", "editor", map[string]any{
+		"required_keys": []any{"title", "summary"},
+	}); err != nil {
+		t.Fatalf("register with schema policy: %v", err)
+	}
+
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{"context", "namespace", "show", "--namespace", "app/editor/session"}); code != 0 {
+		t.Fatalf("namespace show failed: %s", errOut.String())
+	}
+	if !strings.Contains(out.String(), "required_keys") {
+		t.Fatalf("expected policy in namespace show output, got: %s", out.String())
+	}
+
+	errOut.Reset()
+	if code := cli.Run(context.Background(), []string{
+		"context", "put",
+		"--client-id", "editor",
+		"--actor", "app:editor",
+		"--namespace", "app/editor/session",
+		"--key", "summary",
+		"--json", `{"title":"only-title"}`,
+	}); code == 0 {
+		t.Fatalf("expected schema validation failure")
+	}
+	if !strings.Contains(errOut.String(), "missing required keys") {
+		t.Fatalf("expected schema error text, got: %s", errOut.String())
+	}
+}
+
+func TestHealthCommandOutput(t *testing.T) {
+	cli, out, errOut, _ := newTestCLIWithRoot(t)
+	if code := cli.Run(context.Background(), []string{
+		"context", "put",
+		"--client-id", "editor",
+		"--actor", "app:editor",
+		"--namespace", "app/editor/session",
+		"--key", "summary",
+		"--json", `{"v":1}`,
+	}); code != 0 {
+		t.Fatalf("put failed: %s", errOut.String())
+	}
+
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{"context", "health", "--output", "table"}); code != 0 {
+		t.Fatalf("health failed: %s", errOut.String())
+	}
+	if !strings.Contains(out.String(), "HEALTHY") {
+		t.Fatalf("unexpected health output: %s", out.String())
+	}
+}

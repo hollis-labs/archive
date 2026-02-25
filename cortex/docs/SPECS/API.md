@@ -15,7 +15,8 @@ Status: pivot-aligned draft (Task 5)
 - Mechanism: bearer token in `Authorization` header.
 - Scope: mutating endpoints (`POST /v1/namespaces/register`, `POST /v1/context/write`, `POST /v1/context/promote`).
 - Behavior:
-  - When server auth token is configured, mutating requests without a matching bearer token return `401`.
+  - Legacy mode: when static server auth token is configured, mutating requests without a matching bearer token return `401`.
+  - Managed mode: token lifecycle is store-backed (issue/rotate/revoke/expiry). Revoked/expired tokens are rejected with `401`.
   - Read endpoints (`head`, `history`, `views/evaluate`) remain side-effect free and do not require auth in MVP.
 - Error envelope for auth failures:
   - `code: "auth_required"`
@@ -27,6 +28,7 @@ Each mutating request carries:
 - `actor` (string: `user`, `app:<client-id>`, `system`)
 
 Server enforces namespace ownership rules independent of caller-provided namespace values.
+When namespace policy includes schema contract metadata (`required_keys`), write/promote payloads are validated and schema mismatches return `400` (`validation_error`).
 
 ## Endpoints
 
@@ -43,6 +45,19 @@ Response:
 - `namespace`
 - `owner_type`
 - `owner_id`
+- `policy`
+
+### GET `/v1/namespaces/get`
+Retrieve namespace owner + policy metadata.
+
+Query:
+- `namespace`
+
+Response:
+- `namespace`
+- `owner_type`
+- `owner_id`
+- `policy`
 
 ### POST `/v1/context/write`
 Append revision for `(namespace,key)`.
@@ -131,6 +146,18 @@ Response:
 - `rebuilt_heads` (integer)
 - `remaining_issues` (integer)
 - `issues` (post-repair scan findings)
+
+### GET `/v1/health/readiness`
+Return deterministic operational readiness status.
+
+Response:
+- `healthy` (boolean)
+- `db_path` (string)
+- `records_dir` (string)
+- `records_dir_exists` (boolean)
+- `schema_version` (integer)
+- `consistency_issues` (integer)
+- `generated_at` (RFC3339 UTC)
 
 ## Determinism requirements
 - Identical store state + identical request must produce identical item ordering.

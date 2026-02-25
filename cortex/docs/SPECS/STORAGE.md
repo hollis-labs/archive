@@ -37,6 +37,12 @@ Hybrid local storage:
 - `app/<client-id>/*`: owned by specific client id.
 - Cross-namespace writes require explicit policy grants (default deny).
 
+## Namespace schema contracts
+- Namespace policy may define payload contract metadata.
+- MVP supported schema rule:
+  - `required_keys`: array of required top-level JSON object keys.
+- When configured, write/promote operations must satisfy the rule or fail with deterministic validation errors.
+
 ## Deterministic read constraints
 - History ordering: ascending `revision`.
 - Head resolution: single row in `heads`.

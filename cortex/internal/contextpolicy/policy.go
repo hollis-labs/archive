@@ -1,8 +1,10 @@
 package contextpolicy
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -42,6 +44,15 @@ func (e *Engine) RegisterNamespace(namespace, ownerType, ownerID string, policy 
 	defer e.mu.Unlock()
 	e.owners[ns] = NamespaceOwner{OwnerType: ownerType, OwnerID: ownerID, Policy: policy}
 	return nil
+}
+
+// GetNamespace returns namespace metadata when registered.
+func (e *Engine) GetNamespace(namespace string) (NamespaceOwner, bool) {
+	ns := strings.TrimSpace(namespace)
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	owner, ok := e.owners[ns]
+	return owner, ok
 }
 
 // CanWrite enforces namespace write rules.
@@ -101,4 +112,67 @@ func (e *Engine) CanPromote(actor, toNamespace string) error {
 		return errors.New("promotion target must be in user/*")
 	}
 	return nil
+}
+
+// ValidatePayload enforces namespace schema policy when configured.
+// Supported policy keys:
+// - required_keys: [string]
+func (e *Engine) ValidatePayload(namespace string, payload json.RawMessage) error {
+	ns := strings.TrimSpace(namespace)
+	if ns == "" {
+		return errors.New("namespace required")
+	}
+	e.mu.RLock()
+	owner, ok := e.owners[ns]
+	e.mu.RUnlock()
+	if !ok || owner.Policy == nil {
+		return nil
+	}
+
+	required := requiredKeys(owner.Policy)
+	if len(required) == 0 {
+		return nil
+	}
+	var obj map[string]json.RawMessage
+	if err := json.Unmarshal(payload, &obj); err != nil {
+		return errors.New("schema validation failed: payload must be a JSON object")
+	}
+	var missing []string
+	for _, key := range required {
+		if _, ok := obj[key]; !ok {
+			missing = append(missing, key)
+		}
+	}
+	if len(missing) > 0 {
+		sort.Strings(missing)
+		return fmt.Errorf("schema validation failed: missing required keys: %s", strings.Join(missing, ", "))
+	}
+	return nil
+}
+
+func requiredKeys(policy map[string]any) []string {
+	raw, ok := policy["required_keys"]
+	if !ok {
+		return nil
+	}
+	switch v := raw.(type) {
+	case []string:
+		return v
+	case []any:
+		out := make([]string, 0, len(v))
+		for _, item := range v {
+			s, ok := item.(string)
+			if !ok {
+				continue
+			}
+			s = strings.TrimSpace(s)
+			if s == "" {
+				continue
+			}
+			out = append(out, s)
+		}
+		return out
+	default:
+		return nil
+	}
 }

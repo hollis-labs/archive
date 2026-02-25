@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/hollis-labs/volon-dev/internal/contextpolicy"
 	"github.com/hollis-labs/volon-dev/internal/contextstore"
@@ -63,27 +64,63 @@ func (c *CLI) Run(ctx context.Context, args []string) int {
 		return c.runRepairHeads(ctx, args[2:])
 	case "audit":
 		return c.runAudit(ctx, args[2:])
+	case "token":
+		return c.runToken(ctx, args[2:])
+	case "backup":
+		return c.runBackup(ctx, args[2:])
+	case "health":
+		return c.runHealth(ctx, args[2:])
 	default:
 		return c.fail("unknown subcommand: " + args[1])
 	}
 }
 
 func (c *CLI) runNamespace(args []string) int {
-	if len(args) == 0 || args[0] != "register" {
-		return c.fail("usage: context namespace register --namespace ... --owner-type ... --owner-id ...")
+	if len(args) == 0 {
+		return c.fail("usage: context namespace <register|show> ...")
 	}
+	switch args[0] {
+	case "register":
+		return c.runNamespaceRegister(args[1:])
+	case "show":
+		return c.runNamespaceShow(args[1:])
+	default:
+		return c.fail("usage: context namespace <register|show> ...")
+	}
+}
+
+func (c *CLI) runNamespaceRegister(args []string) int {
 	fs := flag.NewFlagSet("namespace register", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	namespace := fs.String("namespace", "", "namespace")
 	ownerType := fs.String("owner-type", "", "owner-type")
 	ownerID := fs.String("owner-id", "", "owner-id")
-	if err := fs.Parse(args[1:]); err != nil {
+	if err := fs.Parse(args); err != nil {
 		return c.fail(err.Error())
 	}
 	if err := c.Policy.RegisterNamespace(*namespace, *ownerType, *ownerID, nil); err != nil {
 		return c.fail(err.Error())
 	}
 	return c.writeJSON(map[string]any{"namespace": *namespace, "owner_type": *ownerType, "owner_id": *ownerID})
+}
+
+func (c *CLI) runNamespaceShow(args []string) int {
+	fs := flag.NewFlagSet("namespace show", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	namespace := fs.String("namespace", "", "namespace")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	owner, ok := c.Policy.GetNamespace(*namespace)
+	if !ok {
+		return c.fail("namespace not registered")
+	}
+	return c.writeJSON(map[string]any{
+		"namespace":  *namespace,
+		"owner_type": owner.OwnerType,
+		"owner_id":   owner.OwnerID,
+		"policy":     owner.Policy,
+	})
 }
 
 func (c *CLI) runPut(ctx context.Context, args []string) int {
@@ -103,6 +140,9 @@ func (c *CLI) runPut(ctx context.Context, args []string) int {
 		return c.fail(err.Error())
 	}
 	if err := c.Policy.CanWrite(*clientID, *actor, *namespace); err != nil {
+		return c.fail(err.Error())
+	}
+	if err := c.Policy.ValidatePayload(*namespace, payload); err != nil {
 		return c.fail(err.Error())
 	}
 	rec, err := c.Store.AppendRecord(ctx, contextstore.AppendInput{Namespace: *namespace, Key: *key, Actor: *actor, Payload: payload})
@@ -206,6 +246,9 @@ func (c *CLI) runPromote(ctx context.Context, args []string) int {
 		return c.fail(err.Error())
 	}
 	if err := c.Policy.CanWrite(*clientID, *actor, *toNamespace); err != nil {
+		return c.fail(err.Error())
+	}
+	if err := c.Policy.ValidatePayload(*toNamespace, src.Payload); err != nil {
 		return c.fail(err.Error())
 	}
 	out, err := c.Store.AppendRecord(ctx, contextstore.AppendInput{
@@ -317,6 +360,207 @@ func (c *CLI) runAudit(ctx context.Context, args []string) int {
 		for _, event := range events {
 			_, _ = fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%d\t%s\n", event.ID, event.EventType, event.Actor, event.Namespace, event.Key, event.Revision, event.CreatedAt)
 		}
+		_ = w.Flush()
+		return 0
+	default:
+		return c.fail("output must be json|table")
+	}
+}
+
+func (c *CLI) runToken(ctx context.Context, args []string) int {
+	if len(args) == 0 {
+		return c.fail("usage: context token <issue|rotate|revoke|list> ...")
+	}
+	switch args[0] {
+	case "issue":
+		return c.runTokenIssue(ctx, args[1:])
+	case "rotate":
+		return c.runTokenRotate(ctx, args[1:])
+	case "revoke":
+		return c.runTokenRevoke(ctx, args[1:])
+	case "list":
+		return c.runTokenList(ctx, args[1:])
+	default:
+		return c.fail("unknown token command: " + args[0])
+	}
+}
+
+func (c *CLI) runTokenIssue(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("token issue", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	label := fs.String("label", "default", "label")
+	ttl := fs.String("ttl", "", "token ttl (e.g. 1h)")
+	output := fs.String("output", "json", "json|table")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	var dur time.Duration
+	if strings.TrimSpace(*ttl) != "" {
+		parsed, err := time.ParseDuration(*ttl)
+		if err != nil {
+			return c.fail("ttl must be a valid duration")
+		}
+		dur = parsed
+	}
+	token, meta, err := c.Store.IssueAuthToken(ctx, *label, dur)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+	switch strings.TrimSpace(*output) {
+	case "json", "":
+		return c.writeJSON(map[string]any{"token": token, "meta": meta})
+	case "table":
+		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
+		_, _ = fmt.Fprintln(w, "TOKEN\tTOKEN_ID\tLABEL\tEXPIRES_AT")
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", token, meta.TokenID, meta.Label, meta.ExpiresAt)
+		_ = w.Flush()
+		return 0
+	default:
+		return c.fail("output must be json|table")
+	}
+}
+
+func (c *CLI) runTokenRotate(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("token rotate", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	oldToken := fs.String("token", "", "existing token")
+	label := fs.String("label", "", "new token label")
+	ttl := fs.String("ttl", "", "new token ttl (e.g. 1h)")
+	output := fs.String("output", "json", "json|table")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	var dur time.Duration
+	if strings.TrimSpace(*ttl) != "" {
+		parsed, err := time.ParseDuration(*ttl)
+		if err != nil {
+			return c.fail("ttl must be a valid duration")
+		}
+		dur = parsed
+	}
+	token, meta, err := c.Store.RotateAuthToken(ctx, *oldToken, *label, dur)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+	switch strings.TrimSpace(*output) {
+	case "json", "":
+		return c.writeJSON(map[string]any{"token": token, "meta": meta})
+	case "table":
+		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
+		_, _ = fmt.Fprintln(w, "TOKEN\tTOKEN_ID\tLABEL\tEXPIRES_AT")
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", token, meta.TokenID, meta.Label, meta.ExpiresAt)
+		_ = w.Flush()
+		return 0
+	default:
+		return c.fail("output must be json|table")
+	}
+}
+
+func (c *CLI) runTokenRevoke(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("token revoke", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	token := fs.String("token", "", "token")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	if err := c.Store.RevokeAuthToken(ctx, *token); err != nil {
+		return c.fail(err.Error())
+	}
+	return c.writeJSON(map[string]any{"revoked": true})
+}
+
+func (c *CLI) runTokenList(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("token list", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	limit := fs.Int("limit", 50, "limit")
+	output := fs.String("output", "json", "json|table")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	tokens, err := c.Store.ListAuthTokens(ctx, *limit)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+	switch strings.TrimSpace(*output) {
+	case "json", "":
+		return c.writeJSON(map[string]any{"count": len(tokens), "items": tokens})
+	case "table":
+		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
+		_, _ = fmt.Fprintln(w, "TOKEN_ID\tLABEL\tCREATED_AT\tEXPIRES_AT\tREVOKED_AT")
+		for _, token := range tokens {
+			_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", token.TokenID, token.Label, token.CreatedAt, token.ExpiresAt, token.RevokedAt)
+		}
+		_ = w.Flush()
+		return 0
+	default:
+		return c.fail("output must be json|table")
+	}
+}
+
+func (c *CLI) runBackup(ctx context.Context, args []string) int {
+	if len(args) == 0 {
+		return c.fail("usage: context backup <export|restore> ...")
+	}
+	switch args[0] {
+	case "export":
+		return c.runBackupExport(ctx, args[1:])
+	case "restore":
+		return c.runBackupRestore(ctx, args[1:])
+	default:
+		return c.fail("usage: context backup <export|restore> ...")
+	}
+}
+
+func (c *CLI) runBackupExport(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("backup export", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	outPath := fs.String("out", "", "backup output file path")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	if strings.TrimSpace(*outPath) == "" {
+		return c.fail("--out is required")
+	}
+	if err := c.Store.ExportBackup(ctx, *outPath); err != nil {
+		return c.fail(err.Error())
+	}
+	return c.writeJSON(map[string]any{"exported": true, "path": *outPath})
+}
+
+func (c *CLI) runBackupRestore(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("backup restore", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	inPath := fs.String("in", "", "backup input file path")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	if strings.TrimSpace(*inPath) == "" {
+		return c.fail("--in is required")
+	}
+	if err := c.Store.RestoreBackup(ctx, *inPath); err != nil {
+		return c.fail(err.Error())
+	}
+	return c.writeJSON(map[string]any{"restored": true, "path": *inPath})
+}
+
+func (c *CLI) runHealth(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("health", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	output := fs.String("output", "json", "json|table")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	report, err := c.Store.Readiness(ctx)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+	switch strings.TrimSpace(*output) {
+	case "json", "":
+		return c.writeJSON(report)
+	case "table":
+		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
+		_, _ = fmt.Fprintln(w, "HEALTHY\tSCHEMA_VERSION\tCONSISTENCY_ISSUES\tRECORDS_DIR_EXISTS\tDB_PATH")
+		_, _ = fmt.Fprintf(w, "%t\t%d\t%d\t%t\t%s\n", report.Healthy, report.SchemaVersion, report.ConsistencyIssues, report.RecordsDirExists, report.DBPath)
 		_ = w.Flush()
 		return 0
 	default:

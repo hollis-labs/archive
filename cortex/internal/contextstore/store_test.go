@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestAppendHeadAndHistory(t *testing.T) {
@@ -268,5 +269,79 @@ func TestScanConsistencyAndRepairHeads(t *testing.T) {
 		if issue.Type == "head_mismatch" {
 			t.Fatalf("expected head mismatch repaired, still present: %+v", issue)
 		}
+	}
+}
+
+func TestAuthTokenLifecycle(t *testing.T) {
+	s, err := Open(context.Background(), Config{RootDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	token, meta, err := s.IssueAuthToken(context.Background(), "cli-admin", time.Hour)
+	if err != nil {
+		t.Fatalf("issue: %v", err)
+	}
+	if meta.TokenID == "" || token == "" {
+		t.Fatalf("expected issued token and metadata")
+	}
+	if err := s.ValidateAuthToken(context.Background(), token); err != nil {
+		t.Fatalf("validate issued token: %v", err)
+	}
+
+	rotated, _, err := s.RotateAuthToken(context.Background(), token, "rotated", time.Hour)
+	if err != nil {
+		t.Fatalf("rotate: %v", err)
+	}
+	if err := s.ValidateAuthToken(context.Background(), token); !errors.Is(err, ErrAuthTokenRevoked) {
+		t.Fatalf("expected revoked old token, got %v", err)
+	}
+	if err := s.ValidateAuthToken(context.Background(), rotated); err != nil {
+		t.Fatalf("validate rotated token: %v", err)
+	}
+
+	if err := s.RevokeAuthToken(context.Background(), rotated); err != nil {
+		t.Fatalf("revoke: %v", err)
+	}
+	if err := s.ValidateAuthToken(context.Background(), rotated); !errors.Is(err, ErrAuthTokenRevoked) {
+		t.Fatalf("expected revoked rotated token, got %v", err)
+	}
+}
+
+func TestReadinessHealthyAndDegraded(t *testing.T) {
+	root := t.TempDir()
+	s, err := Open(context.Background(), Config{RootDir: root})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	if _, err := s.AppendRecord(context.Background(), AppendInput{
+		Namespace: "app/editor/session",
+		Key:       "summary",
+		Actor:     "app:editor",
+		Payload:   json.RawMessage(`{"v":1}`),
+	}); err != nil {
+		t.Fatalf("append: %v", err)
+	}
+
+	healthy, err := s.Readiness(context.Background())
+	if err != nil {
+		t.Fatalf("readiness healthy: %v", err)
+	}
+	if !healthy.Healthy || healthy.ConsistencyIssues != 0 {
+		t.Fatalf("expected healthy readiness, got %+v", healthy)
+	}
+
+	if err := os.Remove(filepath.Join(root, "data", "records", "app", "editor", "session", "summary", "1.json")); err != nil {
+		t.Fatalf("remove payload: %v", err)
+	}
+	degraded, err := s.Readiness(context.Background())
+	if err != nil {
+		t.Fatalf("readiness degraded: %v", err)
+	}
+	if degraded.Healthy || degraded.ConsistencyIssues == 0 {
+		t.Fatalf("expected degraded readiness, got %+v", degraded)
 	}
 }
