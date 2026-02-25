@@ -36,6 +36,19 @@ Define the MCP adapter as a thin transport mapping to existing Context Memory Se
 - Namespace ownership policy remains authoritative.
 - Protected `user/*` updates continue to require explicit user promotion semantics.
 
+## Phased capability model
+
+| Phase | Allowed operations | Auth/policy expectations | Risk controls |
+|---|---|---|---|
+| `phase-1-read-view` | `head`, `history`, `views/evaluate` | Follows API read/view mode (`mvp-open-read` by default, optional gated modes later). | Keep adapter side-effect free for read/view and enforce deterministic ordering parity with API/CLI. |
+| `phase-2-namespace-admin` | `namespaces/register`, `namespaces/get` | Mutating calls require auth per server mode and must respect ownership schema validation. | Restrict to explicit admin/tool contexts; audit every mutation path. |
+| `phase-3-write-promote` | `context/write`, `context/promote` | Write requires namespace ownership grants; promote requires user actor semantics and protected `user/*` policy. | Enforce actor/namespace matrix, deterministic error envelopes, and explicit promote approval flow. |
+
+Phase progression constraints:
+- Each phase must be releasable without changing deterministic behavior in prior phases.
+- Selector semantics remain evaluator-only in all phases (no processor behavior).
+- Capability expansion requires corresponding API/CLI contract documentation updates.
+
 ## References
 - API spec: [`docs/SPECS/API.md`](./API.md)
 - CLI spec: [`docs/SPECS/CLI.md`](./CLI.md)
