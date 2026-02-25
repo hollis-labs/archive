@@ -170,6 +170,17 @@ Rotation checklist:
   - `make contract-cli-run SUITE=api-errors`
   - `make contract-commands`
 
+## Contract fixture lint manifest override
+- Default behavior: `scripts/contract-fixture-lint.sh` validates the repository's built-in fixture list.
+- Optional override for isolated harness checks:
+  - `CONTRACT_FIXTURE_LINT_MANIFEST=/tmp/fixtures.txt scripts/contract-fixture-lint.sh`
+- Manifest format:
+  - One fixture path per line.
+  - Empty lines and `#` comment lines are ignored.
+- Example manifest:
+  - `tests/integration/fixtures/api_contract_golden.json`
+  - `tests/integration/fixtures/cli_contract_command_golden.json`
+
 ## Metrics contract checks
 - Golden metrics fixture: `tests/integration/fixtures/metrics_contract_golden.json`
 - Contract suite: `go test ./tests/integration -run MetricsContract`

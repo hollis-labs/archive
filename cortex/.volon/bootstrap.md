@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-085` to document contract fixture lint manifest override usage.
+- Start `TASK-20260225-086` to add contract table-output coverage for `context contract run --execute`.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 84 done
+- Tasks: 1 todo, 0 blocked, 85 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-085 — Document contract fixture lint manifest override workflow (B)
 - TASK-20260225-086 — Add table-output contract test for context contract run --execute (B)
 
 ### Blockers

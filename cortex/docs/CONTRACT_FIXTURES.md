@@ -93,6 +93,8 @@ Update checklist:
   - `go test ./tests/integration -run BootstrapSyncNoLogContract`
   - `go test ./tests/integration -run BootstrapSyncIdempotentContract`
   - `go test ./tests/integration -run AgentsBootCheckContract`
+- Lint-script contract (manifest override behavior):
+  - `go test ./tests/integration -run ContractFixtureLintScript`
 
 ## Ownership And Update Policy
 
