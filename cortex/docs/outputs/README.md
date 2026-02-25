@@ -12,6 +12,14 @@ This directory (and `docs/SPECS/outputs/`) contains generated pivot support note
 - Use case: "I need current unresolved decisions and follow-up direction."
   - Start with [`open-questions.md`](./open-questions.md) and [`pivot-changelog.md`](./pivot-changelog.md), then trace linked canonical specs/ADRs.
 
+## Choose Your Start
+- Operator:
+  - Start with [`open-questions.md`](./open-questions.md) and [`docs/SPECS/MCP.md`](../SPECS/MCP.md), then use canonical API/CLI specs for exact command/error semantics.
+- Architect:
+  - Start with [`updated-architecture-summary.md`](./updated-architecture-summary.md), then confirm decisions in [`docs/DECISIONS/ADR-0002-generalized-context-registry.md`](../DECISIONS/ADR-0002-generalized-context-registry.md).
+- API implementer:
+  - Start with [`docs/SPECS/outputs/api-diff.md`](../SPECS/outputs/api-diff.md), then validate final contracts in [`docs/SPECS/API.md`](../SPECS/API.md) and [`docs/SPECS/VIEWS.md`](../SPECS/VIEWS.md).
+
 ## Architecture and scope artifacts
 - [`updated-architecture-summary.md`](./updated-architecture-summary.md)
   - Canonical sources:

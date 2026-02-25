@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 82
-updated_at: 2026-02-25T20:46:00Z
+iteration: 83
+updated_at: 2026-02-25T20:52:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,17 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-154` to add outputs index role-based start map.
+- Generate next task batch (`TASK-20260225-155` .. `TASK-20260225-158`) and start `TASK-20260225-155`.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 1 todo, 0 blocked, 153 done
-- Last run log: `.volon/logs/run-iteration-081-2026-02-25.md`
+- Tasks: 0 todo, 0 blocked, 154 done
+- Last run log: `.volon/logs/run-iteration-082-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-154 — Add outputs index 'choose-your-start' map (B)
+- None currently queued; generate next batch.
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
@@ -39,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `ca87de4`
+- Last implementation commit: `49ce6f4`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
