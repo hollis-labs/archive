@@ -111,6 +111,22 @@ Phase 3 (`write-promote`) checklist:
 | Shared workstation | Start with `phase-1`; adopt `phase-2/3` only for trusted operators | `optional-gated-read` minimum | Medium risk; reduce accidental data exposure and require explicit token flow for shared contexts. |
 | Team-managed environment | Start with constrained `phase-1`, then staged rollout to `phase-2/3` with approvals | `strict-auth-all` preferred | Higher risk; enforce strong auth posture, ownership policy checks, and auditability before enabling mutating tools. |
 
+## Preflight checklist (team-managed / production-like)
+
+Before enabling `phase-2` or `phase-3` MCP capabilities:
+1. Auth mode confirmation:
+   - Verify active mode is consistent with team policy (`strict-auth-all` recommended).
+2. Token flow validation:
+   - Confirm bearer token propagation from MCP client through adapter boundary to API calls.
+   - Validate token lifecycle status (active/non-revoked) for operational identities.
+3. Actor/policy checks:
+   - Validate actor mapping for mutate tools.
+   - Confirm promote paths enforce `actor=user` for protected `user/*` transitions.
+4. Audit visibility:
+   - Verify mutate actions appear in audit query surfaces and can be traced by operator.
+5. Rollout guard:
+   - Enable capabilities phase-by-phase with rollback path if auth/policy invariants fail.
+
 ## References
 - API spec: [`docs/SPECS/API.md`](./API.md)
 - CLI spec: [`docs/SPECS/CLI.md`](./CLI.md)

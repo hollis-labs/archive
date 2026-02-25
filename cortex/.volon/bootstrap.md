@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 79
-updated_at: 2026-02-25T20:38:00Z
+iteration: 82
+updated_at: 2026-02-25T20:46:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-153` to add MCP preflight checklist for production-like environments.
+- Start `TASK-20260225-154` to add outputs index role-based start map.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 152 done
-- Last run log: `.volon/logs/run-iteration-080-2026-02-25.md`
+- Tasks: 1 todo, 0 blocked, 153 done
+- Last run log: `.volon/logs/run-iteration-081-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-153 — Add MCP preflight checklist for production-like environments (B)
 - TASK-20260225-154 — Add outputs index 'choose-your-start' map (B)
 
 ### Blockers
@@ -40,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `a907cdd`
+- Last implementation commit: `ca87de4`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
