@@ -88,6 +88,13 @@ When to add a new suite ID:
 | `cli-contract-run-unknown-suite` | Verify unknown suite errors are stable and actionable. | `go test ./tests/integration -run ContractRunUnknownSuiteErrorContract` |
 | `cli-contract-run-invalid-output` | Verify invalid `--output` mode errors remain stable. | `go test ./tests/integration -run ContractRunInvalidOutputErrorContract` |
 
+## Default Output-Mode Suites
+
+| Suite | Command behavior | Targeted command |
+|---|---|---|
+| `cli-contract-list-default-output` | `context contract list` defaults to JSON output. | `go test ./tests/integration -run ContractListDefaultOutputContract` |
+| `cli-contract-run-default-output` | `context contract run --suite <name>` defaults to JSON dry mode (`executed=false`). | `go test ./tests/integration -run ContractRunDefaultOutputContract` |
+
 ## Full validation
 
 - `go test ./...`

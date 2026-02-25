@@ -182,6 +182,12 @@ Rotation checklist:
 - List suites: `contextd context contract list --output table`
 - Show suite command(s) without execution: `contextd context contract run --suite api --output json`
 - Execute suite command(s): `contextd context contract run --suite api --execute --output table`
+- Default output behavior:
+  - `contextd context contract list` defaults to `--output json`.
+  - `contextd context contract run --suite <name>` defaults to `--output json` with `executed=false` unless `--execute` is set.
+  - Default-output contract suites:
+    - `go test ./tests/integration -run ContractListDefaultOutputContract`
+    - `go test ./tests/integration -run ContractRunDefaultOutputContract`
 - Make shortcuts:
   - `make contract-cli-list`
   - `make contract-cli-run SUITE=api`

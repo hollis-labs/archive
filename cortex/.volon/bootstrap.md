@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-097` to document default output-mode behavior for contract CLI commands.
+- Start `TASK-20260225-098` to add contract suite command-prefix regression coverage.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 96 done
+- Tasks: 1 todo, 0 blocked, 97 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-097 — Document default output-mode behavior for contract CLI commands (B)
 - TASK-20260225-098 — Add regression test for contract suite command prefix validity (B)
 
 ### Blockers
