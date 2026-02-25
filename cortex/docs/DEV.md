@@ -63,6 +63,18 @@ Rotation checklist:
 - Show namespace policy: `contextd context namespace show --namespace app/editor/session`
 - Use `required_keys` policy to enforce top-level payload keys for writes/promotions.
 
+### Policy/Promote Operator Quick Reference
+1. Register app namespace policy:
+   - `contextd context namespace register --namespace app/editor/session --owner-type app --owner-id editor`
+2. Write app candidate record:
+   - `contextd context put --client-id editor-ui --actor app:editor-ui --namespace app/editor/session --key summary --json '{"text":"candidate summary"}'`
+3. Promote into protected user namespace:
+   - `contextd context promote --client-id user-shell --actor user --from-namespace app/editor/session --from-key summary --to-namespace user/profile --to-key summary`
+4. Verify promotion via audit trail:
+   - `contextd context audit --limit 20 --namespace user/profile --event-type promote --output table`
+
+See policy semantics: `docs/SPECS/API.md#actor-namespace-contract-matrix`.
+
 ## Consistency operations
 - CLI scan report: `contextd context doctor --output json`
 - CLI head rebuild + report: `contextd context repair-heads --output table`
