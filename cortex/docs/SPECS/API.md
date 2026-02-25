@@ -11,6 +11,12 @@ Status: pivot-aligned draft (Task 5)
   - `message` (string)
 - `details` (object, optional)
 
+Common error codes:
+- `validation_error` (`400`)
+- `policy_denied` (`403`)
+- `auth_required` (`401`)
+- `not_found` (`404`)
+
 ## Local auth posture (MVP)
 - Mechanism: bearer token in `Authorization` header.
 - Scope: mutating endpoints (`POST /v1/namespaces/register`, `POST /v1/context/write`, `POST /v1/context/promote`).
@@ -129,6 +135,23 @@ Selector limits:
 - `limit`: defaults to 200 when omitted/zero, max 500
 - invalid selector complexity/shape returns `400` (`code: "validation_error"`)
 
+### GET `/v1/context/audit`
+Query:
+- `limit` (optional; default `50`, max `200`)
+- `cursor` (optional; positive integer from prior `next_cursor`)
+- `namespace` (optional exact filter)
+- `event_type` (optional exact filter)
+
+Response:
+- `items` (newest-first deterministic ordering by `id DESC`)
+- `count`
+- `next_cursor` (nullable integer)
+
+Example pagination:
+1. `GET /v1/context/audit?limit=2`
+2. Read `next_cursor` from response.
+3. `GET /v1/context/audit?limit=2&cursor=<next_cursor>`
+
 ### GET `/v1/context/consistency/scan`
 Run a deterministic consistency scan across index rows and payload files.
 
@@ -152,6 +175,7 @@ Return deterministic operational readiness status.
 
 Response:
 - `healthy` (boolean)
+- `status` (`healthy` | `degraded` | `failing`)
 - `db_path` (string)
 - `records_dir` (string)
 - `records_dir_exists` (boolean)
@@ -175,6 +199,8 @@ Response:
   - `errors`
   - `latency_ns_total`
   - `latency_ns_avg`
+  - `status_counts` (object keyed by HTTP status code)
+  - `recent_request_ids` (array of most recent request IDs for route correlation)
 - `totals`
   - `requests`
   - `errors`

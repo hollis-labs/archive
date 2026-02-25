@@ -330,7 +330,7 @@ func TestReadinessHealthyAndDegraded(t *testing.T) {
 	if err != nil {
 		t.Fatalf("readiness healthy: %v", err)
 	}
-	if !healthy.Healthy || healthy.ConsistencyIssues != 0 {
+	if !healthy.Healthy || healthy.ConsistencyIssues != 0 || healthy.Status != "healthy" {
 		t.Fatalf("expected healthy readiness, got %+v", healthy)
 	}
 
@@ -341,8 +341,19 @@ func TestReadinessHealthyAndDegraded(t *testing.T) {
 	if err != nil {
 		t.Fatalf("readiness degraded: %v", err)
 	}
-	if degraded.Healthy || degraded.ConsistencyIssues == 0 {
+	if degraded.Healthy || degraded.ConsistencyIssues == 0 || degraded.Status != "degraded" {
 		t.Fatalf("expected degraded readiness, got %+v", degraded)
+	}
+
+	if err := os.RemoveAll(filepath.Join(root, "data", "records")); err != nil {
+		t.Fatalf("remove records dir: %v", err)
+	}
+	failing, err := s.Readiness(context.Background())
+	if err != nil {
+		t.Fatalf("readiness failing: %v", err)
+	}
+	if failing.Status != "failing" || failing.RecordsDirExists {
+		t.Fatalf("expected failing readiness, got %+v", failing)
 	}
 }
 
@@ -444,5 +455,54 @@ func TestCompactionPreservesHeadsAndTrimsAudit(t *testing.T) {
 	}
 	if len(events) != 2 {
 		t.Fatalf("expected 2 audit rows after trim, got %d", len(events))
+	}
+}
+
+func TestQueryAuditEventsFiltersAndCursor(t *testing.T) {
+	s, err := Open(context.Background(), Config{RootDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	seed := []AuditEvent{
+		{EventType: "write", Actor: "app:editor", Namespace: "app/editor/session", Key: "summary", Revision: 1, RecordID: "r1"},
+		{EventType: "write", Actor: "app:editor", Namespace: "app/editor/session", Key: "summary", Revision: 2, RecordID: "r2"},
+		{EventType: "promote", Actor: "user", Namespace: "user/notes", Key: "daily", Revision: 1, RecordID: "r3"},
+	}
+	for i := range seed {
+		if err := s.RecordAuditEvent(context.Background(), seed[i]); err != nil {
+			t.Fatalf("record audit %d: %v", i, err)
+		}
+	}
+
+	pageOne, next, err := s.QueryAuditEvents(context.Background(), AuditQuery{Limit: 2})
+	if err != nil {
+		t.Fatalf("query page one: %v", err)
+	}
+	if len(pageOne) != 2 || next == nil {
+		t.Fatalf("expected 2 items and next cursor, got len=%d next=%v", len(pageOne), next)
+	}
+	pageTwo, nextTwo, err := s.QueryAuditEvents(context.Background(), AuditQuery{Limit: 2, Cursor: *next})
+	if err != nil {
+		t.Fatalf("query page two: %v", err)
+	}
+	if len(pageTwo) != 1 || nextTwo != nil {
+		t.Fatalf("expected final page len=1 and nil cursor, got len=%d next=%v", len(pageTwo), nextTwo)
+	}
+	if pageTwo[0].ID >= pageOne[len(pageOne)-1].ID {
+		t.Fatalf("cursor did not advance to older window")
+	}
+
+	filtered, _, err := s.QueryAuditEvents(context.Background(), AuditQuery{
+		Limit:     10,
+		Namespace: "user/notes",
+		EventType: "promote",
+	})
+	if err != nil {
+		t.Fatalf("query filtered: %v", err)
+	}
+	if len(filtered) != 1 || filtered[0].EventType != "promote" || filtered[0].Namespace != "user/notes" {
+		t.Fatalf("unexpected filtered result: %+v", filtered)
 	}
 }

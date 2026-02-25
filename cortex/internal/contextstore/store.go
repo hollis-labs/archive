@@ -98,6 +98,14 @@ type AuditEvent struct {
 	Metadata  json.RawMessage `json:"metadata,omitempty"`
 }
 
+// AuditQuery defines bounded, deterministic audit query filters.
+type AuditQuery struct {
+	Limit     int
+	Cursor    int64
+	Namespace string
+	EventType string
+}
+
 // AuthToken stores local token lifecycle metadata.
 type AuthToken struct {
 	TokenID   string `json:"token_id"`
@@ -148,6 +156,7 @@ type NamespacePolicyEntry struct {
 // ReadinessReport summarizes operational readiness in a stable shape.
 type ReadinessReport struct {
 	Healthy           bool   `json:"healthy"`
+	Status            string `json:"status"` // healthy|degraded|failing
 	DBPath            string `json:"db_path"`
 	RecordsDir        string `json:"records_dir"`
 	RecordsDirExists  bool   `json:"records_dir_exists"`
@@ -818,29 +827,50 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 
 // ListAuditEvents returns newest-first audit events with deterministic ordering.
 func (s *Store) ListAuditEvents(ctx context.Context, limit int) ([]AuditEvent, error) {
-	if limit <= 0 {
-		limit = 50
-	}
-	if limit > 500 {
-		limit = 500
-	}
+	events, _, err := s.QueryAuditEvents(ctx, AuditQuery{Limit: limit})
+	return events, err
+}
 
-	rows, err := s.db.QueryContext(ctx, `
+// QueryAuditEvents returns deterministic newest-first audit events with optional filters and cursor paging.
+func (s *Store) QueryAuditEvents(ctx context.Context, q AuditQuery) ([]AuditEvent, *int64, error) {
+	if q.Limit <= 0 {
+		q.Limit = 50
+	}
+	if q.Limit > 200 {
+		q.Limit = 200
+	}
+	query := `
 SELECT id, event_type, actor, namespace, key_name, revision, record_id, created_at, metadata_json
 FROM audit_events
-ORDER BY id DESC
-LIMIT ?`, limit)
+WHERE 1=1`
+	args := make([]any, 0, 4)
+	if q.Cursor > 0 {
+		query += "\n  AND id < ?"
+		args = append(args, q.Cursor)
+	}
+	if strings.TrimSpace(q.Namespace) != "" {
+		query += "\n  AND namespace = ?"
+		args = append(args, strings.TrimSpace(q.Namespace))
+	}
+	if strings.TrimSpace(q.EventType) != "" {
+		query += "\n  AND event_type = ?"
+		args = append(args, strings.TrimSpace(q.EventType))
+	}
+	query += "\nORDER BY id DESC\nLIMIT ?"
+	args = append(args, q.Limit+1)
+
+	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rows.Close()
 
-	out := make([]AuditEvent, 0, limit)
+	out := make([]AuditEvent, 0, q.Limit+1)
 	for rows.Next() {
 		var event AuditEvent
 		var metadata string
 		if err := rows.Scan(&event.ID, &event.EventType, &event.Actor, &event.Namespace, &event.Key, &event.Revision, &event.RecordID, &event.CreatedAt, &metadata); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		if strings.TrimSpace(metadata) != "" {
 			event.Metadata = json.RawMessage(metadata)
@@ -848,9 +878,15 @@ LIMIT ?`, limit)
 		out = append(out, event)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return out, nil
+	var nextCursor *int64
+	if len(out) > q.Limit {
+		out = out[:q.Limit]
+		last := out[len(out)-1].ID
+		nextCursor = &last
+	}
+	return out, nextCursor, nil
 }
 
 // IssueAuthToken creates a new token and returns the plaintext token plus stored metadata.
@@ -1229,7 +1265,15 @@ func (s *Store) Readiness(ctx context.Context) (ReadinessReport, error) {
 		return ReadinessReport{}, err
 	}
 	report.ConsistencyIssues = len(issues)
-	report.Healthy = report.RecordsDirExists && report.ConsistencyIssues == 0
+	switch {
+	case !report.RecordsDirExists:
+		report.Status = "failing"
+	case report.ConsistencyIssues > 0:
+		report.Status = "degraded"
+	default:
+		report.Status = "healthy"
+	}
+	report.Healthy = report.Status == "healthy"
 	return report, nil
 }
 

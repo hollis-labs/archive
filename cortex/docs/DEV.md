@@ -47,6 +47,8 @@ Rotation checklist:
 - Start with legacy static token: `contextd serve --static-token <token> --addr :8080`
 - Enable local diagnostics endpoint: `contextd serve --metrics --addr :8080`
 - Enable structured request logging: `contextd serve --request-logs --addr :8080`
+- Request log redaction mode (default redacted): `contextd serve --request-logs --request-log-mode redacted --addr :8080`
+- Request log full query mode (local debugging only): `contextd serve --request-logs --request-log-mode full --addr :8080`
 - Configure graceful shutdown timeout: `contextd serve --shutdown-timeout 10s`
 - Managed auth guard: server startup fails if no active token exists.
 - Metrics endpoint: `GET /v1/metrics` (available only when `--metrics` is enabled).
@@ -66,6 +68,12 @@ Rotation checklist:
 ## Audit operations
 - CLI audit query: `contextd context audit --limit 50 --output table`
 - API audit query: `GET /v1/context/audit?limit=50`
+- API filtered audit query: `GET /v1/context/audit?limit=50&event_type=write&namespace=app/editor/session`
+- Cursor pagination flow (fixture-aligned):
+  1. `curl -s 'http://127.0.0.1:8080/v1/context/audit?limit=2' | jq .`
+  2. Extract `next_cursor` from response.
+  3. `curl -s \"http://127.0.0.1:8080/v1/context/audit?limit=2&cursor=<next_cursor>\" | jq .`
+- Expected response fields: `items`, `count`, `next_cursor`.
 
 ## Backup and restore
 - Export snapshot: `contextd context backup export --out /path/to/backup.json`
@@ -76,7 +84,10 @@ Rotation checklist:
 ## Readiness checks
 - CLI readiness report: `contextd context health --output table`
 - API readiness report: `GET /v1/health/readiness`
-- Readiness includes storage-path status, schema version, and consistency issue count.
+- Readiness includes storage-path status, schema version, consistency issue count, and status tier:
+  - `healthy`: all core checks pass.
+  - `degraded`: store accessible but non-fatal consistency issues detected.
+  - `failing`: required storage path missing or critical readiness preconditions unmet.
 
 ## First-time bootstrap
 - Run deterministic setup: `contextd context bootstrap --default-app editor --output json`
@@ -92,11 +103,24 @@ Rotation checklist:
 - Golden API contract fixture: `tests/integration/fixtures/api_contract_golden.json`
 - Contract suite: `go test ./tests/integration -run APIContract`
 - Update process: modify fixture intentionally alongside API shape changes and include rationale in commit message.
+- Golden audit contract fixture: `tests/integration/fixtures/audit_contract_golden.json`
+- Audit contract suite: `go test ./tests/integration -run AuditContract`
+- Golden API error fixture: `tests/integration/fixtures/api_error_contract_golden.json`
+- Error contract suite: `go test ./tests/integration -run APIErrorContract`
+- Golden readiness contract fixture: `tests/integration/fixtures/readiness_contract_golden.json`
+- Readiness contract suite: `go test ./tests/integration -run ReadinessContract`
 
 ## Metrics contract checks
 - Golden metrics fixture: `tests/integration/fixtures/metrics_contract_golden.json`
 - Contract suite: `go test ./tests/integration -run MetricsContract`
 - Local query example: `curl -s http://127.0.0.1:8080/v1/metrics | jq .`
+- Correlation fields:
+  - `routes[].status_counts` tracks per-status response counts.
+  - `routes[].recent_request_ids` captures recent request IDs for route-level trace correlation.
+- Correlation workflow:
+  1. Start service with `--metrics --request-logs`.
+  2. Send request with `X-Request-Id: <id>`.
+  3. Match `<id>` in request logs and `/v1/metrics` `recent_request_ids`.
 
 ## Service smoke checks
 - Script: `scripts/contextd-smoke.sh`
@@ -110,6 +134,23 @@ Rotation checklist:
   - `contextd context token issue --label local --ttl 24h --output table`
   - `contextd serve --managed-auth --addr 127.0.0.1:8080 --metrics`
   - `scripts/contextd-smoke.sh --base-url http://127.0.0.1:8080 --token <issued-token> --metrics`
+
+## Make targets
+- Run all tests: `make test`
+- Run contract suites: `make contracts`
+- Run smoke against active server: `make smoke BASE_URL=http://127.0.0.1:8080`
+- Run smoke with auth token: `make smoke BASE_URL=http://127.0.0.1:8080 TOKEN=<token>`
+- Run smoke with metrics check enabled: `make smoke BASE_URL=http://127.0.0.1:8080 TOKEN=<token> METRICS=1`
+- Run full local harness (boot + contracts + smoke + teardown):
+  - `make e2e-local`
+  - `AUTH_MODE=static make e2e-local`
+  - `AUTH_MODE=managed make e2e-local`
+- Managed-auth preset:
+  - `make e2e-managed`
+- Quick validation sequence:
+  1. `make contracts`
+  2. Start `contextd serve ...`
+  3. `make smoke BASE_URL=http://127.0.0.1:8080 TOKEN=<token>`
 
 ## Repository conventions
 - Product specifications: `docs/SPECS/`

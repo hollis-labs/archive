@@ -30,6 +30,8 @@ type Server struct {
 	EnableMetrics bool
 	// EnableRequestLogging emits one structured line per request.
 	EnableRequestLogging bool
+	// RequestLogMode controls query logging detail: redacted|full.
+	RequestLogMode string
 	// LogWriter is the destination for structured request logs when enabled.
 	LogWriter  io.Writer
 	startupErr error
@@ -67,10 +69,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			status = http.StatusOK
 		}
 		if s.EnableMetrics {
-			s.metrics.Record(r.Method, r.URL.Path, status, time.Since(started))
+			s.metrics.Record(r.Method, r.URL.Path, status, time.Since(started), requestID)
 		}
 		if s.EnableRequestLogging {
-			s.writeRequestLog(requestID, r.Method, r.URL.Path, status, time.Since(started))
+			s.writeRequestLog(requestID, r.Method, r.URL.Path, r.URL.RawQuery, status, time.Since(started))
 		}
 	}()
 	w = sw
@@ -130,15 +132,32 @@ func (s *Server) nextRequestID() string {
 	return fmt.Sprintf("req-%012d", n)
 }
 
-func (s *Server) writeRequestLog(requestID, method, path string, status int, dur time.Duration) {
+func (s *Server) writeRequestLog(requestID, method, path, rawQuery string, status int, dur time.Duration) {
 	dest := s.LogWriter
 	if dest == nil {
 		return
 	}
-	line := fmt.Sprintf(
-		`{"event":"request","request_id":%q,"method":%q,"path":%q,"status":%d,"latency_ms":%d}`+"\n",
-		requestID, method, path, status, dur.Milliseconds(),
-	)
+	mode := strings.ToLower(strings.TrimSpace(s.RequestLogMode))
+	if mode == "" {
+		mode = "redacted"
+	}
+	payload := map[string]any{
+		"event":      "request",
+		"request_id": requestID,
+		"method":     method,
+		"path":       path,
+		"status":     status,
+		"latency_ms": dur.Milliseconds(),
+	}
+	if strings.TrimSpace(rawQuery) != "" {
+		if mode == "full" {
+			payload["query"] = rawQuery
+		} else {
+			payload["query"] = "[REDACTED]"
+		}
+	}
+	b, _ := json.Marshal(payload)
+	line := string(b) + "\n"
 	s.logMu.Lock()
 	defer s.logMu.Unlock()
 	_, _ = io.WriteString(dest, line)
@@ -458,14 +477,32 @@ func (s *Server) handleAudit(w http.ResponseWriter, r *http.Request) {
 		}
 		limit = n
 	}
-	events, err := s.Store.ListAuditEvents(r.Context(), limit)
+	cursor := int64(0)
+	if raw := strings.TrimSpace(r.URL.Query().Get("cursor")); raw != "" {
+		n, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil || n <= 0 {
+			writeError(w, http.StatusBadRequest, "validation_error", "cursor must be a positive integer", nil)
+			return
+		}
+		cursor = n
+	}
+	namespace := strings.TrimSpace(r.URL.Query().Get("namespace"))
+	eventType := strings.TrimSpace(r.URL.Query().Get("event_type"))
+
+	events, nextCursor, err := s.Store.QueryAuditEvents(r.Context(), contextstore.AuditQuery{
+		Limit:     limit,
+		Cursor:    cursor,
+		Namespace: namespace,
+		EventType: eventType,
+	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "read_failed", err.Error(), nil)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"items": events,
-		"count": len(events),
+		"items":       events,
+		"count":       len(events),
+		"next_cursor": nextCursor,
 	})
 }
 
@@ -637,12 +674,14 @@ type apiMetrics struct {
 }
 
 type routeMetric struct {
-	Method         string `json:"method"`
-	Path           string `json:"path"`
-	Requests       int64  `json:"requests"`
-	Errors         int64  `json:"errors"`
-	LatencyNsTotal int64  `json:"latency_ns_total"`
-	LatencyNsAvg   int64  `json:"latency_ns_avg"`
+	Method           string           `json:"method"`
+	Path             string           `json:"path"`
+	Requests         int64            `json:"requests"`
+	Errors           int64            `json:"errors"`
+	LatencyNsTotal   int64            `json:"latency_ns_total"`
+	LatencyNsAvg     int64            `json:"latency_ns_avg"`
+	StatusCounts     map[string]int64 `json:"status_counts"`
+	RecentRequestIDs []string         `json:"recent_request_ids"`
 }
 
 func newAPIMetrics() *apiMetrics {
@@ -651,18 +690,29 @@ func newAPIMetrics() *apiMetrics {
 	}
 }
 
-func (m *apiMetrics) Record(method, path string, status int, dur time.Duration) {
+func (m *apiMetrics) Record(method, path string, status int, dur time.Duration, requestID string) {
 	key := method + " " + path
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	entry, ok := m.routes[key]
 	if !ok {
-		entry = &routeMetric{Method: method, Path: path}
+		entry = &routeMetric{
+			Method:       method,
+			Path:         path,
+			StatusCounts: make(map[string]int64),
+		}
 		m.routes[key] = entry
 	}
 	entry.Requests++
 	if status >= 400 {
 		entry.Errors++
+	}
+	entry.StatusCounts[strconv.Itoa(status)]++
+	if strings.TrimSpace(requestID) != "" {
+		entry.RecentRequestIDs = append(entry.RecentRequestIDs, requestID)
+		if len(entry.RecentRequestIDs) > 5 {
+			entry.RecentRequestIDs = entry.RecentRequestIDs[len(entry.RecentRequestIDs)-5:]
+		}
 	}
 	entry.LatencyNsTotal += dur.Nanoseconds()
 	entry.LatencyNsAvg = entry.LatencyNsTotal / entry.Requests

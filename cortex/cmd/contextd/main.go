@@ -25,6 +25,7 @@ type serveConfig struct {
 	StaticToken       string
 	EnableMetrics     bool
 	EnableRequestLogs bool
+	RequestLogMode    string
 	ShutdownTimeout   time.Duration
 }
 
@@ -77,6 +78,7 @@ func parseServeArgs(args []string) (serveConfig, error) {
 	static := fs.String("static-token", "", "static bearer token (legacy mode)")
 	metrics := fs.Bool("metrics", false, "enable /v1/metrics endpoint")
 	requestLogs := fs.Bool("request-logs", false, "enable structured request logs")
+	requestLogMode := fs.String("request-log-mode", "redacted", "request log mode: redacted|full")
 	shutdownTimeout := fs.Duration("shutdown-timeout", 5*time.Second, "graceful shutdown timeout")
 	if err := fs.Parse(args); err != nil {
 		return serveConfig{}, err
@@ -84,12 +86,17 @@ func parseServeArgs(args []string) (serveConfig, error) {
 	if *managed && strings.TrimSpace(*static) != "" {
 		return serveConfig{}, fmt.Errorf("managed-auth and static-token are mutually exclusive")
 	}
+	mode := strings.ToLower(strings.TrimSpace(*requestLogMode))
+	if mode != "redacted" && mode != "full" {
+		return serveConfig{}, fmt.Errorf("request-log-mode must be one of: redacted, full")
+	}
 	return serveConfig{
 		Addr:              *addr,
 		ManagedAuth:       *managed,
 		StaticToken:       strings.TrimSpace(*static),
 		EnableMetrics:     *metrics,
 		EnableRequestLogs: *requestLogs,
+		RequestLogMode:    mode,
 		ShutdownTimeout:   *shutdownTimeout,
 	}, nil
 }
@@ -100,6 +107,7 @@ func runServe(ctx context.Context, store *contextstore.Store, stderr *os.File, c
 	srv.AuthToken = cfg.StaticToken
 	srv.EnableMetrics = cfg.EnableMetrics
 	srv.EnableRequestLogging = cfg.EnableRequestLogs
+	srv.RequestLogMode = cfg.RequestLogMode
 	srv.LogWriter = stderr
 
 	if cfg.ManagedAuth {

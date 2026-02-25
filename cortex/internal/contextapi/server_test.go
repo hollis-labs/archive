@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"testing"
 	"time"
 
@@ -293,6 +294,98 @@ func TestAuditEndpointIncludesWriteAndPromoteEvents(t *testing.T) {
 	}
 }
 
+func TestAuditEndpointFiltersAndPagination(t *testing.T) {
+	srv := newTestServer(t)
+
+	for i := 0; i < 3; i++ {
+		write := performJSON(t, srv, http.MethodPost, "/v1/context/write", map[string]any{
+			"client_id": "editor",
+			"actor":     "app:editor",
+			"namespace": "app/editor/session",
+			"key":       "summary",
+			"payload":   map[string]any{"v": i + 1},
+		})
+		if write.Code != http.StatusOK {
+			t.Fatalf("write status=%d body=%s", write.Code, write.Body.String())
+		}
+	}
+	promote := performJSON(t, srv, http.MethodPost, "/v1/context/promote", map[string]any{
+		"client_id":      "editor",
+		"actor":          "user",
+		"from_namespace": "app/editor/session",
+		"from_key":       "summary",
+		"to_namespace":   "user/notes",
+		"to_key":         "daily",
+	})
+	if promote.Code != http.StatusOK {
+		t.Fatalf("promote status=%d body=%s", promote.Code, promote.Body.String())
+	}
+
+	pageOne := performJSON(t, srv, http.MethodGet, "/v1/context/audit?limit=2", nil)
+	if pageOne.Code != http.StatusOK {
+		t.Fatalf("audit page one status=%d body=%s", pageOne.Code, pageOne.Body.String())
+	}
+	var one struct {
+		Count int `json:"count"`
+		Items []struct {
+			ID        int64  `json:"id"`
+			EventType string `json:"event_type"`
+			Namespace string `json:"namespace"`
+		} `json:"items"`
+		NextCursor *int64 `json:"next_cursor"`
+	}
+	if err := json.Unmarshal(pageOne.Body.Bytes(), &one); err != nil {
+		t.Fatalf("unmarshal page one: %v", err)
+	}
+	if one.Count != 2 || one.NextCursor == nil {
+		t.Fatalf("unexpected page one payload: %+v", one)
+	}
+	if one.Items[0].ID <= one.Items[1].ID {
+		t.Fatalf("expected newest-first ordering: %+v", one.Items)
+	}
+
+	pageTwo := performJSON(t, srv, http.MethodGet, "/v1/context/audit?limit=2&cursor="+strconv.FormatInt(*one.NextCursor, 10), nil)
+	if pageTwo.Code != http.StatusOK {
+		t.Fatalf("audit page two status=%d body=%s", pageTwo.Code, pageTwo.Body.String())
+	}
+	var two struct {
+		Count int `json:"count"`
+		Items []struct {
+			ID int64 `json:"id"`
+		} `json:"items"`
+	}
+	if err := json.Unmarshal(pageTwo.Body.Bytes(), &two); err != nil {
+		t.Fatalf("unmarshal page two: %v", err)
+	}
+	if two.Count == 0 {
+		t.Fatalf("expected additional page items")
+	}
+	if two.Items[0].ID >= one.Items[len(one.Items)-1].ID {
+		t.Fatalf("expected cursor window to move older: first_two=%d cursor_anchor=%d", two.Items[0].ID, one.Items[len(one.Items)-1].ID)
+	}
+
+	filtered := performJSON(t, srv, http.MethodGet, "/v1/context/audit?event_type=promote&namespace=user/notes", nil)
+	if filtered.Code != http.StatusOK {
+		t.Fatalf("filtered audit status=%d body=%s", filtered.Code, filtered.Body.String())
+	}
+	var fp struct {
+		Count int `json:"count"`
+		Items []struct {
+			EventType string `json:"event_type"`
+			Namespace string `json:"namespace"`
+		} `json:"items"`
+	}
+	if err := json.Unmarshal(filtered.Body.Bytes(), &fp); err != nil {
+		t.Fatalf("unmarshal filtered audit: %v", err)
+	}
+	if fp.Count != 1 || len(fp.Items) != 1 {
+		t.Fatalf("expected exactly one filtered promote event, got %+v", fp)
+	}
+	if fp.Items[0].EventType != "promote" || fp.Items[0].Namespace != "user/notes" {
+		t.Fatalf("unexpected filtered event: %+v", fp.Items[0])
+	}
+}
+
 func TestManagedAuthRejectsRevokedAndExpiredTokens(t *testing.T) {
 	srv := newTestServer(t)
 	srv.ManagedAuth = true
@@ -401,12 +494,13 @@ func TestReadinessEndpoint(t *testing.T) {
 		t.Fatalf("readiness status=%d body=%s", res.Code, res.Body.String())
 	}
 	var report struct {
-		Healthy bool `json:"healthy"`
+		Healthy bool   `json:"healthy"`
+		Status  string `json:"status"`
 	}
 	if err := json.Unmarshal(res.Body.Bytes(), &report); err != nil {
 		t.Fatalf("unmarshal readiness: %v", err)
 	}
-	if !report.Healthy {
+	if !report.Healthy || report.Status != "healthy" {
 		t.Fatalf("expected healthy readiness")
 	}
 }
@@ -532,6 +626,102 @@ func TestRequestIDGeneratedWhenMissing(t *testing.T) {
 	}
 	if !bytes.Contains(logBuf.Bytes(), []byte(`"event":"request"`)) {
 		t.Fatalf("expected structured request log, got: %s", logBuf.String())
+	}
+}
+
+func TestMetricsIncludeStatusAndRecentRequestIDsForCorrelation(t *testing.T) {
+	srv := newTestServer(t)
+	srv.EnableMetrics = true
+	srv.EnableRequestLogging = true
+	srv.LogWriter = &bytes.Buffer{}
+
+	res1 := performJSONWithHeaders(t, srv, http.MethodGet, "/v1/health/readiness", nil, map[string]string{
+		"X-Request-Id": "corr-a",
+	})
+	if res1.Code != http.StatusOK {
+		t.Fatalf("readiness status=%d body=%s", res1.Code, res1.Body.String())
+	}
+	res2 := performJSONWithHeaders(t, srv, http.MethodGet, "/v1/context/head?namespace=app/editor/session", nil, map[string]string{
+		"X-Request-Id": "corr-b",
+	})
+	if res2.Code != http.StatusBadRequest {
+		t.Fatalf("head status=%d body=%s", res2.Code, res2.Body.String())
+	}
+
+	metrics := performJSON(t, srv, http.MethodGet, "/v1/metrics", nil)
+	if metrics.Code != http.StatusOK {
+		t.Fatalf("metrics status=%d body=%s", metrics.Code, metrics.Body.String())
+	}
+	var payload struct {
+		Routes []struct {
+			Method           string           `json:"method"`
+			Path             string           `json:"path"`
+			StatusCounts     map[string]int64 `json:"status_counts"`
+			RecentRequestIDs []string         `json:"recent_request_ids"`
+		} `json:"routes"`
+	}
+	if err := json.Unmarshal(metrics.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal metrics: %v", err)
+	}
+
+	foundReadiness := false
+	foundHead := false
+	for _, route := range payload.Routes {
+		if route.Method == http.MethodGet && route.Path == "/v1/health/readiness" {
+			foundReadiness = true
+			if route.StatusCounts["200"] < 1 {
+				t.Fatalf("expected status count for 200 on readiness: %+v", route.StatusCounts)
+			}
+			if len(route.RecentRequestIDs) == 0 || route.RecentRequestIDs[len(route.RecentRequestIDs)-1] != "corr-a" {
+				t.Fatalf("expected recent request ids to include corr-a: %+v", route.RecentRequestIDs)
+			}
+		}
+		if route.Method == http.MethodGet && route.Path == "/v1/context/head" {
+			foundHead = true
+			if route.StatusCounts["400"] < 1 {
+				t.Fatalf("expected status count for 400 on head: %+v", route.StatusCounts)
+			}
+			if len(route.RecentRequestIDs) == 0 || route.RecentRequestIDs[len(route.RecentRequestIDs)-1] != "corr-b" {
+				t.Fatalf("expected recent request ids to include corr-b: %+v", route.RecentRequestIDs)
+			}
+		}
+	}
+	if !foundReadiness || !foundHead {
+		t.Fatalf("expected readiness and head routes in metrics: %+v", payload.Routes)
+	}
+}
+
+func TestRequestLogsRedactQueryByDefault(t *testing.T) {
+	srv := newTestServer(t)
+	srv.EnableRequestLogging = true
+	logBuf := &bytes.Buffer{}
+	srv.LogWriter = logBuf
+
+	res := performJSON(t, srv, http.MethodGet, "/v1/health/readiness?token=secret&session=abc", nil)
+	if res.Code != http.StatusOK {
+		t.Fatalf("readiness status=%d body=%s", res.Code, res.Body.String())
+	}
+	if !bytes.Contains(logBuf.Bytes(), []byte(`"query":"[REDACTED]"`)) {
+		t.Fatalf("expected redacted query log, got: %s", logBuf.String())
+	}
+	if bytes.Contains(logBuf.Bytes(), []byte("token=secret")) {
+		t.Fatalf("did not expect raw query in redacted mode: %s", logBuf.String())
+	}
+}
+
+func TestRequestLogsFullModeIncludesQuery(t *testing.T) {
+	srv := newTestServer(t)
+	srv.EnableRequestLogging = true
+	srv.RequestLogMode = "full"
+	logBuf := &bytes.Buffer{}
+	srv.LogWriter = logBuf
+
+	res := performJSON(t, srv, http.MethodGet, "/v1/health/readiness?token=visible&session=abc", nil)
+	if res.Code != http.StatusOK {
+		t.Fatalf("readiness status=%d body=%s", res.Code, res.Body.String())
+	}
+	if !bytes.Contains(logBuf.Bytes(), []byte(`"query":"token=visible\u0026session=abc"`)) {
+		t.Fatalf("expected raw query in full mode, got: %s", logBuf.String())
 	}
 }
 
