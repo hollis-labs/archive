@@ -163,6 +163,7 @@ See also: `docs/DEV.md#contract-output-quick-reference`.
   - `go test ./tests/integration -run ContractListCountParityContract`
   - `go test ./tests/integration -run ContractListInvalidOutputErrorContract`
   - `go test ./tests/integration -run ContractListTableContract`
+  - `go test ./tests/integration -run ContractListTableHeaderContract`
   - `go test ./tests/integration -run ContractListTableCountParityContract`
   - `go test ./tests/integration -run ContractRunAllDefaultOutputContract`
   - `go test ./tests/integration -run ContractRunAllTableContract`

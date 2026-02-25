@@ -13,6 +13,7 @@
     {"name": "cli-contract-list-count-parity", "command": "go test ./tests/integration -run ContractListCountParityContract -count=1"},
     {"name": "cli-contract-list-invalid-output", "command": "go test ./tests/integration -run ContractListInvalidOutputErrorContract -count=1"},
     {"name": "cli-contract-list-table", "command": "go test ./tests/integration -run ContractListTableContract -count=1"},
+    {"name": "cli-contract-list-table-header", "command": "go test ./tests/integration -run ContractListTableHeaderContract -count=1"},
     {"name": "cli-contract-list-table-count-parity", "command": "go test ./tests/integration -run ContractListTableCountParityContract -count=1"},
     {"name": "cli-contract-run-all-default-output", "command": "go test ./tests/integration -run ContractRunAllDefaultOutputContract -count=1"},
     {"name": "cli-contract-run-all-table", "command": "go test ./tests/integration -run ContractRunAllTableContract -count=1"},

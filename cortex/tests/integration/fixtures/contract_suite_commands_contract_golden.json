@@ -13,6 +13,7 @@
     "cli-contract-list-count-parity",
     "cli-contract-list-invalid-output",
     "cli-contract-list-table",
+    "cli-contract-list-table-header",
     "cli-contract-list-table-count-parity",
     "cli-contract-run-all-default-output",
     "cli-contract-run-all-table",

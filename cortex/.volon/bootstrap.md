@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-112` to add list table-header stability regression coverage.
+- Start `TASK-20260225-113` to document guardrail/parity quick-run pack.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 3 todo, 0 blocked, 111 done
+- Tasks: 2 todo, 0 blocked, 112 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-112 — Add contract test for context contract list table header stability (A)
 - TASK-20260225-113 — Document contract guardrail and parity quick-run pack (B)
 - TASK-20260225-114 — Add regression test for contract suite command token count (B)
 

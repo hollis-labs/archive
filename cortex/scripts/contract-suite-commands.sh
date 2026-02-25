@@ -15,6 +15,7 @@ cli-contract-list-deterministic-order	go test ./tests/integration -run ContractL
 cli-contract-list-count-parity	go test ./tests/integration -run ContractListCountParityContract -count=1
 cli-contract-list-invalid-output	go test ./tests/integration -run ContractListInvalidOutputErrorContract -count=1
 cli-contract-list-table	go test ./tests/integration -run ContractListTableContract -count=1
+cli-contract-list-table-header	go test ./tests/integration -run ContractListTableHeaderContract -count=1
 cli-contract-list-table-count-parity	go test ./tests/integration -run ContractListTableCountParityContract -count=1
 cli-contract-run-all-default-output	go test ./tests/integration -run ContractRunAllDefaultOutputContract -count=1
 cli-contract-run-all-table	go test ./tests/integration -run ContractRunAllTableContract -count=1
