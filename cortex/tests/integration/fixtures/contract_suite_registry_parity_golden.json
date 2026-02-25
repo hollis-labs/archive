@@ -43,6 +43,7 @@
     {"name": "contract-suite-commands-deterministic", "command": "go test ./tests/integration -run ContractSuiteCommandsDeterministicContract -count=1"},
     {"name": "contract-suite-commands-suffix", "command": "go test ./tests/integration -run ContractSuiteCommandsSuffixContract -count=1"},
     {"name": "contract-suite-commands-token-count", "command": "go test ./tests/integration -run ContractSuiteCommandsTokenCountContract -count=1"},
+    {"name": "contract-suite-commands-non-empty", "command": "go test ./tests/integration -run ContractSuiteCommandsNonEmptyContract -count=1"},
     {"name": "fixture-lint-script", "command": "go test ./tests/integration -run ContractFixtureLintScript -count=1"},
     {"name": "agents-boot-check", "command": "go test ./tests/integration -run AgentsBootCheckContract -count=1"}
   ]

@@ -182,6 +182,7 @@ Rotation checklist:
 - Contract suite deterministic-order guardrail: `go test ./tests/integration -run ContractSuiteCommandsDeterministicContract`
 - Contract suite command-suffix guardrail: `go test ./tests/integration -run ContractSuiteCommandsSuffixContract`
 - Contract suite command token-count guardrail: `go test ./tests/integration -run ContractSuiteCommandsTokenCountContract`
+- Contract suite non-empty output guardrail: `go test ./tests/integration -run ContractSuiteCommandsNonEmptyContract`
 - Contract fixture lint script suite: `go test ./tests/integration -run ContractFixtureLintScript`
 - Golden bootstrap-sync fixture: `tests/integration/fixtures/bootstrap_sync_contract_golden.json`
 - Bootstrap-sync contract suite: `go test ./tests/integration -run BootstrapSyncScript`
@@ -245,6 +246,8 @@ Guardrail pack:
 3. `go test ./tests/integration -run ContractSuiteCommandsPrefixContract`
 4. `go test ./tests/integration -run ContractSuiteCommandsDeterministicContract`
 5. `go test ./tests/integration -run ContractSuiteCommandsSuffixContract`
+6. `go test ./tests/integration -run ContractSuiteCommandsTokenCountContract`
+7. `go test ./tests/integration -run ContractSuiteCommandsNonEmptyContract`
 
 Parity pack:
 1. `go test ./tests/integration -run ContractListCountParityContract`

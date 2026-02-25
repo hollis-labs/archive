@@ -43,6 +43,7 @@
     "contract-suite-commands-deterministic",
     "contract-suite-commands-suffix",
     "contract-suite-commands-token-count",
+    "contract-suite-commands-non-empty",
     "fixture-lint-script",
     "agents-boot-check"
   ]

@@ -107,6 +107,7 @@ When to add a new suite ID:
 | `contract-suite-commands-deterministic` | Enforce stable output ordering across repeated runs. | `go test ./tests/integration -run ContractSuiteCommandsDeterministicContract` |
 | `contract-suite-commands-suffix` | Enforce `-count=1` command suffix consistency. | `go test ./tests/integration -run ContractSuiteCommandsSuffixContract` |
 | `contract-suite-commands-token-count` | Enforce minimum command token structure (`go test ./tests/integration -run ...`). | `go test ./tests/integration -run ContractSuiteCommandsTokenCountContract` |
+| `contract-suite-commands-non-empty` | Enforce non-empty script output with known suite marker presence. | `go test ./tests/integration -run ContractSuiteCommandsNonEmptyContract` |
 
 Recommended run order:
 1. `go test ./tests/integration -run ContractSuiteCommandsFormatContract`
@@ -115,6 +116,7 @@ Recommended run order:
 4. `go test ./tests/integration -run ContractSuiteCommandsDeterministicContract`
 5. `go test ./tests/integration -run ContractSuiteCommandsSuffixContract`
 6. `go test ./tests/integration -run ContractSuiteCommandsTokenCountContract`
+7. `go test ./tests/integration -run ContractSuiteCommandsNonEmptyContract`
 
 ## Default Output-Mode Suites
 
@@ -203,6 +205,7 @@ See also: `docs/DEV.md#contract-quick-run-pack`.
   - `go test ./tests/integration -run ContractSuiteCommandsDeterministicContract`
   - `go test ./tests/integration -run ContractSuiteCommandsSuffixContract`
   - `go test ./tests/integration -run ContractSuiteCommandsTokenCountContract`
+  - `go test ./tests/integration -run ContractSuiteCommandsNonEmptyContract`
   - `go test ./tests/integration -run ContractFixtureLintScript`
   - `go test ./tests/integration -run BootstrapSyncScript`
   - `go test ./tests/integration -run BootstrapSyncNoLogContract`
