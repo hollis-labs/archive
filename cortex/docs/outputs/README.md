@@ -4,6 +4,14 @@ Status: reference index
 
 This directory (and `docs/SPECS/outputs/`) contains generated pivot support notes. Canonical behavior remains in source specs/ADRs.
 
+## Quickstart
+- Use case: "I need a fast orientation to pivot scope and architecture decisions."
+  - Start with [`updated-architecture-summary.md`](./updated-architecture-summary.md), then confirm details in canonical architecture/scope docs.
+- Use case: "I need runnable/communicable API/CLI examples."
+  - Start with spec output notes in `docs/SPECS/outputs/`, then validate exact behavior in [`docs/SPECS/API.md`](../SPECS/API.md) and [`docs/SPECS/CLI.md`](../SPECS/CLI.md).
+- Use case: "I need current unresolved decisions and follow-up direction."
+  - Start with [`open-questions.md`](./open-questions.md) and [`pivot-changelog.md`](./pivot-changelog.md), then trace linked canonical specs/ADRs.
+
 ## Architecture and scope artifacts
 - [`updated-architecture-summary.md`](./updated-architecture-summary.md)
   - Canonical sources:
