@@ -16,6 +16,7 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/make_contract_cli_list_contract_golden.json` | `make contract-cli-list` output marker contract | `go test ./tests/integration -run MakeContractCLIListContract` |
 | `tests/integration/fixtures/make_contract_cli_run_contract_golden.json` | `make contract-cli-run SUITE=<name>` output marker contract | `go test ./tests/integration -run MakeContractCLIRunContract` |
 | `tests/integration/fixtures/contract_suite_commands_contract_golden.json` | `scripts/contract-suite-commands.sh` output ordering contract | `go test ./tests/integration -run ContractSuiteCommandsScript` |
+| `tests/integration/fixtures/contract_suite_registry_parity_golden.json` | CLI suite registry and script catalog parity contract | `go test ./tests/integration -run ContractSuiteRegistryParity` |
 | `tests/integration/fixtures/smoke_invalid_token_contract_golden.json` | Smoke invalid-token marker sequence contract | `go test ./tests/integration -run SmokeInvalidTokenContract` |
 | `tests/integration/fixtures/make_smoke_invalid_token_contract_golden.json` | `make smoke-invalid-token` output marker contract | `go test ./tests/integration -run MakeSmokeInvalidTokenContract` |
 | `tests/integration/fixtures/runlog_helper_contract_golden.json` | Run-log helper output skeleton contract | `go test ./tests/integration -run RunlogHelperContract` |
@@ -44,6 +45,7 @@ This index lists fixture files and their associated validation command.
   - `go test ./tests/integration -run MakeContractCLIRunContract`
 - Script command stability:
   - `go test ./tests/integration -run ContractSuiteCommandsScript`
+  - `go test ./tests/integration -run ContractSuiteRegistryParity`
   - `go test ./tests/integration -run RunlogHelperContract`
   - `go test ./tests/integration -run BootstrapSyncScript`
   - `go test ./tests/integration -run AgentsBootCheckContract`

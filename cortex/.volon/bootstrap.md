@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-075` to add parity checks between CLI suite registry and script command catalog.
+- Start `TASK-20260225-076` to add integration contract coverage for bootstrap-sync make shortcuts.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 4 todo, 0 blocked, 74 done
+- Tasks: 3 todo, 0 blocked, 75 done
 - Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-075 — Add parity check test for CLI suite registry vs script command catalog (A)
 - TASK-20260225-076 — Add integration contract for bootstrap-sync make shortcut targets (A)
 - TASK-20260225-077 — Add contract fixture index section for bootstrap and make command suites (B)
 - TASK-20260225-078 — Add regression test for bootstrap-sync no-log behavior (B)

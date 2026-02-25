@@ -128,6 +128,8 @@ Rotation checklist:
 - Make contract-cli-run suite: `go test ./tests/integration -run MakeContractCLIRunContract`
 - Golden contract-suite-commands fixture: `tests/integration/fixtures/contract_suite_commands_contract_golden.json`
 - Contract-suite-commands suite: `go test ./tests/integration -run ContractSuiteCommandsScript`
+- Golden suite-registry parity fixture: `tests/integration/fixtures/contract_suite_registry_parity_golden.json`
+- Suite-registry parity suite: `go test ./tests/integration -run ContractSuiteRegistryParity`
 - Golden smoke invalid-token fixture: `tests/integration/fixtures/smoke_invalid_token_contract_golden.json`
 - Smoke invalid-token contract suite: `go test ./tests/integration -run SmokeInvalidTokenContract`
 - Golden make smoke-invalid-token fixture: `tests/integration/fixtures/make_smoke_invalid_token_contract_golden.json`

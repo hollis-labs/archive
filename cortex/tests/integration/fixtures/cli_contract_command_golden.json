@@ -1,5 +1,5 @@
 {
   "list_top_keys": ["count", "items"],
   "run_top_keys": ["executed", "count", "items"],
-  "ordered_suites": ["api", "api-errors", "audit", "metrics", "log-metrics", "readiness", "cli-health-summary", "cli-audit", "smoke-invalid-token", "make-contract-cli-list", "make-contract-cli-run", "bootstrap-sync", "runlog-helper", "make-smoke-invalid-token", "agents-boot-check"]
+  "ordered_suites": ["api", "api-errors", "audit", "metrics", "log-metrics", "readiness", "cli-health-summary", "cli-audit", "smoke-invalid-token", "make-contract-cli-list", "make-contract-cli-run", "bootstrap-sync", "make-smoke-invalid-token", "runlog-helper", "agents-boot-check"]
 }
