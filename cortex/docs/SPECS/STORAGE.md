@@ -43,6 +43,28 @@ Hybrid local storage:
   - `required_keys`: array of required top-level JSON object keys.
 - When configured, write/promote operations must satisfy the rule or fail with deterministic validation errors.
 
+## Policy schema evolution options
+
+Option A: namespace-level policy only (current baseline)
+- Pros:
+  - Simpler policy evaluation and lower operational complexity.
+  - Aligns directly with current actor/namespace matrix semantics.
+- Cons:
+  - Coarse-grained controls when different keys in one namespace need different constraints.
+
+Option B: namespace + per-key policy overlays (future option)
+- Pros:
+  - Finer-grained authorization and schema constraints per key.
+  - Better fit for mixed-sensitivity data within a shared namespace.
+- Cons:
+  - Higher policy complexity and migration/test burden.
+  - Greater risk of conflicting rules if precedence is not explicit.
+
+Compatibility guidance:
+- Start with namespace-level defaults, then add per-key overlays as additive policy fields.
+- Preserve existing behavior when per-key overlays are absent.
+- Treat precedence changes as contract-level updates requiring API/CLI docs and migration notes.
+
 ## Deterministic read constraints
 - History ordering: ascending `revision`.
 - Head resolution: single row in `heads`.

@@ -65,6 +65,7 @@ When namespace policy includes schema contract metadata (`required_keys`), write
 Policy notes:
 - Namespace ownership policy is authoritative for write decisions.
 - `user/*` remains protected and is updated through explicit user promotion semantics.
+- Policy schema evolution options reference: `docs/SPECS/STORAGE.md#policy-schema-evolution-options`.
 
 ## Endpoints
 
