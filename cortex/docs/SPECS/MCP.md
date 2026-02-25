@@ -102,6 +102,26 @@ Gate alignment notes:
 - Apply these criteria together with the `Preflight checklist (team-managed / production-like)` before enabling new mutate capabilities.
 - Phase sequencing should follow `Environment-based phase adoption recommendations` so auth posture and risk controls stay aligned.
 
+## Phase promotion evidence checklist
+
+Capture this evidence before approving a phase transition:
+1. Auth validation proof:
+   - Record token enforcement results for the target phase tool surfaces in active environment mode.
+   - Include at least one successful authenticated flow and one expected `auth_required` failure case.
+2. Policy verification proof:
+   - Record actor/namespace policy checks for newly enabled mutating tools.
+   - Include evidence that protected `user/*` promote semantics (`actor=user`) are enforced where applicable.
+3. Observability proof:
+   - Capture audit/trace evidence for representative success and failure paths.
+   - Ensure `auth_required`, `policy_denied`, and `validation_error` outcomes are visible and actionable in operator workflows.
+4. Rollout control proof:
+   - Document rollback trigger and rollback owner for the promotion window.
+   - Confirm phase-to-tool exposure decisions match explicit enablement posture in this spec.
+
+Evidence handling notes:
+- Store promotion evidence with release/change artifacts so approvals are reproducible.
+- Treat missing evidence in any category as a no-go for phase promotion.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:

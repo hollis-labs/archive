@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 101
-updated_at: 2026-02-25T23:35:00Z
+iteration: 102
+updated_at: 2026-02-25T23:45:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-169` to add MCP phase promotion evidence checklist.
+- Start `TASK-20260225-170` to add outputs stale-artifact triage note.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 168 done
-- Last run log: `.volon/logs/run-iteration-101-2026-02-25.md`
+- Tasks: 1 todo, 0 blocked, 169 done
+- Last run log: `.volon/logs/run-iteration-102-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-169 — Add MCP phase promotion evidence checklist (B)
 - TASK-20260225-170 — Add outputs stale-artifact triage note (B)
 
 ### Blockers
@@ -40,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `23aff04`
+- Last implementation commit: `57a8b47`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
