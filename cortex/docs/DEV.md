@@ -124,6 +124,8 @@ Rotation checklist:
 - CLI contract command suite: `go test ./tests/integration -run CLIContractCommand`
 - Golden make contract-cli-list fixture: `tests/integration/fixtures/make_contract_cli_list_contract_golden.json`
 - Make contract-cli-list suite: `go test ./tests/integration -run MakeContractCLIListContract`
+- Golden make contract-cli-run fixture: `tests/integration/fixtures/make_contract_cli_run_contract_golden.json`
+- Make contract-cli-run suite: `go test ./tests/integration -run MakeContractCLIRunContract`
 - Golden contract-suite-commands fixture: `tests/integration/fixtures/contract_suite_commands_contract_golden.json`
 - Contract-suite-commands suite: `go test ./tests/integration -run ContractSuiteCommandsScript`
 - Golden smoke invalid-token fixture: `tests/integration/fixtures/smoke_invalid_token_contract_golden.json`
@@ -132,11 +134,14 @@ Rotation checklist:
 - Make smoke-invalid-token contract suite: `go test ./tests/integration -run MakeSmokeInvalidTokenContract`
 - Golden run-log helper fixture: `tests/integration/fixtures/runlog_helper_contract_golden.json`
 - Run-log helper contract suite: `go test ./tests/integration -run RunlogHelperContract`
+- Golden bootstrap-sync fixture: `tests/integration/fixtures/bootstrap_sync_contract_golden.json`
+- Bootstrap-sync contract suite: `go test ./tests/integration -run BootstrapSyncScript`
 - Golden AGENTS boot check fixture: `tests/integration/fixtures/agents_boot_check_contract_golden.json`
 - AGENTS boot check contract suite: `go test ./tests/integration -run AgentsBootCheckContract`
 - Full fixture inventory: `docs/CONTRACT_FIXTURES.md`
 - Fixture ownership/update policy: see `docs/CONTRACT_FIXTURES.md#ownership-and-update-policy`
 - Fixture quickstart: see `docs/CONTRACT_FIXTURES.md#quickstart`
+- Script-based suites: see `docs/CONTRACT_FIXTURES.md#script-based-suites`
 
 ## Contract helper CLI
 - List suites: `contextd context contract list --output table`
@@ -145,6 +150,7 @@ Rotation checklist:
 - Make shortcuts:
   - `make contract-cli-list`
   - `make contract-cli-run SUITE=api`
+  - `make contract-cli-run SUITE=api-errors`
   - `make contract-commands`
 
 ## Metrics contract checks
@@ -208,6 +214,7 @@ Rotation checklist:
 - Bootstrap summary sync:
   - report only: `make bootstrap-report`
   - apply updates: `make bootstrap-sync`
+  - explicit aliases: `make bootstrap-sync-report` and `make bootstrap-sync-apply`
 
 ## Boot profile drift checks
 - Script: `scripts/agents-boot-drift-check.sh`

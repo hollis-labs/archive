@@ -72,6 +72,13 @@ else
 fi
 updated_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-perl -0777 -i -pe "s/- Tasks: .*?\\n/- Tasks: ${todo} todo, ${blocked} blocked, ${done_count} done\\n/s; s/- Last run log: .*?\\n/- Last run log: \\\`${latest_log:-<none>}\\\`\\n/s; s/updated_at: .*?\\n/updated_at: ${updated_at}\\n/s" "$BOOTSTRAP_PATH"
+BOOTSTRAP_TASKS_LINE="$tasks_line" \
+BOOTSTRAP_LOG_LINE="$log_line" \
+BOOTSTRAP_UPDATED_AT="$updated_at" \
+perl -0777 -i -pe '
+  s/^- Tasks: .*$/$ENV{BOOTSTRAP_TASKS_LINE}/m;
+  s/^- Last run log: .*$/$ENV{BOOTSTRAP_LOG_LINE}/m;
+  s/^updated_at: .*$/updated_at: $ENV{BOOTSTRAP_UPDATED_AT}/m;
+' "$BOOTSTRAP_PATH"
 
 echo "applied bootstrap summary updates"

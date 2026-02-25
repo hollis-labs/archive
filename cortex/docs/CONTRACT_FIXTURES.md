@@ -14,10 +14,12 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/cli_audit_contract_golden.json` | CLI `context audit` cursor/filter JSON contract | `go test ./tests/integration -run CLIAuditContract` |
 | `tests/integration/fixtures/cli_contract_command_golden.json` | CLI `context contract list/run` dry-mode contract | `go test ./tests/integration -run CLIContractCommand` |
 | `tests/integration/fixtures/make_contract_cli_list_contract_golden.json` | `make contract-cli-list` output marker contract | `go test ./tests/integration -run MakeContractCLIListContract` |
+| `tests/integration/fixtures/make_contract_cli_run_contract_golden.json` | `make contract-cli-run SUITE=<name>` output marker contract | `go test ./tests/integration -run MakeContractCLIRunContract` |
 | `tests/integration/fixtures/contract_suite_commands_contract_golden.json` | `scripts/contract-suite-commands.sh` output ordering contract | `go test ./tests/integration -run ContractSuiteCommandsScript` |
 | `tests/integration/fixtures/smoke_invalid_token_contract_golden.json` | Smoke invalid-token marker sequence contract | `go test ./tests/integration -run SmokeInvalidTokenContract` |
 | `tests/integration/fixtures/make_smoke_invalid_token_contract_golden.json` | `make smoke-invalid-token` output marker contract | `go test ./tests/integration -run MakeSmokeInvalidTokenContract` |
 | `tests/integration/fixtures/runlog_helper_contract_golden.json` | Run-log helper output skeleton contract | `go test ./tests/integration -run RunlogHelperContract` |
+| `tests/integration/fixtures/bootstrap_sync_contract_golden.json` | `scripts/bootstrap-sync.sh` report/apply contract | `go test ./tests/integration -run BootstrapSyncScript` |
 | `tests/integration/fixtures/agents_boot_check_contract_golden.json` | AGENTS boot drift check success-output contract | `go test ./tests/integration -run AgentsBootCheckContract` |
 
 ## Full validation
@@ -32,6 +34,19 @@ This index lists fixture files and their associated validation command.
 3. `go test ./tests/integration -run CLIContractCommand`
 4. `go test ./tests/integration -run SmokeInvalidTokenContract`
 5. `go test ./...`
+
+## Script-Based Suites
+
+- Smoke and make wrappers:
+  - `go test ./tests/integration -run SmokeInvalidTokenContract`
+  - `go test ./tests/integration -run MakeSmokeInvalidTokenContract`
+  - `go test ./tests/integration -run MakeContractCLIListContract`
+  - `go test ./tests/integration -run MakeContractCLIRunContract`
+- Script command stability:
+  - `go test ./tests/integration -run ContractSuiteCommandsScript`
+  - `go test ./tests/integration -run RunlogHelperContract`
+  - `go test ./tests/integration -run BootstrapSyncScript`
+  - `go test ./tests/integration -run AgentsBootCheckContract`
 
 ## Ownership And Update Policy
 

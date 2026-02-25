@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 24
-updated_at: 2026-02-25T14:13:00Z
+iteration: 26
+updated_at: 2026-02-25T15:05:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,20 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Generate next task batch (`TASK-20260225-071+`) for continued hardening.
+- Start `TASK-20260225-075` to add parity checks between CLI suite registry and script command catalog.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 0 todo, 0 blocked, 70 done
-- Last run log: `.volon/logs/run-iteration-006-2026-02-25.md`
+- Tasks: 4 todo, 0 blocked, 74 done
+- Last run log: `.volon/logs/run-iteration-025-2026-02-25.md`
 
 ## Active work
 ### Highest priority todos
-- None in current batch.
+- TASK-20260225-075 — Add parity check test for CLI suite registry vs script command catalog (A)
+- TASK-20260225-076 — Add integration contract for bootstrap-sync make shortcut targets (A)
+- TASK-20260225-077 — Add contract fixture index section for bootstrap and make command suites (B)
+- TASK-20260225-078 — Add regression test for bootstrap-sync no-log behavior (B)
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
@@ -39,6 +42,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `b8b4984`
+- Last implementation commit: `2ec6c9d`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

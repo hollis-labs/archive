@@ -9,6 +9,9 @@
     "cli-health-summary",
     "cli-audit",
     "smoke-invalid-token",
+    "make-contract-cli-list",
+    "make-contract-cli-run",
+    "bootstrap-sync",
     "make-smoke-invalid-token",
     "runlog-helper",
     "agents-boot-check"
