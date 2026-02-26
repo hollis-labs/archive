@@ -167,6 +167,16 @@ Use this when an `auth_required` incident is resolved:
 5. Closure owner + timestamp:
    - Record incident closer and closure time for auditability.
 
+### Auth post-incident review note
+
+After closure, run a short review to reduce recurrence:
+1. Recurrence pattern:
+   - Identify whether the incident pattern was mode assumption drift, token-path fragility, lifecycle handling gap, or environment targeting confusion.
+2. Mitigation update:
+   - Record one concrete mitigation update (runbook/script/config/automation guard) applied after closure.
+3. Ownership:
+   - Assign an owner for validating the mitigation in the next release/maintenance window.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
