@@ -317,6 +317,14 @@ Recommended cadence for VIEWS example upkeep:
    - `Section cross-reference map`
 3. If drift is found, update the smallest affected section first, then reconcile linked sections in the same PR.
 
+## Example update PR checklist
+
+Before opening a VIEWS example update PR:
+1. Use `Section cross-reference map` to identify all affected sections.
+2. Run `Selector examples consistency checklist` and resolve cross-section drift.
+3. Confirm PR scope states whether changes are validation-only, compatibility-only, or deprecation/versioning-related.
+4. Keep PR focused on example/documentation alignment without altering underlying selector contract intent.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
