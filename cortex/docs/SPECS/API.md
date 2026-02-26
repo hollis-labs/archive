@@ -152,6 +152,21 @@ Use this when handing unresolved `auth_required` incidents to another operator:
 5. Pending actions + owner:
    - Record next required action, owner, and expected verification signal before retry.
 
+### Auth incident closure checklist
+
+Use this when an `auth_required` incident is resolved:
+1. Confirmed root cause:
+   - Record the validated root cause (mode mismatch, token propagation gap, token lifecycle issue, or targeting error).
+2. Fix verification:
+   - Record verification request(s) showing expected behavior after fix.
+   - Confirm outcome is consistent with endpoint class + active mode expectations.
+3. Residual risk + follow-up:
+   - Record any remaining risk (for example, fragile proxy/header path) and assigned follow-up action.
+4. Documentation/automation updates:
+   - Record updates made to scripts/runbooks/tool configs to prevent recurrence.
+5. Closure owner + timestamp:
+   - Record incident closer and closure time for auditability.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
