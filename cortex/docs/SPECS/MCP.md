@@ -140,6 +140,21 @@ Rollback alignment notes:
 - Keep rollback checklist decisions consistent with `Phase gate criteria` and `Phase promotion evidence checklist`.
 - Do not advance phase rollout when rollback trigger/owner/scope are undefined.
 
+## Phase promotion sign-off template
+
+Use this template when approving a phase transition:
+- `Phase transition:` `<from_phase> -> <to_phase>`
+- `Approver:` `<name/team>`
+- `Date:` `YYYY-MM-DD`
+- `Gate criteria status:` `pass|fail` (reference `Phase gate criteria`)
+- `Evidence checklist status:` `pass|fail` (reference `Phase promotion evidence checklist`)
+- `Rollback readiness status:` `pass|fail` (reference `Phase rollback-readiness checklist`)
+- `Tool exposure decision:` `<enabled surfaces + scope>`
+- `Approval note:` `<brief rationale + constraints>`
+
+Sign-off rule:
+- Any `fail` status blocks promotion approval until remediated and re-verified.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:
