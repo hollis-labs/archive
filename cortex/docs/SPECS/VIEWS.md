@@ -424,6 +424,16 @@ Assign clear ownership for checklist evidence freshness:
 3. Completion handoff:
    - Completion records should reference the latest evidence owner confirmation before merge.
 
+## Checklist ownership handoff note
+
+When checklist ownership changes during review:
+1. Handoff record:
+   - Record outgoing owner, incoming owner, and handoff timestamp in the PR thread.
+2. Evidence continuity:
+   - Transfer responsibility for stale evidence refresh and revalidation follow-ups to the incoming owner.
+3. Completion readiness:
+   - Confirm completion status references the incoming owner confirmation after handoff.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
