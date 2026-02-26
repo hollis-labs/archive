@@ -404,6 +404,16 @@ For long-running PRs, revalidate checklist evidence before merge:
 3. Merge alignment:
    - Confirm final completion status reflects the refreshed evidence set.
 
+## Checklist review-window note
+
+Apply a consistent checklist review window for evidence freshness:
+1. Window definition:
+   - Treat checklist evidence as in-window only within the active review window for the PR.
+2. Window breach handling:
+   - If evidence is outside the window, trigger checklist revalidation before merge.
+3. Completion alignment:
+   - Keep completion status tied to evidence that is still within the review window.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
