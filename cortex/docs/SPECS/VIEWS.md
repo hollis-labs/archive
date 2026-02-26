@@ -325,6 +325,14 @@ Before opening a VIEWS example update PR:
 3. Confirm PR scope states whether changes are validation-only, compatibility-only, or deprecation/versioning-related.
 4. Keep PR focused on example/documentation alignment without altering underlying selector contract intent.
 
+## Checklist selection note
+
+Use this quick chooser when editing VIEWS docs:
+- Use `Quick validation checklist` for selector-shape and constraint correctness checks.
+- Use `Reviewer checklist (doc PRs)` for review-phase determinism and capability-alignment checks.
+- Use `Selector examples consistency checklist` when touching multiple example sections.
+- Use `Example update PR checklist` right before opening a PR for example-focused edits.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
