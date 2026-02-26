@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 148
-updated_at: 2026-02-26T07:55:00Z
+iteration: 149
+updated_at: 2026-02-26T08:05:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,20 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Generate next task batch `TASK-20260225-207` through `TASK-20260225-210`.
+- Start `TASK-20260225-207` to add API auth incident closure evidence retention note.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 0 todo, 0 blocked, 206 done
-- Last run log: `.volon/logs/run-iteration-148-2026-02-26.md`
+- Tasks: 4 todo, 0 blocked, 206 done
+- Last run log: `.volon/logs/run-iteration-149-2026-02-26.md`
 
 ## Active work
 ### Highest priority todos
-- None; generate next batch.
+- TASK-20260225-207 — Add API auth incident closure evidence retention note (A)
+- TASK-20260225-208 — Add VIEWS checklist exception expiry note (B)
+- TASK-20260225-209 — Add MCP rollback evidence archival note (B)
+- TASK-20260225-210 — Add outputs stale annotation ownership rotation note (B)
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
@@ -39,6 +42,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `b19247e`
+- Last implementation commit: `3f6b10e`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
