@@ -223,6 +223,15 @@ When ownership changes mid-cycle, hand off stale-annotation work with:
 3. Precedence continuity check:
    - Confirm canonical-source precedence guidance remains explicit in all touched artifacts at handoff.
 
+## Stale annotation audit escalation note
+When repeated stale-annotation audit failures occur:
+1. Escalation trigger:
+   - Escalate after recurring failures in the same artifact area across consecutive maintenance passes.
+2. Escalation record:
+   - Record failing checks, impacted artifacts, and assigned escalation owner.
+3. Resolution linkage:
+   - Link escalation outcome to refreshed stale markers/audit evidence while preserving canonical-source precedence guidance.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:

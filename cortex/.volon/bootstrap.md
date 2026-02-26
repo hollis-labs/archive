@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 162
-updated_at: 2026-02-26T10:15:00Z
+iteration: 163
+updated_at: 2026-02-26T10:25:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,17 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-218` to add outputs stale annotation audit escalation note.
+- Generate next task batch `TASK-20260225-219` through `TASK-20260225-222`.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 1 todo, 0 blocked, 217 done
-- Last run log: `.volon/logs/run-iteration-162-2026-02-26.md`
+- Tasks: 0 todo, 0 blocked, 218 done
+- Last run log: `.volon/logs/run-iteration-163-2026-02-26.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-218 — Add outputs stale annotation audit escalation note (B)
+- None; generate next batch.
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
@@ -39,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `ede27ad`
+- Last implementation commit: `1dcf1f6`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
