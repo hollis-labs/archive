@@ -167,6 +167,16 @@ Stale-status annotation examples:
 - Deferred stale state:
   - `Freshness: stale (deferred until 2026-03 release window; owner: docs-ops)`
 
+## Stale annotation review note
+When stale guidance changes, review both output sets:
+- `docs/outputs/*`
+- `docs/SPECS/outputs/*`
+
+Review focus:
+1. Stale annotation examples still match current deferral disclosure guidance.
+2. Active/deferred stale wording stays consistent across artifacts.
+3. Canonical-source precedence statements remain present alongside stale annotations.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
