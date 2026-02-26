@@ -292,6 +292,19 @@ When retained and retrieved evidence differ, reconcile with:
 Reconciliation alignment:
 - Keep reconciliation outcomes linked to retrieval, archival, and closure evidence references.
 
+## Rollback evidence discrepancy escalation note
+
+If reconciliation cannot resolve evidence discrepancies:
+1. Escalation trigger:
+   - Escalate unresolved mismatches after reconciliation attempts in the current review cycle.
+2. Escalation record:
+   - Record discrepancy summary, affected evidence artifacts, and assigned escalation owner.
+3. Outcome linkage:
+   - Link escalation outcome to updated reconciliation/closure evidence before final sign-off.
+
+Escalation alignment:
+- Keep discrepancy escalation aligned with reconciliation, retrieval, and closure evidence guidance.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:
