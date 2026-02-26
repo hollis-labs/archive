@@ -214,6 +214,15 @@ When stale-annotation ownership changes between release windows:
 3. Precedence continuity:
    - Ensure canonical-source precedence guidance remains unchanged through ownership transitions.
 
+## Stale annotation handoff note
+When ownership changes mid-cycle, hand off stale-annotation work with:
+1. Handoff package:
+   - Current stale markers, open deferrals, active exceptions, and pending audit checkpoints.
+2. Owner transition record:
+   - Outgoing owner, incoming owner, and handoff timestamp in the same maintenance thread.
+3. Precedence continuity check:
+   - Confirm canonical-source precedence guidance remains explicit in all touched artifacts at handoff.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
