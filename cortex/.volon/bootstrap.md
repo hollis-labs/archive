@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 136
-updated_at: 2026-02-26T05:25:00Z
+iteration: 137
+updated_at: 2026-02-26T05:35:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-197` to add MCP rollback communication closure note.
+- Start `TASK-20260225-198` to add outputs stale annotation audit note.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 196 done
-- Last run log: `.volon/logs/run-iteration-136-2026-02-26.md`
+- Tasks: 1 todo, 0 blocked, 197 done
+- Last run log: `.volon/logs/run-iteration-137-2026-02-26.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-197 — Add MCP rollback communication closure note (B)
 - TASK-20260225-198 — Add outputs stale annotation audit note (B)
 
 ### Blockers
@@ -40,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `3ca4b1a`
+- Last implementation commit: `2ee13f7`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

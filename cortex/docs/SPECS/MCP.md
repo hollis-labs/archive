@@ -214,6 +214,19 @@ Resume rollout only when all gates pass:
 Resume alignment:
 - Apply with `Promotion freeze-condition note`, `Rollback validation snapshot note`, and `Phase promotion sign-off template`.
 
+## Rollback communication closure note
+
+After freeze/rollback/resume decisions, publish a closure update including:
+1. Final decision state:
+   - `frozen`, `rolled back`, or `resume-approved`.
+2. Evidence reference:
+   - Pointer to rollback snapshot and/or resume-gate verification artifacts.
+3. Owner + next checkpoint:
+   - Responsible owner and next planned review/checkpoint time.
+
+Closure alignment:
+- Keep closure messaging consistent with `Promotion freeze-condition note`, `Rollback resume gate note`, and sign-off records.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:
