@@ -279,6 +279,19 @@ When archived rollback evidence must be reviewed:
 Retrieval alignment:
 - Keep retrieval guidance aligned with retention and archival sections to maintain evidence continuity.
 
+## Rollback evidence reconciliation note
+
+When retained and retrieved evidence differ, reconcile with:
+1. Mismatch record:
+   - Record which artifact fields differ between retained and retrieved bundles.
+2. Reconciliation action:
+   - Resolve mismatch by validating canonical evidence trail and updating incorrect references.
+3. Accountability:
+   - Record reconciler owner and reconciliation timestamp in the evidence log.
+
+Reconciliation alignment:
+- Keep reconciliation outcomes linked to retrieval, archival, and closure evidence references.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:
