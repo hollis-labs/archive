@@ -282,6 +282,16 @@ If reconciliation cannot resolve evidence mismatches:
 3. Outcome linkage:
    - Link escalation outcome to corrected evidence references before final closure confirmation.
 
+### Auth evidence prevention note
+
+Reduce future evidence discrepancies with proactive checks:
+1. Prevention checks:
+   - Run periodic checks for missing lifecycle fields across retention, archival, retrieval, and reconciliation records.
+2. Drift watch:
+   - Flag incidents with repeated evidence corrections for targeted process updates.
+3. Precedence guard:
+   - Keep canonical-source precedence and incident closure references explicit in all preventive updates.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
