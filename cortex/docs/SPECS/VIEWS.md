@@ -340,6 +340,13 @@ For multi-author VIEWS doc updates:
 2. Assign next-owner for unfinished checklist items in the PR summary.
 3. Keep checklist status updates in the same PR thread to avoid split/ambiguous ownership.
 
+## Checklist escalation note
+
+If checklist conflicts remain unresolved:
+1. Escalate with a brief summary of conflicting checklist outcomes.
+2. Identify current owner and proposed deciding reviewer in the same PR thread.
+3. Pause merge until escalation outcome is recorded and affected checklist status is updated.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
