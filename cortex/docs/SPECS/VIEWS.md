@@ -333,6 +333,13 @@ Use this quick chooser when editing VIEWS docs:
 - Use `Selector examples consistency checklist` when touching multiple example sections.
 - Use `Example update PR checklist` right before opening a PR for example-focused edits.
 
+## Checklist handoff note
+
+For multi-author VIEWS doc updates:
+1. Record which checklist was completed (`Quick validation`, `Reviewer`, `Consistency`, `Example update PR`) and which remain.
+2. Assign next-owner for unfinished checklist items in the PR summary.
+3. Keep checklist status updates in the same PR thread to avoid split/ambiguous ownership.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
