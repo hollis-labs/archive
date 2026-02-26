@@ -222,6 +222,16 @@ Record escalation acknowledgement details once incident severity is tagged:
 3. Flow alignment:
    - Link acknowledgement details to the timeline, handoff checklist, and closure checklist records.
 
+### Auth incident escalation timeout note
+
+If escalation acknowledgement does not lead to progress in the expected window:
+1. Timeout window:
+   - Record the escalation timeout window for the incident severity class and current phase.
+2. Reassignment owner + status update:
+   - Reassign active escalation ownership and post status update in the incident communication channel when timeout is reached.
+3. Continuity linkage:
+   - Link timeout handling notes to timeline entries and closure checklist updates.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
