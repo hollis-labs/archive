@@ -200,6 +200,18 @@ Record a minimal timeline for each auth incident:
 3. Closure verification timestamp:
    - Time of successful post-fix verification request(s) and verifier identity.
 
+### Auth incident severity tagging note
+
+Tag each auth incident with a severity label to drive follow-up:
+1. Severity intent:
+   - `sev-1`: service-wide auth breakage or blocking operator workflows.
+   - `sev-2`: scoped auth failure with workaround.
+   - `sev-3`: isolated/non-blocking auth issue.
+2. Ownership impact:
+   - Record escalation owner for `sev-1`/`sev-2` and follow-up owner for `sev-3`.
+3. Follow-up expectation:
+   - Higher severity requires tighter follow-up timing and explicit mitigation tracking in post-incident review notes.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
