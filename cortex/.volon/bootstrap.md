@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 122
-updated_at: 2026-02-26T03:05:00Z
+iteration: 123
+updated_at: 2026-02-26T03:15:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,17 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-186` to add outputs stale deferral disclosure note.
+- Generate next task batch (`TASK-20260225-187` .. `TASK-20260225-190`).
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 1 todo, 0 blocked, 185 done
-- Last run log: `.volon/logs/run-iteration-122-2026-02-26.md`
+- Tasks: 0 todo, 0 blocked, 186 done
+- Last run log: `.volon/logs/run-iteration-123-2026-02-26.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-186 — Add outputs stale deferral disclosure note (B)
+- None currently queued.
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
@@ -39,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `5458e6f`
+- Last implementation commit: `ab620eb`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

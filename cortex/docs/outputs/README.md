@@ -148,6 +148,19 @@ Remediation expectations:
 Remediation rule:
 - Stale markers are temporary safety signals; canonical specs/ADRs remain the authoritative source until refresh is complete.
 
+## Stale deferral disclosure
+When stale remediation is intentionally deferred for either:
+- `docs/outputs/*`
+- `docs/SPECS/outputs/*`
+
+Include a short disclosure in the stale artifact:
+1. Reason for deferral.
+2. Expected refresh window (date or release window).
+3. Assigned owner for follow-through.
+
+Disclosure rule:
+- Keep the stale marker visible until refresh completes; canonical specs/ADRs remain the authoritative reference during deferral.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
