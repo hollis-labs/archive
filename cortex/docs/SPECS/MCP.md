@@ -122,6 +122,24 @@ Evidence handling notes:
 - Store promotion evidence with release/change artifacts so approvals are reproducible.
 - Treat missing evidence in any category as a no-go for phase promotion.
 
+## Phase rollback-readiness checklist
+
+Complete this before enabling new mutating MCP capabilities:
+1. Rollback trigger:
+   - Define explicit rollback conditions (for example: repeated `auth_required` failures under validated token flow, policy invariant violations, or audit visibility gaps).
+2. Rollback owner:
+   - Assign a named operator/team responsible for executing rollback and validating post-rollback state.
+3. Verification scope:
+   - Identify the minimum verification set to run after rollback (tool exposure state, auth mode expectations, policy enforcement, audit visibility).
+4. Communication expectations:
+   - Define who receives rollback notices and where status updates are posted during the rollback window.
+5. Post-rollback confirmation:
+   - Confirm system returns to previously approved phase behavior and update promotion evidence artifacts with rollback outcome notes.
+
+Rollback alignment notes:
+- Keep rollback checklist decisions consistent with `Phase gate criteria` and `Phase promotion evidence checklist`.
+- Do not advance phase rollout when rollback trigger/owner/scope are undefined.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:
