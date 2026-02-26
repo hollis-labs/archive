@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 121
-updated_at: 2026-02-26T02:55:00Z
+iteration: 122
+updated_at: 2026-02-26T03:05:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-185` to add MCP promotion freeze condition note.
+- Start `TASK-20260225-186` to add outputs stale deferral disclosure note.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 184 done
-- Last run log: `.volon/logs/run-iteration-121-2026-02-26.md`
+- Tasks: 1 todo, 0 blocked, 185 done
+- Last run log: `.volon/logs/run-iteration-122-2026-02-26.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-185 — Add MCP promotion freeze condition note (B)
 - TASK-20260225-186 — Add outputs stale deferral disclosure note (B)
 
 ### Blockers
@@ -40,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `a2eae04`
+- Last implementation commit: `5458e6f`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

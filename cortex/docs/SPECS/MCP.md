@@ -170,6 +170,22 @@ Immediately after phase promotion approval, monitor:
 Monitoring alignment:
 - Use this note with `Phase gate criteria`, `Phase promotion evidence checklist`, and `Phase promotion sign-off template`.
 
+## Promotion freeze-condition note
+
+Freeze further phase rollout when any of these conditions are met:
+1. Auth threshold breach:
+   - Sustained `auth_required` failures above expected rollout baseline for newly enabled surfaces.
+2. Policy threshold breach:
+   - Repeated `policy_denied` outcomes indicating unresolved actor/namespace policy mismatches.
+3. Observability threshold breach:
+   - Missing or incomplete audit/trace visibility for promoted success/failure paths.
+
+Freeze action:
+- Pause promotion expansion and route through rollback-readiness + remediation flow before resuming rollout.
+
+Freeze alignment:
+- Apply with `Post-promotion monitoring note` and `Phase rollback-readiness checklist`.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:
