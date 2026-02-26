@@ -434,6 +434,16 @@ When checklist ownership changes during review:
 3. Completion readiness:
    - Confirm completion status references the incoming owner confirmation after handoff.
 
+## Checklist prevention note
+
+Reduce revalidation failures with proactive checklist checks:
+1. Prevention checks:
+   - Validate checklist evidence freshness and link integrity before review-window expiry.
+2. Drift watch:
+   - Flag PRs with repeated checklist refresh churn for targeted cleanup.
+3. Completion guard:
+   - Keep completion status tied to prevention-check outcomes and latest owner confirmation.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
