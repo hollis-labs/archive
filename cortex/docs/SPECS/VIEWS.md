@@ -354,6 +354,16 @@ When all VIEWS checklist gates are satisfied:
 2. Confirm no unresolved escalation items remain.
 3. Note completion owner and completion timestamp for traceability.
 
+## Checklist evidence capture note
+
+Before marking checklist completion, capture these minimum references:
+1. Checklist evidence links:
+   - Link the exact review artifacts for `Quick validation`, `Reviewer`, `Consistency`, and `PR checklist` outcomes.
+2. Escalation outcome reference:
+   - If escalation occurred, link the final escalation decision entry alongside updated checklist status.
+3. Completion alignment:
+   - Keep evidence links in the same PR summary entry as completion owner/timestamp to preserve audit traceability.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
