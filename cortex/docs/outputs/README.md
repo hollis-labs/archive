@@ -232,6 +232,15 @@ When repeated stale-annotation audit failures occur:
 3. Resolution linkage:
    - Link escalation outcome to refreshed stale markers/audit evidence while preserving canonical-source precedence guidance.
 
+## Stale annotation recovery note
+After escalated stale-audit failures, recover with:
+1. Recovery sequence:
+   - Re-run stale-marker normalization, exception cleanup, and audit checks in order.
+2. Recovery record:
+   - Record recovered artifacts, unresolved gaps, and recovery owner/timestamp.
+3. Precedence confirmation:
+   - Confirm canonical-source precedence guidance remains explicit after recovery updates.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
