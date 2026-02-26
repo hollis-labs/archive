@@ -227,6 +227,19 @@ After freeze/rollback/resume decisions, publish a closure update including:
 Closure alignment:
 - Keep closure messaging consistent with `Promotion freeze-condition note`, `Rollback resume gate note`, and sign-off records.
 
+## Rollback verification handoff note
+
+Before handing rollback validation to the next responder, record:
+1. Snapshot handoff package:
+   - Link the rollback validation snapshot, freeze-condition status, and any open verification gaps.
+2. Handoff owner + timestamp:
+   - Record outgoing owner, incoming owner, and handoff timestamp in the same evidence thread.
+3. Resume/closure linkage:
+   - Identify whether next action targets resume-gate re-approval or closure communication, with direct links to required artifacts.
+
+Handoff alignment:
+- Keep handoff records aligned with `Rollback validation snapshot note`, `Rollback resume gate note`, and `Rollback communication closure note`.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:
