@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 107
-updated_at: 2026-02-26T00:35:00Z
+iteration: 108
+updated_at: 2026-02-26T00:45:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,17 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-174` to add outputs update sequencing note.
+- Generate next task batch (`TASK-20260225-175` .. `TASK-20260225-178`).
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 1 todo, 0 blocked, 173 done
-- Last run log: `.volon/logs/run-iteration-107-2026-02-26.md`
+- Tasks: 0 todo, 0 blocked, 174 done
+- Last run log: `.volon/logs/run-iteration-108-2026-02-26.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-174 — Add outputs update sequencing note (B)
+- None currently queued.
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
@@ -39,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `34e2cea`
+- Last implementation commit: `49572aa`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

@@ -106,6 +106,20 @@ Priority order:
 Triage rule:
 - When uncertainty exists, treat canonical specs/ADRs as source of truth and downgrade artifact confidence until refreshed.
 
+## Update sequencing
+Apply this sequencing for both artifact sets:
+- `docs/outputs/*`
+- `docs/SPECS/outputs/*`
+
+Recommended order:
+1. Update canonical spec/ADR sources first.
+2. Refresh affected output artifacts immediately after canonical merge.
+3. Re-run freshness/triage checks and update ownership notes where needed.
+4. Perform release-prep sweep to catch any remaining stale artifacts before publication.
+
+Sequencing rule:
+- If sequencing conflicts with delivery timing, preserve canonical-source correctness first and mark outputs as stale until refreshed.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
