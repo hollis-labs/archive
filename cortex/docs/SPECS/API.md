@@ -242,6 +242,16 @@ After incident closure, keep closure evidence available with:
 3. Owner responsibility:
    - Assign an owner for retention integrity and archival/cleanup decisions after the retention window ends.
 
+### Auth incident evidence archival note
+
+After retention windows complete, archive incident evidence with:
+1. Archive trigger:
+   - Archive when retention period ends and no active follow-up/escalation remains.
+2. Archival scope:
+   - Archive closure checklist records, timeline evidence, escalation acknowledgements/timeouts, and mitigation references together.
+3. Archive accountability:
+   - Record archival owner and archival timestamp in the incident evidence trail.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
