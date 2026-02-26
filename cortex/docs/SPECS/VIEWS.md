@@ -294,6 +294,20 @@ Use this when editing multiple selector example sections in one PR:
 4. Cross-section drift check:
    - Reconcile deprecation examples with capability examples so no field is simultaneously shown as both unsupported and baseline without an explicit assumption.
 
+## Section cross-reference map
+
+Use this map when deciding where to update VIEWS guidance:
+- Validation constraints and example hygiene:
+  - `Quick validation checklist`
+- Reviewer-oriented PR checks:
+  - `Reviewer checklist (doc PRs)`
+- Cross-section example drift checks:
+  - `Selector examples consistency checklist`
+- Compatibility, additive fields, and unknown-field strictness:
+  - `Selector capability discovery model` and `Compatibility examples`
+- Deprecation and version transition behavior:
+  - `Selector extension and versioning policy` and `Deprecation normalization examples`
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
