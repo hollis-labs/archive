@@ -266,6 +266,19 @@ After retention windows are satisfied, archive rollback evidence with:
 Archival alignment:
 - Keep archival handling aligned with retention, handoff, and closure guidance to preserve end-to-end evidence lineage.
 
+## Rollback evidence retrieval note
+
+When archived rollback evidence must be reviewed:
+1. Retrieval pointer:
+   - Record where archived evidence is stored and the retrieval identifier/path.
+2. Retrieval scope:
+   - Retrieve snapshot, handoff, closure, and retention/archival metadata as a single evidence package.
+3. Retrieval accountability:
+   - Record retriever identity and retrieval timestamp for audit follow-up.
+
+Retrieval alignment:
+- Keep retrieval guidance aligned with retention and archival sections to maintain evidence continuity.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:
