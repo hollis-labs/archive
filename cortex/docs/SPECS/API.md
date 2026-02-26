@@ -292,6 +292,16 @@ Reduce future evidence discrepancies with proactive checks:
 3. Precedence guard:
    - Keep canonical-source precedence and incident closure references explicit in all preventive updates.
 
+### Auth evidence continuous-improvement note
+
+Track recurring evidence issues with a lightweight improvement loop:
+1. Recurring issue log:
+   - Record repeated evidence mismatch patterns by incident area.
+2. Linked improvements:
+   - Attach one concrete process/runbook/doc improvement action per recurring pattern.
+3. Follow-up verification:
+   - Re-check affected evidence paths in the next maintenance pass and record outcome.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
