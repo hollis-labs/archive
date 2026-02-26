@@ -414,6 +414,16 @@ Apply a consistent checklist review window for evidence freshness:
 3. Completion alignment:
    - Keep completion status tied to evidence that is still within the review window.
 
+## Checklist evidence-owner note
+
+Assign clear ownership for checklist evidence freshness:
+1. Owner assignment:
+   - Identify the evidence owner responsible for keeping checklist links/results current during review.
+2. Owner action:
+   - Evidence owner refreshes stale checklist artifacts when review-window or revalidation triggers fire.
+3. Completion handoff:
+   - Completion records should reference the latest evidence owner confirmation before merge.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
