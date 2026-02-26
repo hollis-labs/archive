@@ -177,6 +177,19 @@ After closure, run a short review to reduce recurrence:
 3. Ownership:
    - Assign an owner for validating the mitigation in the next release/maintenance window.
 
+### Auth incident evidence capture note
+
+Capture these artifacts during incident handling:
+1. Request context evidence:
+   - Endpoint path/class, request timestamp window, and target environment/base URL.
+2. Mode snapshot evidence:
+   - Active mode at incident time (`mvp-open-read`, `optional-gated-read`, `strict-auth-all`) and source of confirmation.
+3. Token-path evidence:
+   - Presence/absence of bearer token at caller boundary and API boundary.
+   - Token lifecycle status evidence when managed mode applies.
+4. Verification artifacts:
+   - Before/after request outcomes used to validate diagnosis and fix.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)

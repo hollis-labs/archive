@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 124
-updated_at: 2026-02-26T03:25:00Z
+iteration: 125
+updated_at: 2026-02-26T03:35:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-187` to add API auth incident evidence capture note.
+- Start `TASK-20260225-188` to add VIEWS checklist handoff note.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 4 todo, 0 blocked, 186 done
-- Last run log: `.volon/logs/run-iteration-124-2026-02-26.md`
+- Tasks: 3 todo, 0 blocked, 187 done
+- Last run log: `.volon/logs/run-iteration-125-2026-02-26.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-187 — Add API auth incident evidence capture note (A)
 - TASK-20260225-188 — Add VIEWS checklist handoff note (B)
 - TASK-20260225-189 — Add MCP rollback validation snapshot note (B)
 - TASK-20260225-190 — Add outputs stale-status annotation examples (B)
@@ -42,6 +41,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `7dcea00`
+- Last implementation commit: `f965d8b`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
