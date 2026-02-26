@@ -212,6 +212,16 @@ Tag each auth incident with a severity label to drive follow-up:
 3. Follow-up expectation:
    - Higher severity requires tighter follow-up timing and explicit mitigation tracking in post-incident review notes.
 
+### Auth incident escalation acknowledgement note
+
+Record escalation acknowledgement details once incident severity is tagged:
+1. Acknowledgement actor:
+   - Record who accepted escalation (name/role) for `sev-1` and `sev-2` incidents.
+2. Acknowledgement timestamp + channel:
+   - Record when escalation was acknowledged and where (for example: on-call channel, incident room, paging system).
+3. Flow alignment:
+   - Link acknowledgement details to the timeline, handoff checklist, and closure checklist records.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
