@@ -259,6 +259,15 @@ Track recurring stale-annotation issues with a lightweight improvement loop:
 3. Verification follow-up:
    - Re-check affected artifacts in the next maintenance pass and record outcome.
 
+## Stale annotation trend note
+Track stale-annotation patterns across release windows:
+1. Trend tracking:
+   - Record recurring stale-marker or deferral-quality issues by artifact set/release window.
+2. Trend interpretation:
+   - Highlight whether issue frequency is improving, stable, or worsening over time.
+3. Action linkage:
+   - Link trend signals to targeted maintenance actions while keeping canonical-source precedence explicit.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
