@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 169
-updated_at: 2026-02-26T11:25:00Z
+iteration: 170
+updated_at: 2026-02-26T11:35:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-223` to add API auth evidence discrepancy escalation note.
+- Start `TASK-20260225-224` to add VIEWS checklist evidence-owner note.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 4 todo, 0 blocked, 222 done
-- Last run log: `.volon/logs/run-iteration-169-2026-02-26.md`
+- Tasks: 3 todo, 0 blocked, 223 done
+- Last run log: `.volon/logs/run-iteration-170-2026-02-26.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-223 — Add API auth evidence discrepancy escalation note (A)
 - TASK-20260225-224 — Add VIEWS checklist evidence-owner note (B)
 - TASK-20260225-225 — Add MCP rollback evidence recovery note (B)
 - TASK-20260225-226 — Add outputs stale annotation prevention note (B)
@@ -42,6 +41,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `b845cb2`
+- Last implementation commit: `5e37e06`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

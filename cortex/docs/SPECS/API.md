@@ -272,6 +272,16 @@ If evidence records conflict across lifecycle stages:
 3. Reconciler accountability:
    - Record reconciler owner and reconciliation timestamp in incident follow-up records.
 
+### Auth evidence discrepancy escalation note
+
+If reconciliation cannot resolve evidence mismatches:
+1. Escalation trigger:
+   - Escalate unresolved evidence mismatches after reconciliation attempts in the current review cycle.
+2. Escalation record:
+   - Record discrepancy summary, impacted evidence artifacts, and assigned escalation owner.
+3. Outcome linkage:
+   - Link escalation outcome to corrected evidence references before final closure confirmation.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
