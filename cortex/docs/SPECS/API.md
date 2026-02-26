@@ -137,6 +137,21 @@ Use this first-response path for `auth_required` incidents:
    - If token path failure: fix propagation before retry.
    - If token invalid: rotate/re-issue token and re-run request.
 
+### Auth incident handoff checklist
+
+Use this when handing unresolved `auth_required` incidents to another operator:
+1. Endpoint class + request target:
+   - Record endpoint class (read/view, mutating, operational read), endpoint path, and target environment/base URL.
+2. Mode assumption snapshot:
+   - Record assumed active mode and why (`mvp-open-read`, `optional-gated-read`, `strict-auth-all`).
+3. Token-flow findings:
+   - Record whether bearer token was present at caller boundary and API boundary.
+   - Record token lifecycle status checks (active/revoked/expired) when applicable.
+4. Actions completed:
+   - List troubleshooting steps already run (matrix checks, decision-path branches, preflight checks).
+5. Pending actions + owner:
+   - Record next required action, owner, and expected verification signal before retry.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
