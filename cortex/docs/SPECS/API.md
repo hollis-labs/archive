@@ -252,6 +252,16 @@ After retention windows complete, archive incident evidence with:
 3. Archive accountability:
    - Record archival owner and archival timestamp in the incident evidence trail.
 
+### Auth incident evidence retrieval note
+
+When archived incident evidence is needed for audit/follow-up:
+1. Retrieval pointer:
+   - Record archive location/identifier used to retrieve incident evidence.
+2. Retrieval scope:
+   - Retrieve timeline, closure, escalation, retention, and archival records as one evidence package.
+3. Retriever accountability:
+   - Record retriever identity and retrieval timestamp in follow-up notes.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
