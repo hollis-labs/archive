@@ -262,6 +262,16 @@ When archived incident evidence is needed for audit/follow-up:
 3. Retriever accountability:
    - Record retriever identity and retrieval timestamp in follow-up notes.
 
+### Auth incident evidence reconciliation note
+
+If evidence records conflict across lifecycle stages:
+1. Mismatch record:
+   - Record conflicting fields between retained, archived, and retrieved evidence artifacts.
+2. Reconciliation action:
+   - Resolve mismatch by validating canonical incident evidence trail and correcting stale/incorrect references.
+3. Reconciler accountability:
+   - Record reconciler owner and reconciliation timestamp in incident follow-up records.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
