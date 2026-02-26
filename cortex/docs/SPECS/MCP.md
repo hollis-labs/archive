@@ -318,6 +318,19 @@ After discrepancy escalations are resolved, recover evidence flow with:
 Recovery alignment:
 - Keep recovery outcomes linked to discrepancy escalation, reconciliation, and closure evidence sections.
 
+## Rollback evidence prevention note
+
+Reduce future evidence discrepancy escalations with proactive checks:
+1. Prevention checks:
+   - Run periodic completeness checks across reconciliation, discrepancy escalation, and recovery records.
+2. Drift watch:
+   - Flag rollback streams with recurring discrepancies for targeted maintenance updates.
+3. Precedence guard:
+   - Keep canonical evidence references explicit in preventive updates and sign-off artifacts.
+
+Prevention alignment:
+- Keep prevention controls aligned with recovery, reconciliation, and discrepancy escalation guidance.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:
