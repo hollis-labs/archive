@@ -232,6 +232,16 @@ If escalation acknowledgement does not lead to progress in the expected window:
 3. Continuity linkage:
    - Link timeout handling notes to timeline entries and closure checklist updates.
 
+### Auth incident closure evidence retention note
+
+After incident closure, keep closure evidence available with:
+1. Retention window:
+   - Record minimum retention period for closure artifacts in the active release/support window.
+2. Artifact scope:
+   - Retain closure checklist entries, verification request outcomes, and post-incident mitigation references together.
+3. Owner responsibility:
+   - Assign an owner for retention integrity and archival/cleanup decisions after the retention window ends.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
