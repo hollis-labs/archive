@@ -201,6 +201,19 @@ Immediately after rollback execution, capture:
 Snapshot alignment:
 - Use with `Phase rollback-readiness checklist` and `Promotion freeze-condition note` before considering rollout resume.
 
+## Rollback resume gate note
+
+Resume rollout only when all gates pass:
+1. Freeze-condition remediation:
+   - Auth/policy/observability threshold breaches that triggered freeze are resolved and verified.
+2. Rollback validation snapshot completeness:
+   - Snapshot evidence is captured and confirms expected post-rollback baseline behavior.
+3. Re-approval gate:
+   - Promotion sign-off is re-run with updated evidence before any rollout expansion resumes.
+
+Resume alignment:
+- Apply with `Promotion freeze-condition note`, `Rollback validation snapshot note`, and `Phase promotion sign-off template`.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:
