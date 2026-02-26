@@ -196,6 +196,15 @@ When a temporary exception to stale annotation guidance is required:
 3. Canonical precedence carry-forward:
    - Keep canonical-source precedence language adjacent to the exception note until standard format is restored.
 
+## Stale annotation normalization note
+After an exception window closes, normalize stale annotations by:
+1. Format restoration:
+   - Restore standard stale marker/disclosure wording used across both output artifact sets.
+2. Residual cleanup:
+   - Remove obsolete exception phrasing once replacement guidance is verified.
+3. Precedence confirmation:
+   - Reconfirm canonical-source precedence text remains explicit near normalized stale guidance.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
