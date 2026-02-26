@@ -374,6 +374,16 @@ When an intentional checklist deviation is necessary:
 3. Completion linkage:
    - Tie the variance entry to checklist evidence and completion records so final status remains auditable.
 
+## Checklist exception expiry note
+
+For temporary checklist exceptions, include explicit expiry handling:
+1. Expiry window:
+   - Record the date/release window when the exception expires.
+2. Revalidation trigger:
+   - Define the trigger that requires checklist revalidation at or before expiry.
+3. Ownership:
+   - Assign owner responsible for closing or renewing the exception with updated evidence.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
