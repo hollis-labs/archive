@@ -250,6 +250,15 @@ Reduce stale-audit escalations with proactive checks:
 3. Precedence guard:
    - Keep canonical-source precedence statements explicit in all proactive edits.
 
+## Stale annotation continuous-improvement note
+Track recurring stale-annotation issues with a lightweight improvement loop:
+1. Recurring issue log:
+   - Record repeated stale-marker or deferral-quality failures by artifact area.
+2. Improvement actions:
+   - Link each recurring issue to one concrete process/documentation improvement action.
+3. Verification follow-up:
+   - Re-check affected artifacts in the next maintenance pass and record outcome.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
