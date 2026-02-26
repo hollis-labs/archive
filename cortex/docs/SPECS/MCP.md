@@ -305,6 +305,19 @@ If reconciliation cannot resolve evidence discrepancies:
 Escalation alignment:
 - Keep discrepancy escalation aligned with reconciliation, retrieval, and closure evidence guidance.
 
+## Rollback evidence recovery note
+
+After discrepancy escalations are resolved, recover evidence flow with:
+1. Recovery sequence:
+   - Re-run reconciliation checks and refresh evidence references across retained/retrieved bundles.
+2. Recovery record:
+   - Record recovered artifacts, unresolved gaps, and recovery owner/timestamp.
+3. Closure readiness:
+   - Confirm closure/sign-off evidence references use the recovered evidence set.
+
+Recovery alignment:
+- Keep recovery outcomes linked to discrepancy escalation, reconciliation, and closure evidence sections.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:

@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 171
-updated_at: 2026-02-26T11:50:00Z
+iteration: 172
+updated_at: 2026-02-26T12:00:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-225` to add MCP rollback evidence recovery note.
+- Start `TASK-20260225-226` to add outputs stale annotation prevention note.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 224 done
-- Last run log: `.volon/logs/run-iteration-171-2026-02-26.md`
+- Tasks: 1 todo, 0 blocked, 225 done
+- Last run log: `.volon/logs/run-iteration-172-2026-02-26.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-225 — Add MCP rollback evidence recovery note (B)
 - TASK-20260225-226 — Add outputs stale annotation prevention note (B)
 
 ### Blockers
@@ -40,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `036302d`
+- Last implementation commit: `df7d29e`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
