@@ -177,6 +177,16 @@ Review focus:
 2. Active/deferred stale wording stays consistent across artifacts.
 3. Canonical-source precedence statements remain present alongside stale annotations.
 
+## Stale annotation audit note
+Run a lightweight periodic audit across:
+- `docs/outputs/*`
+- `docs/SPECS/outputs/*`
+
+Audit checks:
+1. Stale markers and annotation examples follow the same current format.
+2. Deferral disclosures include reason, expected window, and owner when applicable.
+3. Canonical-source precedence text remains present near stale guidance.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
