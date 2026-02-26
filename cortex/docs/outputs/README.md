@@ -187,6 +187,15 @@ Audit checks:
 2. Deferral disclosures include reason, expected window, and owner when applicable.
 3. Canonical-source precedence text remains present near stale guidance.
 
+## Stale annotation exception note
+When a temporary exception to stale annotation guidance is required:
+1. Exception disclosure:
+   - State the specific exception and why standard stale annotation format cannot be used.
+2. Exception window + owner:
+   - Record expected end window and assigned owner for re-alignment.
+3. Canonical precedence carry-forward:
+   - Keep canonical-source precedence language adjacent to the exception note until standard format is restored.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
