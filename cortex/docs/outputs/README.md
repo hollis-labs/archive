@@ -120,6 +120,20 @@ Recommended order:
 Sequencing rule:
 - If sequencing conflicts with delivery timing, preserve canonical-source correctness first and mark outputs as stale until refreshed.
 
+## Release-readiness check
+Run this check before release publication for both:
+- `docs/outputs/*`
+- `docs/SPECS/outputs/*`
+
+Release check items:
+1. Freshness markers updated for artifacts touched by canonical changes.
+2. Stale-artifact triage reviewed and no unresolved `critical` items remain.
+3. Update sequencing completed (canonical first, outputs refreshed, sweep done).
+4. Canonical-source precedence statements remain present where summary guidance is provided.
+
+Release rule:
+- If any item fails, keep release notes anchored to canonical specs/ADRs and mark affected outputs as pending refresh.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
