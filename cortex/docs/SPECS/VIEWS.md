@@ -384,6 +384,16 @@ For temporary checklist exceptions, include explicit expiry handling:
 3. Ownership:
    - Assign owner responsible for closing or renewing the exception with updated evidence.
 
+## Checklist exception closure note
+
+When a temporary checklist exception is resolved:
+1. Closure record:
+   - Record closure date and the checklist item now revalidated.
+2. Evidence update:
+   - Replace exception references with current checklist evidence links in the PR summary.
+3. Status alignment:
+   - Confirm completion records no longer depend on the closed exception.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
