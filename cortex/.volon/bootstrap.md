@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 108
-updated_at: 2026-02-26T00:45:00Z
+iteration: 109
+updated_at: 2026-02-26T00:55:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,20 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Generate next task batch (`TASK-20260225-175` .. `TASK-20260225-178`).
+- Start `TASK-20260225-175` to add API auth incident handoff checklist.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 0 todo, 0 blocked, 174 done
-- Last run log: `.volon/logs/run-iteration-108-2026-02-26.md`
+- Tasks: 4 todo, 0 blocked, 174 done
+- Last run log: `.volon/logs/run-iteration-109-2026-02-26.md`
 
 ## Active work
 ### Highest priority todos
-- None currently queued.
+- TASK-20260225-175 — Add API auth incident handoff checklist (A)
+- TASK-20260225-176 — Add VIEWS examples maintenance cadence note (B)
+- TASK-20260225-177 — Add MCP phase promotion sign-off template (B)
+- TASK-20260225-178 — Add outputs release-readiness check note (B)
 
 ### Blockers
 - Volon CLI executable (`volon`) not found in PATH; lifecycle transitions continue via markdown task state.
@@ -39,6 +42,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `49572aa`
+- Last implementation commit: `87c0aac`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
