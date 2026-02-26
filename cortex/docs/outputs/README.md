@@ -205,6 +205,15 @@ After an exception window closes, normalize stale annotations by:
 3. Precedence confirmation:
    - Reconfirm canonical-source precedence text remains explicit near normalized stale guidance.
 
+## Stale annotation ownership rotation note
+When stale-annotation ownership changes between release windows:
+1. Rotation record:
+   - Record outgoing owner, incoming owner, and effective rotation window.
+2. Responsibility carryover:
+   - Transfer open stale-marker exceptions, deferrals, and pending audits to the incoming owner.
+3. Precedence continuity:
+   - Ensure canonical-source precedence guidance remains unchanged through ownership transitions.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
