@@ -347,6 +347,13 @@ If checklist conflicts remain unresolved:
 2. Identify current owner and proposed deciding reviewer in the same PR thread.
 3. Pause merge until escalation outcome is recorded and affected checklist status is updated.
 
+## Checklist completion note
+
+When all VIEWS checklist gates are satisfied:
+1. Record final checklist status (`Quick validation`, `Reviewer`, `Consistency`, `PR checklist`) in the PR summary.
+2. Confirm no unresolved escalation items remain.
+3. Note completion owner and completion timestamp for traceability.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
