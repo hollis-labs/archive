@@ -394,6 +394,16 @@ When a temporary checklist exception is resolved:
 3. Status alignment:
    - Confirm completion records no longer depend on the closed exception.
 
+## Checklist revalidation reminder note
+
+For long-running PRs, revalidate checklist evidence before merge:
+1. Reminder trigger:
+   - If checklist evidence is older than the current review window, rerun relevant checklist checks.
+2. Evidence refresh:
+   - Update links/results for stale checklist artifacts in the PR summary.
+3. Merge alignment:
+   - Confirm final completion status reflects the refreshed evidence set.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
