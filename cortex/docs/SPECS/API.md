@@ -190,6 +190,16 @@ Capture these artifacts during incident handling:
 4. Verification artifacts:
    - Before/after request outcomes used to validate diagnosis and fix.
 
+### Auth incident timeline capture note
+
+Record a minimal timeline for each auth incident:
+1. Detection timestamp:
+   - First observed failure time and detection source.
+2. Mitigation timeline:
+   - Ordered list of mitigation steps with timestamps (mode check, token-path fixes, config updates).
+3. Closure verification timestamp:
+   - Time of successful post-fix verification request(s) and verifier identity.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
