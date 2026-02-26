@@ -134,6 +134,20 @@ Release check items:
 Release rule:
 - If any item fails, keep release notes anchored to canonical specs/ADRs and mark affected outputs as pending refresh.
 
+## Stale-marker remediation
+When an artifact is marked stale in either set:
+- `docs/outputs/*`
+- `docs/SPECS/outputs/*`
+
+Remediation expectations:
+1. Assign a responsible owner immediately (or default to the most recent canonical-change author).
+2. Set expected refresh timing in the current release window unless explicitly deferred.
+3. Update artifact content and freshness marker after canonical source verification.
+4. If deferred, keep stale marker explicit and record follow-up action in the next maintenance pass.
+
+Remediation rule:
+- Stale markers are temporary safety signals; canonical specs/ADRs remain the authoritative source until refresh is complete.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
