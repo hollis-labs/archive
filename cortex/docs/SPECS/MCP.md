@@ -240,6 +240,19 @@ Before handing rollback validation to the next responder, record:
 Handoff alignment:
 - Keep handoff records aligned with `Rollback validation snapshot note`, `Rollback resume gate note`, and `Rollback communication closure note`.
 
+## Rollback evidence retention note
+
+After rollback handling is complete, retain verification artifacts with:
+1. Retention window:
+   - Minimum retention period aligned to current release/support window for the affected phase transition.
+2. Artifact scope:
+   - Preserve rollback snapshot evidence, handoff records, and closure communication references together.
+3. Ownership:
+   - Assign a responsible owner for retention integrity and eventual archival/cleanup decision.
+
+Retention alignment:
+- Keep retention expectations aligned with sign-off evidence handling and post-promotion monitoring needs.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:
