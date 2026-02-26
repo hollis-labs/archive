@@ -302,6 +302,16 @@ Track recurring evidence issues with a lightweight improvement loop:
 3. Follow-up verification:
    - Re-check affected evidence paths in the next maintenance pass and record outcome.
 
+### Auth evidence trend note
+
+Track evidence quality patterns across release windows:
+1. Trend tracking:
+   - Record recurring evidence mismatch/correction patterns by incident stream and release window.
+2. Trend interpretation:
+   - Classify trend direction as improving, stable, or worsening.
+3. Action linkage:
+   - Link trend signals to targeted preventive or process-improvement actions.
+
 ## Identity and namespace context
 Each mutating request carries:
 - `client_id` (string)
