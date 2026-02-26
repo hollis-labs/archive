@@ -364,6 +364,16 @@ Before marking checklist completion, capture these minimum references:
 3. Completion alignment:
    - Keep evidence links in the same PR summary entry as completion owner/timestamp to preserve audit traceability.
 
+## Checklist variance note
+
+When an intentional checklist deviation is necessary:
+1. Variance disclosure:
+   - Record the exact checklist item deviated from and why the standard requirement is not applicable in this change.
+2. Approval reference:
+   - Link reviewer/owner acknowledgement for the variance in the same PR thread.
+3. Completion linkage:
+   - Tie the variance entry to checklist evidence and completion records so final status remains auditable.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`

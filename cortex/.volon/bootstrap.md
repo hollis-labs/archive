@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 145
-updated_at: 2026-02-26T07:25:00Z
+iteration: 146
+updated_at: 2026-02-26T07:35:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-204` to add VIEWS checklist variance note.
+- Start `TASK-20260225-205` to add MCP rollback evidence retention note.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 3 todo, 0 blocked, 203 done
-- Last run log: `.volon/logs/run-iteration-145-2026-02-26.md`
+- Tasks: 2 todo, 0 blocked, 204 done
+- Last run log: `.volon/logs/run-iteration-146-2026-02-26.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-204 — Add VIEWS checklist variance note (B)
 - TASK-20260225-205 — Add MCP rollback evidence retention note (B)
 - TASK-20260225-206 — Add outputs stale annotation normalization note (B)
 
@@ -41,6 +40,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `53789ac`
+- Last implementation commit: `a1e20ed`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
