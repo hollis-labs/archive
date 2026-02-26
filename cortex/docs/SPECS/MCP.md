@@ -186,6 +186,21 @@ Freeze action:
 Freeze alignment:
 - Apply with `Post-promotion monitoring note` and `Phase rollback-readiness checklist`.
 
+## Rollback validation snapshot note
+
+Immediately after rollback execution, capture:
+1. Auth-state snapshot:
+   - Post-rollback `auth_required` behavior for affected tool surfaces matches pre-promotion expectations.
+2. Policy-state snapshot:
+   - Post-rollback `policy_denied` behavior confirms actor/namespace protections are restored to expected baseline.
+3. Observability snapshot:
+   - Audit/trace records show rollback actions and subsequent validation checks with complete visibility.
+4. Snapshot record:
+   - Store captured results with rollback timestamp and validator owner for reproducibility.
+
+Snapshot alignment:
+- Use with `Phase rollback-readiness checklist` and `Promotion freeze-condition note` before considering rollout resume.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:
