@@ -161,6 +161,12 @@ Include a short disclosure in the stale artifact:
 Disclosure rule:
 - Keep the stale marker visible until refresh completes; canonical specs/ADRs remain the authoritative reference during deferral.
 
+Stale-status annotation examples:
+- Active stale state:
+  - `Freshness: stale pending API spec update`
+- Deferred stale state:
+  - `Freshness: stale (deferred until 2026-03 release window; owner: docs-ops)`
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
