@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 116
-updated_at: 2026-02-26T02:05:00Z
+iteration: 117
+updated_at: 2026-02-26T02:15:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-181` to add MCP post-promotion monitoring note.
+- Start `TASK-20260225-182` to add outputs stale-marker remediation note.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 180 done
-- Last run log: `.volon/logs/run-iteration-116-2026-02-26.md`
+- Tasks: 1 todo, 0 blocked, 181 done
+- Last run log: `.volon/logs/run-iteration-117-2026-02-26.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-181 — Add MCP post-promotion monitoring note (B)
 - TASK-20260225-182 — Add outputs stale-marker remediation note (B)
 
 ### Blockers
@@ -40,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `d170b34`
+- Last implementation commit: `4749356`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

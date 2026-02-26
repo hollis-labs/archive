@@ -155,6 +155,21 @@ Use this template when approving a phase transition:
 Sign-off rule:
 - Any `fail` status blocks promotion approval until remediated and re-verified.
 
+## Post-promotion monitoring note
+
+Immediately after phase promotion approval, monitor:
+1. Auth failure signals:
+   - Track `auth_required` rates for newly enabled tool surfaces to detect token flow regressions.
+2. Policy denial signals:
+   - Watch `policy_denied` outcomes for unexpected actor/namespace mismatches in promoted paths.
+3. Observability integrity:
+   - Confirm audit/trace visibility remains complete for success and failure paths.
+4. Escalation threshold:
+   - If auth/policy failures exceed expected baseline, trigger rollback-readiness process and pause further rollout expansion.
+
+Monitoring alignment:
+- Use this note with `Phase gate criteria`, `Phase promotion evidence checklist`, and `Phase promotion sign-off template`.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:
