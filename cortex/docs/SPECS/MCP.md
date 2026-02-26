@@ -331,6 +331,19 @@ Reduce future evidence discrepancy escalations with proactive checks:
 Prevention alignment:
 - Keep prevention controls aligned with recovery, reconciliation, and discrepancy escalation guidance.
 
+## Rollback evidence continuous-improvement note
+
+Track recurring rollback evidence issues with a lightweight loop:
+1. Recurring issue log:
+   - Record repeated discrepancy patterns across rollback evidence streams.
+2. Linked improvements:
+   - Attach one concrete runbook/process/documentation improvement per recurring pattern.
+3. Follow-up verification:
+   - Re-check affected evidence paths in the next maintenance pass and record results.
+
+Improvement alignment:
+- Keep continuous-improvement outcomes linked to prevention, recovery, and discrepancy escalation evidence flows.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:

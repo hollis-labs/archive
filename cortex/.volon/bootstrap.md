@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 181
-updated_at: 2026-02-26T13:30:00Z
+iteration: 182
+updated_at: 2026-02-26T13:40:00Z
 config:
   path: volon.yaml
   storage_backend: nanite
@@ -18,17 +18,16 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260225-233` to add MCP rollback evidence continuous-improvement note.
+- Start `TASK-20260225-234` to add outputs stale annotation trend note.
 
 ## Current state summary
 - volon.yaml: present
 - PCC: present
-- Tasks: 2 todo, 0 blocked, 232 done
-- Last run log: `.volon/logs/run-iteration-181-2026-02-26.md`
+- Tasks: 1 todo, 0 blocked, 233 done
+- Last run log: `.volon/logs/run-iteration-182-2026-02-26.md`
 
 ## Active work
 ### Highest priority todos
-- TASK-20260225-233 — Add MCP rollback evidence continuous-improvement note (B)
 - TASK-20260225-234 — Add outputs stale annotation trend note (B)
 
 ### Blockers
@@ -40,6 +39,6 @@ execution:
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `3deafe1`
+- Last implementation commit: `6d9d615`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
