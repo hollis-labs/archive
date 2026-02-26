@@ -308,6 +308,15 @@ Use this map when deciding where to update VIEWS guidance:
 - Deprecation and version transition behavior:
   - `Selector extension and versioning policy` and `Deprecation normalization examples`
 
+## Examples maintenance cadence
+
+Recommended cadence for VIEWS example upkeep:
+1. Trigger immediate review when selector behavior docs change (validation, compatibility, or deprecation semantics).
+2. Run a periodic checklist pass once per release window using:
+   - `Selector examples consistency checklist`
+   - `Section cross-reference map`
+3. If drift is found, update the smallest affected section first, then reconcile linked sections in the same PR.
+
 ## CLI/API mapping
 - API: `POST /v1/views/evaluate`
 - CLI: `context view --selector ...`
