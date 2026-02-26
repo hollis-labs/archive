@@ -241,6 +241,15 @@ After escalated stale-audit failures, recover with:
 3. Precedence confirmation:
    - Confirm canonical-source precedence guidance remains explicit after recovery updates.
 
+## Stale annotation prevention note
+Reduce stale-audit escalations with proactive checks:
+1. Prevention checks:
+   - Run periodic stale-marker format checks and ownership/deferral completeness checks before release windows.
+2. Drift watch:
+   - Flag artifacts with repeated stale updates for targeted maintenance.
+3. Precedence guard:
+   - Keep canonical-source precedence statements explicit in all proactive edits.
+
 ## Maintenance checklist
 1. After updating canonical specs/ADRs, verify linked summary artifacts still match current behavior.
 2. Validate links for both:
