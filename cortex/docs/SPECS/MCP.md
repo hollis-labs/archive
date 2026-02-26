@@ -253,6 +253,19 @@ After rollback handling is complete, retain verification artifacts with:
 Retention alignment:
 - Keep retention expectations aligned with sign-off evidence handling and post-promotion monitoring needs.
 
+## Rollback evidence archival note
+
+After retention windows are satisfied, archive rollback evidence with:
+1. Archive trigger:
+   - Archive when retention window closes and no active freeze/resume investigations remain.
+2. Archive bundle:
+   - Archive rollback snapshot, handoff records, closure communication, and retention metadata together.
+3. Archive accountability:
+   - Record archive owner and archive timestamp in the same evidence trail for audit continuity.
+
+Archival alignment:
+- Keep archival handling aligned with retention, handoff, and closure guidance to preserve end-to-end evidence lineage.
+
 ## Operator enablement checklist
 
 Phase 1 (`read-view`) checklist:
