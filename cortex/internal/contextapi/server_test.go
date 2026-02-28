@@ -750,3 +750,85 @@ func performJSONWithHeaders(t *testing.T, h http.Handler, method, path string, b
 	h.ServeHTTP(res, req)
 	return res
 }
+
+func TestPacketEndpointBudgetCutoff(t *testing.T) {
+	s := newTestServer(t)
+
+	// Write 10 records to user/memory/packet-test
+	for i := 0; i < 10; i++ {
+		res := performJSON(t, s, "POST", "/v1/context/write", map[string]any{
+			"actor":     "user",
+			"namespace": "user/memory/packet-test",
+			"key":       "item-" + strconv.Itoa(i),
+			"payload":   map[string]any{"n": i},
+		})
+		if res.Code != http.StatusOK {
+			t.Fatalf("write %d: %s", i, res.Body)
+		}
+	}
+
+	// Request packet with max_items=5
+	res := performJSON(t, s, "POST", "/v1/context/packet", map[string]any{
+		"selector": map[string]any{
+			"namespaces":     []string{"user/memory/packet-test"},
+			"revision_scope": "head",
+		},
+		"assembly": map[string]any{
+			"include_pins": false,
+			"budget": map[string]any{
+				"max_items": 5,
+			},
+		},
+	})
+	if res.Code != http.StatusOK {
+		t.Fatalf("packet: %s", res.Body)
+	}
+	var resp map[string]any
+	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	manifest := resp["manifest"].(map[string]any)
+	items := resp["items"].([]any)
+	if len(items) != 5 {
+		t.Errorf("want 5 items, got %d", len(items))
+	}
+	if manifest["truncated"] != true {
+		t.Errorf("want truncated=true, got %v", manifest["truncated"])
+	}
+	if got := int(manifest["items_total"].(float64)); got != 10 {
+		t.Errorf("want items_total=10, got %d", got)
+	}
+}
+
+func TestEstimateEndpoint(t *testing.T) {
+	s := newTestServer(t)
+
+	for i := 0; i < 3; i++ {
+		performJSON(t, s, "POST", "/v1/context/write", map[string]any{
+			"actor":     "user",
+			"namespace": "user/memory/est-test",
+			"key":       "k" + strconv.Itoa(i),
+			"payload":   map[string]any{"data": "hello"},
+		})
+	}
+
+	res := performJSON(t, s, "POST", "/v1/context/estimate", map[string]any{
+		"selector": map[string]any{
+			"namespaces":     []string{"user/memory/est-test"},
+			"revision_scope": "head",
+		},
+	})
+	if res.Code != http.StatusOK {
+		t.Fatalf("estimate: %s", res.Body)
+	}
+	var resp map[string]any
+	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if int(resp["record_count"].(float64)) != 3 {
+		t.Errorf("want record_count=3, got %v", resp["record_count"])
+	}
+	if int(resp["total_bytes"].(float64)) == 0 {
+		t.Errorf("want total_bytes > 0")
+	}
+}

@@ -132,6 +132,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.handleMaintenanceCompact(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/packet":
+		s.handlePacket(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/estimate":
+		s.handleEstimate(w, r)
 	default:
 		writeError(w, http.StatusNotFound, "not_found", "endpoint not found", nil)
 	}
@@ -320,6 +324,7 @@ type writeRequest struct {
 	Namespace string          `json:"namespace"`
 	Key       string          `json:"key"`
 	Payload   json.RawMessage `json:"payload"`
+	Metadata  json.RawMessage `json:"metadata,omitempty"`
 	Reason    string          `json:"reason"`
 }
 
@@ -346,6 +351,7 @@ func (s *Server) handleWrite(w http.ResponseWriter, r *http.Request) {
 		Key:       req.Key,
 		Actor:     req.Actor,
 		Payload:   req.Payload,
+		Metadata:  req.Metadata,
 	})
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "write_failed", err.Error(), nil)

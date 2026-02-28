@@ -15,7 +15,8 @@ Views are not processors. They do not summarize, infer, merge, or mutate records
   "keys": ["goal", "priority", "summary"],
   "revision_scope": "head|all",
   "order": ["namespace", "key", "revision"],
-  "limit": 100
+  "limit": 100,
+  "tags_any": ["urgent", "pinned"]
 }
 ```
 
@@ -25,10 +26,9 @@ Views are not processors. They do not summarize, infer, merge, or mutate records
 - `revision_scope`:
   - `head`: return only current head per `(namespace,key)`.
   - `all`: return full history matches.
-- `order`: explicit stable sort keys. Required for deterministic behavior.
+- `order`: explicit stable sort keys. Required for deterministic behavior. Allowed values: `namespace`, `key`, `revision`, `created_asc`, `created_desc`.
 - `limit`: optional bounded result size.
-
-> **Planned (not yet implemented):** Tag-based filtering (`tags_any`) is not part of the current selector contract. Tag indexing is tracked as a Phase 2 feature (see TASK-20260228-012). Tags stored in `metadata_json` per record are unaffected.
+- `tags_any`: optional list of tags — returns records that have at least one matching tag. Tags are written via `metadata.tags` on the write request and indexed in the `record_tags` table.
 
 ## Complexity guardrails (MVP)
 - Max `namespaces` patterns: `32`
@@ -36,7 +36,7 @@ Views are not processors. They do not summarize, infer, merge, or mutate records
 - `limit` behavior:
   - default when omitted/zero: `200`
   - maximum accepted: `500`
-- `order` keys allowed: `namespace`, `key`, `revision` (no duplicates)
+- `order` keys allowed: `namespace`, `key`, `revision`, `created_asc`, `created_desc` (no duplicates)
 
 ## Determinism rules
 1. Selector parsing is pure and side-effect free.

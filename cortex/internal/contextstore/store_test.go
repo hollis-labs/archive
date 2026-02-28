@@ -706,3 +706,101 @@ func TestScanConsistencyChecksumCases(t *testing.T) {
 		}
 	}
 }
+
+func TestEstimateTokens(t *testing.T) {
+	if got := EstimateTokens([]byte{}); got != 0 {
+		t.Errorf("empty payload: want 0, got %d", got)
+	}
+	// 1000 bytes → ceil(1000/4) = 250
+	payload1000 := make([]byte, 1000)
+	if got := EstimateTokens(payload1000); got != 250 {
+		t.Errorf("1000-byte payload: want 250, got %d", got)
+	}
+	// 1001 bytes → ceil(1001/4) = 251
+	payload1001 := make([]byte, 1001)
+	if got := EstimateTokens(payload1001); got != 251 {
+		t.Errorf("1001-byte payload: want 251, got %d", got)
+	}
+}
+
+func TestTagsAnySelector(t *testing.T) {
+	root := t.TempDir()
+	s, err := Open(context.Background(), Config{RootDir: root})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	// Write 3 records: tags [a,b], [b,c], [c,d]
+	tagSets := [][]string{{"a", "b"}, {"b", "c"}, {"c", "d"}}
+	for i, tags := range tagSets {
+		tagsJSON, _ := json.Marshal(tags)
+		meta := json.RawMessage(`{"tags":` + string(tagsJSON) + `}`)
+		_, err := s.AppendRecord(context.Background(), AppendInput{
+			Namespace: "user/memory/tags-test",
+			Key:       fmt.Sprintf("key-%d", i),
+			Actor:     "tester",
+			Payload:   json.RawMessage(`{"i":` + fmt.Sprintf("%d", i) + `}`),
+			Metadata:  meta,
+		})
+		if err != nil {
+			t.Fatalf("append key-%d: %v", i, err)
+		}
+	}
+
+	checkCount := func(tagsAny []string, want int) {
+		t.Helper()
+		recs, err := s.Select(context.Background(), Selector{
+			Namespaces: []string{"user/memory/tags-test"},
+			RevisionScope: "head",
+			TagsAny:    tagsAny,
+		})
+		if err != nil {
+			t.Fatalf("select tags_any=%v: %v", tagsAny, err)
+		}
+		if got := len(recs); got != want {
+			t.Errorf("tags_any=%v: want %d records, got %d", tagsAny, want, got)
+		}
+	}
+
+	checkCount([]string{"a"}, 1)      // only key-0
+	checkCount([]string{"b"}, 2)      // key-0 and key-1
+	checkCount([]string{"x"}, 0)      // no match
+	checkCount([]string{"a", "c"}, 3) // all three have a or c
+}
+
+func TestAppendRecordWithMetadata(t *testing.T) {
+	root := t.TempDir()
+	s, err := Open(context.Background(), Config{RootDir: root})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	rec, err := s.AppendRecord(context.Background(), AppendInput{
+		Namespace: "user/memory/meta-test",
+		Key:       "key-meta",
+		Actor:     "tester",
+		Payload:   json.RawMessage(`{"v":1}`),
+		Metadata:  json.RawMessage(`{"tags":["foo","bar"],"source":"test"}`),
+	})
+	if err != nil {
+		t.Fatalf("append: %v", err)
+	}
+	if rec.RecordID == "" {
+		t.Error("expected non-empty RecordID")
+	}
+
+	// Tag filter should find the record.
+	recs, err := s.Select(context.Background(), Selector{
+		Namespaces: []string{"user/memory/meta-test"},
+		RevisionScope: "head",
+		TagsAny:    []string{"foo"},
+	})
+	if err != nil {
+		t.Fatalf("select: %v", err)
+	}
+	if len(recs) != 1 {
+		t.Errorf("want 1 record, got %d", len(recs))
+	}
+}

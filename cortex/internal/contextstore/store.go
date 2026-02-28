@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	schemaVersion = 4
+	schemaVersion = 5
 	// DefaultSelectLimit bounds selector response size when no explicit limit is provided.
 	DefaultSelectLimit = 200
 	// MaxSelectLimit is the upper bound accepted for selector limits.
@@ -71,8 +71,9 @@ type Selector struct {
 	Namespaces    []string `json:"namespaces,omitempty"`
 	Keys          []string `json:"keys,omitempty"`
 	RevisionScope string   `json:"revision_scope,omitempty"` // head|all
-	Order         []string `json:"order,omitempty"`
+	Order         []string `json:"order,omitempty"`          // namespace|key|revision|created_asc|created_desc
 	Limit         int      `json:"limit,omitempty"`
+	TagsAny       []string `json:"tags_any,omitempty"` // records with at least one of these tags
 }
 
 // ConsistencyIssue reports a deterministic storage/index inconsistency finding.
@@ -318,6 +319,24 @@ CREATE TABLE IF NOT EXISTS namespace_policies (
 			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_namespace_policies_updated ON namespace_policies(updated_at, namespace)`); err != nil {
 				return err
 			}
+		case 5:
+			if _, err = tx.ExecContext(ctx, `ALTER TABLE records ADD COLUMN metadata_json TEXT`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `
+CREATE TABLE IF NOT EXISTS record_tags (
+	record_id TEXT NOT NULL,
+	tag TEXT NOT NULL,
+	UNIQUE(record_id, tag)
+)`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_record_tags_tag ON record_tags(tag)`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_record_tags_record_id ON record_tags(record_id)`); err != nil {
+				return err
+			}
 		}
 
 		version++
@@ -335,6 +354,9 @@ type AppendInput struct {
 	Key       string
 	Actor     string
 	Payload   json.RawMessage
+	// Metadata is optional structured metadata stored alongside the record.
+	// Tags are extracted from metadata.tags ([]string) for filtering.
+	Metadata json.RawMessage
 }
 
 // AppendRecord appends a new immutable revision and advances heads atomically in SQLite.
@@ -393,13 +415,24 @@ func (s *Store) AppendRecord(ctx context.Context, in AppendInput) (_ Record, err
 	h := sha256.Sum256(compactPayload)
 	checksum := hex.EncodeToString(h[:])
 
+	var metaStr string
+	if len(in.Metadata) > 0 && json.Valid(in.Metadata) {
+		metaStr = string(in.Metadata)
+	}
 	_, err = tx.ExecContext(ctx, `
-INSERT INTO records (record_id, namespace, key_name, revision, actor, created_at, checksum, file_path)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-`, recordID, ns, key, rev, in.Actor, now, checksum, relPath)
+INSERT INTO records (record_id, namespace, key_name, revision, actor, created_at, checksum, file_path, metadata_json)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+`, recordID, ns, key, rev, in.Actor, now, checksum, relPath, metaStr)
 	if err != nil {
 		_ = os.Remove(absPath)
 		return Record{}, err
+	}
+
+	for _, tag := range extractTags(in.Metadata) {
+		if _, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO record_tags (record_id, tag) VALUES (?, ?)`, recordID, strings.TrimSpace(tag)); err != nil {
+			_ = os.Remove(absPath)
+			return Record{}, err
+		}
 	}
 
 	_, err = tx.ExecContext(ctx, `
@@ -526,15 +559,24 @@ func (s *Store) Select(ctx context.Context, sel Selector) ([]Record, error) {
 	scope := normalizedScope(sel.RevisionScope)
 
 	query := `
-SELECT r.record_id, r.namespace, r.key_name, r.revision, r.actor, r.created_at, r.checksum, r.file_path
+SELECT DISTINCT r.record_id, r.namespace, r.key_name, r.revision, r.actor, r.created_at, r.checksum, r.file_path
 FROM records r`
 	if scope == "head" {
 		query += `
 JOIN heads h ON h.head_record_id = r.record_id`
 	}
+	if len(sel.TagsAny) > 0 {
+		query += `
+JOIN record_tags rt ON rt.record_id = r.record_id AND rt.tag IN (` + placeholders(len(sel.TagsAny)) + `)`
+	}
 	query += "\nWHERE 1=1"
 
 	var args []any
+	if len(sel.TagsAny) > 0 {
+		for _, tag := range sel.TagsAny {
+			args = append(args, strings.TrimSpace(tag))
+		}
+	}
 	if len(sel.Keys) > 0 {
 		query += " AND r.key_name IN (" + placeholders(len(sel.Keys)) + ")"
 		for _, key := range sel.Keys {
@@ -588,6 +630,14 @@ JOIN heads h ON h.head_record_id = r.record_id`
 			case "revision":
 				if a.Revision != b.Revision {
 					return a.Revision < b.Revision
+				}
+			case "created_asc":
+				if a.CreatedAt != b.CreatedAt {
+					return a.CreatedAt < b.CreatedAt
+				}
+			case "created_desc":
+				if a.CreatedAt != b.CreatedAt {
+					return a.CreatedAt > b.CreatedAt
 				}
 			}
 		}
@@ -1774,7 +1824,7 @@ func validateSelector(sel *Selector) error {
 	seen := map[string]bool{}
 	for _, key := range sel.Order {
 		switch key {
-		case "namespace", "key", "revision":
+		case "namespace", "key", "revision", "created_asc", "created_desc":
 			if seen[key] {
 				return fmt.Errorf("duplicate order key %q", key)
 			}
@@ -1801,4 +1851,31 @@ func matchNamespace(patterns []string, namespace string) bool {
 		}
 	}
 	return false
+}
+
+// EstimateTokens returns a deterministic byte-to-token estimate using a simple
+// 4-bytes-per-token heuristic. Never calls a model.
+func EstimateTokens(payload []byte) int {
+	return (len(payload) + 3) / 4
+}
+
+// extractTags parses a JSON metadata blob and returns the "tags" string array.
+// Returns nil if metadata is absent, invalid, or has no tags field.
+func extractTags(metadata json.RawMessage) []string {
+	if len(metadata) == 0 {
+		return nil
+	}
+	var m struct {
+		Tags []string `json:"tags"`
+	}
+	if err := json.Unmarshal(metadata, &m); err != nil {
+		return nil
+	}
+	var out []string
+	for _, t := range m.Tags {
+		if t = strings.TrimSpace(t); t != "" {
+			out = append(out, t)
+		}
+	}
+	return out
 }

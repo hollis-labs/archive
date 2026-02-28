@@ -1090,9 +1090,158 @@ func (c *CLI) runMaintenanceCompact(ctx context.Context, args []string) int {
 	return 0
 }
 
-// runPacket is implemented in sprint-2026-06 (TASK-20260228-010).
 func (c *CLI) runPacket(ctx context.Context, args []string) int {
-	return c.fail("context packet: not yet implemented (sprint-2026-06)")
+	fs := flag.NewFlagSet("packet", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	var namespaces []string
+	fs.Func("namespace", "namespace pattern (repeatable)", func(v string) error {
+		namespaces = append(namespaces, v)
+		return nil
+	})
+	budgetItems := fs.Int("budget-items", 0, "max items to include (0=unlimited)")
+	budgetBytes := fs.Int("budget-bytes", 0, "max bytes to include (0=unlimited)")
+	budgetTokens := fs.Int("budget-tokens", 0, "max estimated tokens to include (0=unlimited)")
+	since := fs.String("since", "", "include records created after this RFC3339 time")
+	until := fs.String("until", "", "include records created before this RFC3339 time")
+	noPins := fs.Bool("no-pins", false, "skip user/pins/* prepend")
+	payloadMode := fs.String("payload-mode", "full", "payload mode: full|head_only")
+	manifest := fs.String("manifest", "summary", "manifest detail: summary|full")
+	output := fs.String("output", "human", "output mode: human|json|manifest-only")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+
+	var items []map[string]any
+	sources := map[string]int{}
+	bytesSoFar, tokensSoFar := 0, 0
+	pinsIncluded := 0
+	truncated := false
+	truncationReason := ""
+
+	budgetExceeded := func() bool {
+		if *budgetItems > 0 && len(items) >= *budgetItems {
+			truncationReason = "budget.max_items"
+			return true
+		}
+		if *budgetBytes > 0 && bytesSoFar >= *budgetBytes {
+			truncationReason = "budget.max_bytes"
+			return true
+		}
+		if *budgetTokens > 0 && tokensSoFar >= *budgetTokens {
+			truncationReason = "budget.max_tokens_estimate"
+			return true
+		}
+		return false
+	}
+
+	addRecord := func(rec contextstore.Record) bool {
+		if budgetExceeded() {
+			return false
+		}
+		payload := rec.Payload
+		if *payloadMode == "head_only" && len(payload) > 512 {
+			payload = payload[:512]
+		}
+		item := map[string]any{
+			"record_id":  rec.RecordID,
+			"namespace":  rec.Namespace,
+			"key":        rec.Key,
+			"revision":   rec.Revision,
+			"actor":      rec.Actor,
+			"created_at": rec.CreatedAt,
+			"payload":    json.RawMessage(payload),
+		}
+		items = append(items, item)
+		bytesSoFar += len(payload)
+		tokensSoFar += (len(payload) + 3) / 4
+		parts := strings.SplitN(rec.Namespace, "/", 3)
+		nsKey := rec.Namespace
+		if len(parts) >= 2 {
+			nsKey = parts[0] + "/" + parts[1]
+		}
+		sources[nsKey]++
+		return true
+	}
+
+	inTime := func(rec contextstore.Record) bool {
+		if *since != "" && rec.CreatedAt < *since {
+			return false
+		}
+		if *until != "" && rec.CreatedAt > *until {
+			return false
+		}
+		return true
+	}
+
+	// Prepend pins unless --no-pins.
+	if !*noPins {
+		pinSel := contextstore.Selector{Namespaces: []string{"user/pins/*"}, RevisionScope: "head"}
+		if pins, err := c.Store.Select(ctx, pinSel); err == nil {
+			for _, rec := range pins {
+				if inTime(rec) && addRecord(rec) {
+					pinsIncluded++
+				}
+			}
+		}
+	}
+
+	// Main selection.
+	sel := contextstore.Selector{Namespaces: namespaces, RevisionScope: "head"}
+	candidates, err := c.Store.Select(ctx, sel)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+	itemsTotal := 0
+	for _, rec := range candidates {
+		if !inTime(rec) {
+			continue
+		}
+		itemsTotal++
+		if !addRecord(rec) {
+			truncated = true
+			break
+		}
+	}
+
+	manifestData := map[string]any{
+		"pins_included":   pinsIncluded,
+		"items_total":     itemsTotal,
+		"items_returned":  len(items) - pinsIncluded,
+		"bytes_returned":  bytesSoFar,
+		"tokens_estimate": tokensSoFar,
+		"truncated":       truncated,
+		"sources":         sources,
+	}
+	if truncationReason != "" {
+		manifestData["truncation_reason"] = truncationReason
+	}
+	if *manifest == "full" {
+		manifestData["selector"] = sel
+	}
+
+	if items == nil {
+		items = []map[string]any{}
+	}
+
+	switch *output {
+	case "json":
+		enc := json.NewEncoder(c.Stdout)
+		enc.SetIndent("", "  ")
+		_ = enc.Encode(map[string]any{"items": items, "manifest": manifestData})
+	case "manifest-only":
+		enc := json.NewEncoder(c.Stdout)
+		enc.SetIndent("", "  ")
+		_ = enc.Encode(manifestData)
+	default:
+		itemsReturned := len(items) - pinsIncluded
+		trunc := ""
+		if truncated {
+			trunc = fmt.Sprintf(" (truncated: %s)", truncationReason)
+		}
+		_, _ = fmt.Fprintf(c.Stdout, "%d items, %d bytes (~%d tokens) from %d namespace(s)%s\n",
+			itemsReturned, bytesSoFar, tokensSoFar, len(sources), trunc)
+	}
+	return 0
 }
 
 // runBroker is implemented in sprint-2026-09 (TASK-20260228-017).
