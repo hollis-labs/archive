@@ -506,3 +506,90 @@ func TestQueryAuditEventsFiltersAndCursor(t *testing.T) {
 		t.Fatalf("unexpected filtered result: %+v", filtered)
 	}
 }
+
+func TestChecksumOnWrite(t *testing.T) {
+	s, err := Open(context.Background(), Config{RootDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	rec, err := s.AppendRecord(context.Background(), AppendInput{
+		Namespace: "user/memory/test",
+		Key:       "checksum-test",
+		Actor:     "user",
+		Payload:   []byte(`{"hello":"world"}`),
+	})
+	if err != nil {
+		t.Fatalf("append: %v", err)
+	}
+	if rec.Checksum == "" {
+		t.Fatal("expected non-empty checksum on new record")
+	}
+	// SHA-256 hex digest is always 64 hex characters.
+	if len(rec.Checksum) != 64 {
+		t.Fatalf("checksum wrong length: got %d want 64", len(rec.Checksum))
+	}
+}
+
+func TestScanConsistencyChecksumCases(t *testing.T) {
+	root := t.TempDir()
+	s, err := Open(context.Background(), Config{RootDir: root})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	// Write 3 records.
+	recs := make([]Record, 3)
+	for i := range recs {
+		recs[i], err = s.AppendRecord(context.Background(), AppendInput{
+			Namespace: "user/memory/scan-test",
+			Key:       fmt.Sprintf("key-%d", i),
+			Actor:     "user",
+			Payload:   []byte(`{"v":` + string(rune('0'+i)) + `}`),
+		})
+		if err != nil {
+			t.Fatalf("append %d: %v", i, err)
+		}
+	}
+
+	// Confirm clean scan — no corrupted issues.
+	issues, err := s.ScanConsistency(context.Background())
+	if err != nil {
+		t.Fatalf("clean scan: %v", err)
+	}
+	for _, iss := range issues {
+		if iss.Type == "corrupted" {
+			t.Errorf("unexpected corrupted issue on clean store: %+v", iss)
+		}
+	}
+
+	// Corrupt one file on disk. Store uses <root>/data/records/<namespace>/<key>/<revision>.json
+	corruptPath := filepath.Join(root, "data", "records", recs[1].Namespace, recs[1].Key, fmt.Sprintf("%d.json", recs[1].Revision))
+	if err := os.WriteFile(corruptPath, []byte(`{"v":"tampered"}`), 0o644); err != nil {
+		t.Fatalf("corrupt file: %v", err)
+	}
+
+	issues, err = s.ScanConsistency(context.Background())
+	if err != nil {
+		t.Fatalf("scan after corrupt: %v", err)
+	}
+
+	var foundCorrupted bool
+	for _, iss := range issues {
+		if iss.Type == "corrupted" && iss.Key == "key-1" {
+			foundCorrupted = true
+		}
+	}
+	if !foundCorrupted {
+		t.Errorf("expected corrupted issue for key-1, got: %+v", issues)
+	}
+
+	// Records key-0 and key-2 should not be corrupted.
+	for _, iss := range issues {
+		if iss.Type == "corrupted" && (iss.Key == "key-0" || iss.Key == "key-2") {
+			t.Errorf("unexpected corrupted for %s: %+v", iss.Key, iss)
+		}
+	}
+}

@@ -13,7 +13,6 @@ Views are not processors. They do not summarize, infer, merge, or mutate records
 {
   "namespaces": ["user/*", "app/editor/*"],
   "keys": ["goal", "priority", "summary"],
-  "tags_any": ["active", "session"],
   "revision_scope": "head|all",
   "order": ["namespace", "key", "revision"],
   "limit": 100
@@ -23,12 +22,13 @@ Views are not processors. They do not summarize, infer, merge, or mutate records
 ## Fields
 - `namespaces`: optional glob-like namespace filters.
 - `keys`: optional explicit key filter list.
-- `tags_any`: optional metadata tag match (OR semantics).
 - `revision_scope`:
   - `head`: return only current head per `(namespace,key)`.
   - `all`: return full history matches.
 - `order`: explicit stable sort keys. Required for deterministic behavior.
 - `limit`: optional bounded result size.
+
+> **Planned (not yet implemented):** Tag-based filtering (`tags_any`) is not part of the current selector contract. Tag indexing is tracked as a Phase 2 feature (see TASK-20260228-012). Tags stored in `metadata_json` per record are unaffected.
 
 ## Complexity guardrails (MVP)
 - Max `namespaces` patterns: `32`
@@ -85,19 +85,6 @@ Truncation example (deterministic):
 }
 ```
 
-`tags_any` selector example:
-```json
-{
-  "selector": {
-    "namespaces": ["app/editor/*", "user/*"],
-    "tags_any": ["active", "session"],
-    "revision_scope": "head",
-    "order": ["namespace", "key", "revision"],
-    "limit": 100
-  }
-}
-```
-
 `revision_scope=all` selector example:
 ```json
 {
@@ -118,7 +105,7 @@ Truncation example (deterministic):
 ## Example naming/style conventions
 
 - Valid examples:
-  - Use labels ending in `selector example` (for example: `` `tags_any` selector example ``).
+  - Use labels ending in `selector example` (for example: `` `revision_scope=all` selector example ``).
   - Show only supported fields unless demonstrating fallback behavior explicitly.
   - Include deterministic cues (`order`, `limit`, `revision_scope`) when behavior depends on them.
 - Invalid examples:

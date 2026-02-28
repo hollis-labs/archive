@@ -383,10 +383,13 @@ func (s *Store) AppendRecord(ctx context.Context, in AppendInput) (_ Record, err
 		return Record{}, err
 	}
 
+	h := sha256.Sum256(in.Payload)
+	checksum := hex.EncodeToString(h[:])
+
 	_, err = tx.ExecContext(ctx, `
 INSERT INTO records (record_id, namespace, key_name, revision, actor, created_at, checksum, file_path)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-`, recordID, ns, key, rev, in.Actor, now, "", relPath)
+`, recordID, ns, key, rev, in.Actor, now, checksum, relPath)
 	if err != nil {
 		_ = os.Remove(absPath)
 		return Record{}, err
@@ -417,6 +420,7 @@ ON CONFLICT(namespace, key_name) DO UPDATE SET
 		Revision:  rev,
 		Actor:     in.Actor,
 		CreatedAt: now,
+		Checksum:  checksum,
 		Payload:   append(json.RawMessage(nil), in.Payload...),
 	}, nil
 }
@@ -597,10 +601,11 @@ func (s *Store) ScanConsistency(ctx context.Context) ([]ConsistencyIssue, error)
 		revision  int64
 		recordID  string
 		filePath  string
+		checksum  string
 	}
 
 	rows, err := s.db.QueryContext(ctx, `
-SELECT namespace, key_name, revision, record_id, file_path
+SELECT namespace, key_name, revision, record_id, file_path, COALESCE(checksum, '')
 FROM records
 ORDER BY namespace, key_name, revision ASC`)
 	if err != nil {
@@ -614,7 +619,7 @@ ORDER BY namespace, key_name, revision ASC`)
 
 	for rows.Next() {
 		var rr recRow
-		if err := rows.Scan(&rr.namespace, &rr.key, &rr.revision, &rr.recordID, &rr.filePath); err != nil {
+		if err := rows.Scan(&rr.namespace, &rr.key, &rr.revision, &rr.recordID, &rr.filePath, &rr.checksum); err != nil {
 			return nil, err
 		}
 		recordByID[rr.recordID] = rr
@@ -652,6 +657,30 @@ ORDER BY namespace, key_name, revision ASC`)
 				FilePath:  rr.filePath,
 				Detail:    "payload file is not valid JSON",
 			})
+		}
+		if rr.checksum == "" {
+			issues = append(issues, ConsistencyIssue{
+				Type:      "unverified_checksum",
+				Namespace: rr.namespace,
+				Key:       rr.key,
+				RecordID:  rr.recordID,
+				Revision:  rr.revision,
+				FilePath:  rr.filePath,
+				Detail:    "record has no stored checksum; written before checksum support was added",
+			})
+		} else {
+			h := sha256.Sum256(payload)
+			if hex.EncodeToString(h[:]) != rr.checksum {
+				issues = append(issues, ConsistencyIssue{
+					Type:      "corrupted",
+					Namespace: rr.namespace,
+					Key:       rr.key,
+					RecordID:  rr.recordID,
+					Revision:  rr.revision,
+					FilePath:  rr.filePath,
+					Detail:    "payload sha256 does not match stored checksum",
+				})
+			}
 		}
 	}
 	if err := rows.Err(); err != nil {
@@ -1192,10 +1221,12 @@ func (s *Store) RestoreBackup(ctx context.Context, inPath string) error {
 		if err = os.WriteFile(abs, rec.Payload, 0o644); err != nil {
 			return err
 		}
+		restoreHash := sha256.Sum256(rec.Payload)
+		restoreChecksum := hex.EncodeToString(restoreHash[:])
 		if _, err = tx.ExecContext(ctx, `
 INSERT INTO records (record_id, namespace, key_name, revision, actor, created_at, checksum, file_path)
-VALUES (?, ?, ?, ?, ?, ?, '', ?)`,
-			rec.RecordID, rec.Namespace, rec.Key, rec.Revision, rec.Actor, rec.CreatedAt, rec.FilePath); err != nil {
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+			rec.RecordID, rec.Namespace, rec.Key, rec.Revision, rec.Actor, rec.CreatedAt, restoreChecksum, rec.FilePath); err != nil {
 			return err
 		}
 	}

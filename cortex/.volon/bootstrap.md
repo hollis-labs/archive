@@ -2,7 +2,7 @@
 version: 1
 type: bootstrap
 iteration: 188
-updated_at: 2026-02-27T12:00:00Z
+updated_at: 2026-02-27T18:00:00Z
 config:
   path: volon.yaml
   storage_backend: files
@@ -18,8 +18,8 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260228-005` (sprint-2026-04-eval-phase0): close tags_any spec/impl mismatch — choose Option A (remove from spec) then move to task 006.
-- Then `TASK-20260228-006`: implement records.checksum on write (one-line fix in store.go:389, plus scan validation).
+- Start `TASK-20260228-006` (sprint-2026-04-eval-phase0): implement records.checksum on write (fix in store.go:389, plus scan validation).
+- TASK-20260228-005 is done (Option A applied — tags_any removed from spec, deferred-pointer note added).
 
 ## MVP Sprint Plan (re-focused 2026-02-27, audited 2026-02-27)
 Evaluation spec at `SPEC-TASKS/Context Memory Service Evaluation/` is authoritative.
@@ -28,16 +28,16 @@ Plan: `artifacts/plan/mvp-replan-2026-02-27.md`
 
 ## Current state summary
 - PCC: present
-- Tasks: 15 todo, 0 blocked, 235 done (3 cancelled, 10 deferred: 8 GUI + 2 MCP)
+- Tasks: 14 todo, 0 blocked, 236 done (3 cancelled, 10 deferred: 8 GUI + 2 MCP)
 - Active todo series: TASK-20260228-005 through TASK-20260228-019 (no duplicates, all in-sprint)
 - Deferred: TASK-20260225-239..242 + TASK-20260228-001..004 (GUI); TASK-20260227-019..020 (MCP)
-- Last run log: `.volon/logs/run-iteration-186-2026-02-26.md`
+- Last run log: `.volon/logs/run-iteration-188-2026-02-27.md`
 - Replan log: `artifacts/plan/mvp-replan-2026-02-27.md`
 
 ## Active work (MVP sprints in priority order)
 ### sprint-2026-04-eval-phase0 — Spec alignment (START HERE)
-- TASK-20260228-005 — Close tags_any spec/impl mismatch (A) ← NEXT
-- TASK-20260228-006 — Implement records.checksum on write + scan validation (A)
+- TASK-20260228-005 — Close tags_any spec/impl mismatch (A) ✓ done
+- TASK-20260228-006 — Implement records.checksum on write + scan validation (A) ← NEXT
 
 ### sprint-2026-05-eval-phase1 — Tiered namespaces
 - TASK-20260228-007 — Define canonical tiered namespace conventions + defaults (A)

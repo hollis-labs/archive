@@ -85,7 +85,7 @@ It provides:
 - head vs history compare
 
 2. View Builder
-- selector editor (`namespaces`, `keys`, `tags_any`, `revision_scope`, `order`, `limit`)
+- selector editor (`namespaces`, `keys`, `revision_scope`, `order`, `limit`)
 - deterministic results table
 - saved selector presets
 
