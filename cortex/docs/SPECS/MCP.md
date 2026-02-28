@@ -1,6 +1,57 @@
 # MCP Adapter Spec
 
-Status: planned (pivot follow-up)
+Status: **implemented** (commit `426691d`, sprint-post-mvp-mcp)
+
+## Getting started
+
+### Prerequisites
+
+- `contextd` binary built (`go build -o contextd ./cmd/contextd`)
+- A capability token with required scopes (see below)
+
+### Minimal `.mcp.json`
+
+```json
+{
+  "mcpServers": {
+    "context": {
+      "command": "/path/to/contextd",
+      "args": ["mcp", "--token", "<your-token>"],
+      "env": {
+        "CONTEXTD_ROOT": "/Users/<you>/.context"
+      }
+    }
+  }
+}
+```
+
+The `--token` value must be a token created with:
+```bash
+contextd context token create \
+  --name my-agent \
+  --scopes write,promote.request \
+  --namespaces "app/my-agent/*" \
+  --ttl 8760h
+```
+
+Read tools (`context_head`, `context_history`, `context_view`, `context_packet`) work
+without a token. Write tools (`context_write`, `context_promote_request`) require a token
+with the matching scope and a namespace glob that covers the target namespace.
+
+### Available tools
+
+| Tool | Auth required | Description |
+|---|---|---|
+| `context_head` | none | Read latest record revision |
+| `context_history` | none | Read revision history (newest first) |
+| `context_view` | none | Evaluate a namespace/selector query |
+| `context_packet` | none | Assemble a budget-bounded context bundle |
+| `context_write` | `write` scope | Append a record revision |
+| `context_promote_request` | `promote.request` scope | Request promotion to user/* |
+
+See [`docs/AGENT-SETUP.md`](../AGENT-SETUP.md) for full tool schemas and agent workflow.
+
+---
 
 ## Purpose
 Define the MCP adapter as a thin transport mapping to existing Context Memory Service contracts.
@@ -87,6 +138,13 @@ Phase progression constraints:
 - Selector semantics remain evaluator-only in all phases (no processor behavior).
 - Capability expansion requires corresponding API/CLI contract documentation updates.
 - Selector capability discovery/negotiation follows `docs/SPECS/VIEWS.md#selector-capability-discovery-model`.
+
+---
+
+## Appendix: Operator runbook (phase gating, rollback, evidence)
+
+The sections below are reference material for team-managed or production deployments.
+For local developer usage, the getting-started section above is sufficient.
 
 ## Phase gate criteria
 
@@ -406,6 +464,8 @@ Before enabling `phase-2` or `phase-3` MCP capabilities:
    - Enable capabilities phase-by-phase with rollback path if auth/policy invariants fail.
 
 ## References
+- Agent setup guide: [`docs/AGENT-SETUP.md`](../AGENT-SETUP.md)
+- Quick start: [`docs/QUICKSTART.md`](../QUICKSTART.md)
 - API spec: [`docs/SPECS/API.md`](./API.md)
 - CLI spec: [`docs/SPECS/CLI.md`](./CLI.md)
 - Views spec: [`docs/SPECS/VIEWS.md`](./VIEWS.md)
