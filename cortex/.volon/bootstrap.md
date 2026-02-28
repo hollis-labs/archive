@@ -87,6 +87,6 @@ Plan: `artifacts/plan/mcp-sprint-plan-2026-02-27.md`
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: sprint-post-mvp-mcp (pending commit)
+- Last implementation commit: `426691d` (sprint-post-mvp-mcp — MCP adapter complete)
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
