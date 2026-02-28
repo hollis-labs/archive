@@ -122,6 +122,16 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.handleConsistencyRepair(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/maintenance/trim":
+		if !s.authorizeMutatingRequest(w, r) {
+			return
+		}
+		s.handleMaintenanceTrim(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/maintenance/compact":
+		if !s.authorizeMutatingRequest(w, r) {
+			return
+		}
+		s.handleMaintenanceCompact(w, r)
 	default:
 		writeError(w, http.StatusNotFound, "not_found", "endpoint not found", nil)
 	}
@@ -323,6 +333,10 @@ func (s *Server) handleWrite(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusForbidden, "policy_denied", err.Error(), nil)
 		return
 	}
+	if err := s.Policy.ValidateTierPolicy(req.Namespace, "write", len(req.Payload), req.Payload); err != nil {
+		writeError(w, http.StatusForbidden, "policy_violation", err.Error(), nil)
+		return
+	}
 	if err := s.Policy.ValidatePayload(req.Namespace, req.Payload); err != nil {
 		writeError(w, http.StatusBadRequest, "validation_error", err.Error(), nil)
 		return
@@ -391,6 +405,10 @@ func (s *Server) handlePromote(w http.ResponseWriter, r *http.Request) {
 
 	if err := s.Policy.CanWrite(req.ClientID, req.Actor, req.ToNamespace); err != nil {
 		writeError(w, http.StatusForbidden, "policy_denied", err.Error(), nil)
+		return
+	}
+	if err := s.Policy.ValidateTierPolicy(req.ToNamespace, "write", len(src.Payload), src.Payload); err != nil {
+		writeError(w, http.StatusForbidden, "policy_violation", err.Error(), nil)
 		return
 	}
 	if err := s.Policy.ValidatePayload(req.ToNamespace, src.Payload); err != nil {
@@ -749,4 +767,88 @@ func sortRouteMetrics(items []routeMetric) {
 			}
 		}
 	}
+}
+
+type maintenanceTrimRequest struct {
+	NamespacePattern string `json:"namespace_pattern"`
+	Retention        string `json:"retention"`
+	DryRun           bool   `json:"dry_run"`
+}
+
+func (s *Server) handleMaintenanceTrim(w http.ResponseWriter, r *http.Request) {
+	var req maintenanceTrimRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
+		return
+	}
+	if strings.TrimSpace(req.NamespacePattern) == "" {
+		req.NamespacePattern = "user/cache/%"
+	}
+	retention := req.Retention
+	if strings.TrimSpace(retention) == "" {
+		retention = "72h"
+	}
+	dur, err := time.ParseDuration(retention)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "validation_error", "retention must be a valid duration (e.g. 72h)", nil)
+		return
+	}
+	cutoff := time.Now().UTC().Add(-dur).Format(time.RFC3339)
+	start := time.Now()
+	trimmed, err := s.Store.TrimRecords(r.Context(), req.NamespacePattern, cutoff, req.DryRun)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "maintenance_failed", err.Error(), nil)
+		return
+	}
+	_ = s.Store.RecordAuditEvent(r.Context(), contextstore.AuditEvent{
+		EventType: "maintenance.trim",
+		Actor:     "system",
+		Namespace: req.NamespacePattern,
+		Metadata:  json.RawMessage(fmt.Sprintf(`{"records_affected":%d,"dry_run":%t}`, trimmed, req.DryRun)),
+	})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"trimmed":           trimmed,
+		"namespace_pattern": req.NamespacePattern,
+		"duration_ms":       time.Since(start).Milliseconds(),
+		"dry_run":           req.DryRun,
+	})
+}
+
+type maintenanceCompactRequest struct {
+	NamespacePattern string `json:"namespace_pattern"`
+	MaxRevisions     int    `json:"max_revisions"`
+	DryRun           bool   `json:"dry_run"`
+}
+
+func (s *Server) handleMaintenanceCompact(w http.ResponseWriter, r *http.Request) {
+	var req maintenanceCompactRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
+		return
+	}
+	if strings.TrimSpace(req.NamespacePattern) == "" {
+		writeError(w, http.StatusBadRequest, "validation_error", "namespace_pattern is required", nil)
+		return
+	}
+	if req.MaxRevisions < 1 {
+		req.MaxRevisions = 1
+	}
+	start := time.Now()
+	compacted, err := s.Store.CompactNamespace(r.Context(), req.NamespacePattern, req.MaxRevisions, req.DryRun)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "maintenance_failed", err.Error(), nil)
+		return
+	}
+	_ = s.Store.RecordAuditEvent(r.Context(), contextstore.AuditEvent{
+		EventType: "maintenance.compact",
+		Actor:     "system",
+		Namespace: req.NamespacePattern,
+		Metadata:  json.RawMessage(fmt.Sprintf(`{"records_affected":%d,"dry_run":%t}`, compacted, req.DryRun)),
+	})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"compacted":         compacted,
+		"namespace_pattern": req.NamespacePattern,
+		"duration_ms":       time.Since(start).Milliseconds(),
+		"dry_run":           req.DryRun,
+	})
 }

@@ -85,3 +85,65 @@ Rationale:
 Compaction linkage:
 - Runtime/CLI compaction should preserve head invariants and deterministic selector behavior.
 - Baseline values should be treated as defaults; operators may increase/decrease based on local retention requirements.
+
+## Tier Model
+
+Namespaces are organized into five canonical tiers with distinct ownership, retention, and promotion rules. See `docs/SPECS/NAMESPACES.md` for the full tier spec.
+
+Summary:
+| Tier | Pattern | Owner | Retention |
+|---|---|---|---|
+| `memory` | `user/memory/*` | user | indefinite |
+| `cache` | `user/cache/*` | user | 72h default |
+| `pins` | `user/pins/*` | user | indefinite |
+| `draft` | `app/<id>/draft/*` | app | 7d default |
+| `session` | `app/<id>/session/*` | app | 24h default |
+
+**Key invariant**: Apps cannot write to `user/*` directly. Promotion workflow is the only bridge.
+
+## Promotion workflow
+
+The `promote.request → promote.approve → promote.apply` lifecycle records are stored as follows:
+- Requests: `app/<id>/promotions/<request-id>`
+- Approvals: `user/promotions/<approval-id>`
+
+See `docs/SPECS/PROMOTION.md` for the full promotion spec.
+
+## Namespace policy schema (tier-extended)
+
+Each namespace policy JSON may include these tier enforcement fields (see `docs/SPECS/NAMESPACES.md` for defaults per tier):
+
+```json
+{
+  "tier": "memory|cache|pins|draft|session",
+  "retention": "72h",
+  "max_revisions": 5,
+  "max_bytes_per_key": 65536,
+  "allowed_ops": ["write", "promote.request", "promote.apply", "repair", "namespace.register"],
+  "required_schema_keys": [],
+  "redaction": { "allowed": true, "tombstone_on_delete": true }
+}
+```
+
+Enforcement:
+- `allowed_ops`: checked at write/promote time; empty = all ops permitted (backward compat).
+- `max_bytes_per_key`: checked at write time; `0` = unlimited.
+- `required_schema_keys`: checked at write time (payload must be a JSON object with these keys).
+- `retention` + `max_revisions`: enforced by maintenance jobs, not at write time.
+
+## Maintenance API and CLI
+
+Maintenance operations are manually triggered (not automatic in MVP):
+
+```
+POST /v1/maintenance/trim     — delete records older than namespace retention policy
+POST /v1/maintenance/compact  — keep only max_revisions per (namespace, key)
+```
+
+CLI:
+```
+context maintenance trim [--namespace <pattern>] [--dry-run]
+context maintenance compact [--namespace <pattern>] [--dry-run]
+```
+
+Audit log entry written per maintenance run: action, namespace_pattern, records_affected, actor, timestamp.

@@ -1,6 +1,7 @@
 package contextstore
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
@@ -374,16 +375,22 @@ func (s *Store) AppendRecord(ctx context.Context, in AppendInput) (_ Record, err
 		return Record{}, err
 	}
 
+	var compactBuf bytes.Buffer
+	if err = json.Compact(&compactBuf, in.Payload); err != nil {
+		return Record{}, fmt.Errorf("compact payload: %w", err)
+	}
+	compactPayload := compactBuf.Bytes()
+
 	relPath := filepath.Join(ns, key, fmt.Sprintf("%d.json", rev))
 	absPath := filepath.Join(s.recordsDir, relPath)
 	if err = os.MkdirAll(filepath.Dir(absPath), 0o755); err != nil {
 		return Record{}, err
 	}
-	if err = os.WriteFile(absPath, in.Payload, 0o644); err != nil {
+	if err = os.WriteFile(absPath, compactPayload, 0o644); err != nil {
 		return Record{}, err
 	}
 
-	h := sha256.Sum256(in.Payload)
+	h := sha256.Sum256(compactPayload)
 	checksum := hex.EncodeToString(h[:])
 
 	_, err = tx.ExecContext(ctx, `
@@ -421,7 +428,7 @@ ON CONFLICT(namespace, key_name) DO UPDATE SET
 		Actor:     in.Actor,
 		CreatedAt: now,
 		Checksum:  checksum,
-		Payload:   append(json.RawMessage(nil), in.Payload...),
+		Payload:   append(json.RawMessage(nil), compactPayload...),
 	}, nil
 }
 
@@ -1218,10 +1225,15 @@ func (s *Store) RestoreBackup(ctx context.Context, inPath string) error {
 		if err = os.MkdirAll(filepath.Dir(abs), 0o755); err != nil {
 			return err
 		}
-		if err = os.WriteFile(abs, rec.Payload, 0o644); err != nil {
+		var cb bytes.Buffer
+		if err = json.Compact(&cb, rec.Payload); err != nil {
+			return fmt.Errorf("compact restored payload: %w", err)
+		}
+		compactPayload := cb.Bytes()
+		if err = os.WriteFile(abs, compactPayload, 0o644); err != nil {
 			return err
 		}
-		restoreHash := sha256.Sum256(rec.Payload)
+		restoreHash := sha256.Sum256(compactPayload)
 		restoreChecksum := hex.EncodeToString(restoreHash[:])
 		if _, err = tx.ExecContext(ctx, `
 INSERT INTO records (record_id, namespace, key_name, revision, actor, created_at, checksum, file_path)
@@ -1394,6 +1406,146 @@ WHERE id IN (
 		return 0, nil
 	}
 	return n, nil
+}
+
+// TrimRecords deletes records in namespaces matching namespacePattern whose
+// created_at is older than cutoffISO (an RFC3339 timestamp string).
+// namespacePattern uses SQL LIKE syntax (% for wildcard).
+// Returns the number of records trimmed and a list of deleted file paths.
+func (s *Store) TrimRecords(ctx context.Context, namespacePattern, cutoffISO string, dryRun bool) (int64, error) {
+	if strings.TrimSpace(namespacePattern) == "" {
+		return 0, errors.New("namespace_pattern required")
+	}
+	if strings.TrimSpace(cutoffISO) == "" {
+		return 0, errors.New("cutoff required")
+	}
+
+	rows, err := s.db.QueryContext(ctx, `
+SELECT record_id, file_path FROM records
+WHERE namespace LIKE ? AND created_at < ?
+ORDER BY created_at ASC`, namespacePattern, cutoffISO)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	type toDelete struct {
+		id   string
+		path string
+	}
+	var targets []toDelete
+	for rows.Next() {
+		var td toDelete
+		if err := rows.Scan(&td.id, &td.path); err != nil {
+			return 0, err
+		}
+		targets = append(targets, td)
+	}
+	if err := rows.Err(); err != nil {
+		return 0, err
+	}
+	if dryRun || len(targets) == 0 {
+		return int64(len(targets)), nil
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	var deleted int64
+	for _, td := range targets {
+		if _, err = tx.ExecContext(ctx, `DELETE FROM heads WHERE head_record_id = ?`, td.id); err != nil {
+			return 0, err
+		}
+		if _, err = tx.ExecContext(ctx, `DELETE FROM records WHERE record_id = ?`, td.id); err != nil {
+			return 0, err
+		}
+		_ = os.Remove(filepath.Join(s.recordsDir, td.path))
+		deleted++
+	}
+	if err = tx.Commit(); err != nil {
+		return 0, err
+	}
+	if _, err = s.RebuildHeads(ctx); err != nil {
+		return deleted, err
+	}
+	return deleted, nil
+}
+
+// CompactNamespace keeps only the most recent maxRevisions revisions per
+// (namespace, key) for namespaces matching namespacePattern (SQL LIKE syntax).
+// maxRevisions must be >= 1.
+func (s *Store) CompactNamespace(ctx context.Context, namespacePattern string, maxRevisions int, dryRun bool) (int64, error) {
+	if strings.TrimSpace(namespacePattern) == "" {
+		return 0, errors.New("namespace_pattern required")
+	}
+	if maxRevisions < 1 {
+		return 0, errors.New("max_revisions must be >= 1")
+	}
+
+	rows, err := s.db.QueryContext(ctx, `
+SELECT record_id, file_path FROM (
+	SELECT record_id, file_path,
+		ROW_NUMBER() OVER (PARTITION BY namespace, key_name ORDER BY revision DESC) AS rn
+	FROM records
+	WHERE namespace LIKE ?
+)
+WHERE rn > ?`, namespacePattern, maxRevisions)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	type toDelete struct {
+		id   string
+		path string
+	}
+	var targets []toDelete
+	for rows.Next() {
+		var td toDelete
+		if err := rows.Scan(&td.id, &td.path); err != nil {
+			return 0, err
+		}
+		targets = append(targets, td)
+	}
+	if err := rows.Err(); err != nil {
+		return 0, err
+	}
+	if dryRun || len(targets) == 0 {
+		return int64(len(targets)), nil
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	var deleted int64
+	for _, td := range targets {
+		if _, err = tx.ExecContext(ctx, `DELETE FROM records WHERE record_id = ?`, td.id); err != nil {
+			return 0, err
+		}
+		_ = os.Remove(filepath.Join(s.recordsDir, td.path))
+		deleted++
+	}
+	if err = tx.Commit(); err != nil {
+		return 0, err
+	}
+	if _, err = s.RebuildHeads(ctx); err != nil {
+		return deleted, err
+	}
+	return deleted, nil
 }
 
 // UpsertNamespacePolicy persists namespace owner/policy metadata.

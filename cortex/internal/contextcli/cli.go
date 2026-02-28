@@ -45,7 +45,7 @@ func (c *CLI) Run(ctx context.Context, args []string) int {
 		return c.fail(err.Error())
 	}
 	if len(args) == 0 || args[0] != "context" {
-		return c.fail("usage: context <namespace|put|get|history|view|promote> ...")
+		return c.fail("usage: context <namespace|put|get|history|view|promote|maintenance|packet|broker> ...")
 	}
 	if len(args) < 2 {
 		return c.fail("missing context subcommand")
@@ -82,6 +82,12 @@ func (c *CLI) Run(ctx context.Context, args []string) int {
 		return c.runCompact(ctx, args[2:])
 	case "contract":
 		return c.runContract(ctx, args[2:])
+	case "maintenance":
+		return c.runMaintenance(ctx, args[2:])
+	case "packet":
+		return c.runPacket(ctx, args[2:])
+	case "broker":
+		return c.runBroker(ctx, args[2:])
 	default:
 		return c.fail("unknown subcommand: " + args[1])
 	}
@@ -1000,4 +1006,96 @@ func readSelector(raw, filePath string) (contextstore.Selector, error) {
 		return contextstore.Selector{}, err
 	}
 	return out, nil
+}
+
+func (c *CLI) runMaintenance(ctx context.Context, args []string) int {
+	if len(args) == 0 {
+		return c.fail("usage: context maintenance <trim|compact> ...")
+	}
+	switch args[0] {
+	case "trim":
+		return c.runMaintenanceTrim(ctx, args[1:])
+	case "compact":
+		return c.runMaintenanceCompact(ctx, args[1:])
+	default:
+		return c.fail("usage: context maintenance <trim|compact> ...")
+	}
+}
+
+func (c *CLI) runMaintenanceTrim(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("maintenance trim", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	namespace := fs.String("namespace", "user/cache/%", "namespace pattern (SQL LIKE syntax)")
+	retention := fs.String("retention", "72h", "trim records older than this duration")
+	dryRun := fs.Bool("dry-run", false, "show what would be trimmed without modifying data")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+
+	dur, err := time.ParseDuration(*retention)
+	if err != nil {
+		return c.fail("retention must be a valid duration (e.g. 72h)")
+	}
+	cutoff := time.Now().UTC().Add(-dur).Format(time.RFC3339)
+	trimmed, err := c.Store.TrimRecords(ctx, *namespace, cutoff, *dryRun)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+
+	if *dryRun {
+		_, _ = fmt.Fprintf(c.Stdout, "Would trim %d records from %s (dry-run, no changes made)\n", trimmed, *namespace)
+	} else if trimmed == 0 {
+		_, _ = fmt.Fprintf(c.Stdout, "Nothing to trim in %s (0 records matched retention policy)\n", *namespace)
+	} else {
+		_, _ = fmt.Fprintf(c.Stdout, "Trimmed %d records from %s\n", trimmed, *namespace)
+		_ = c.Store.RecordAuditEvent(ctx, contextstore.AuditEvent{
+			EventType: "maintenance.trim",
+			Actor:     "cli",
+			Namespace: *namespace,
+		})
+	}
+	return 0
+}
+
+func (c *CLI) runMaintenanceCompact(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("maintenance compact", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	namespace := fs.String("namespace", "", "namespace pattern (SQL LIKE syntax, required)")
+	maxRevisions := fs.Int("max-revisions", 1, "revisions to keep per (namespace,key)")
+	dryRun := fs.Bool("dry-run", false, "show what would be compacted without modifying data")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	if strings.TrimSpace(*namespace) == "" {
+		return c.fail("--namespace is required")
+	}
+
+	compacted, err := c.Store.CompactNamespace(ctx, *namespace, *maxRevisions, *dryRun)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+
+	if *dryRun {
+		_, _ = fmt.Fprintf(c.Stdout, "Would compact %d revisions from %s (dry-run, no changes made)\n", compacted, *namespace)
+	} else if compacted == 0 {
+		_, _ = fmt.Fprintf(c.Stdout, "Nothing to compact in %s (0 excess revisions found)\n", *namespace)
+	} else {
+		_, _ = fmt.Fprintf(c.Stdout, "Compacted %d revisions from %s\n", compacted, *namespace)
+		_ = c.Store.RecordAuditEvent(ctx, contextstore.AuditEvent{
+			EventType: "maintenance.compact",
+			Actor:     "cli",
+			Namespace: *namespace,
+		})
+	}
+	return 0
+}
+
+// runPacket is implemented in sprint-2026-06 (TASK-20260228-010).
+func (c *CLI) runPacket(ctx context.Context, args []string) int {
+	return c.fail("context packet: not yet implemented (sprint-2026-06)")
+}
+
+// runBroker is implemented in sprint-2026-09 (TASK-20260228-017).
+func (c *CLI) runBroker(ctx context.Context, args []string) int {
+	return c.fail("context broker: not yet implemented (sprint-2026-09)")
 }

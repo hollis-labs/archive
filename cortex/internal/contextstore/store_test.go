@@ -507,6 +507,119 @@ func TestQueryAuditEventsFiltersAndCursor(t *testing.T) {
 	}
 }
 
+func TestTrimRecordsIdempotent(t *testing.T) {
+	s, err := Open(context.Background(), Config{RootDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	// Write 5 cache records.
+	for i := 0; i < 5; i++ {
+		_, err := s.AppendRecord(context.Background(), AppendInput{
+			Namespace: "user/cache/test",
+			Key:       fmt.Sprintf("key-%d", i),
+			Actor:     "user",
+			Payload:   []byte(`{"v":1}`),
+		})
+		if err != nil {
+			t.Fatalf("append %d: %v", i, err)
+		}
+	}
+
+	// Trim with a future cutoff — should trim all 5.
+	future := time.Now().UTC().Add(1 * time.Hour).Format(time.RFC3339)
+	trimmed, err := s.TrimRecords(context.Background(), "user/cache/%", future, false)
+	if err != nil {
+		t.Fatalf("trim: %v", err)
+	}
+	if trimmed != 5 {
+		t.Fatalf("expected 5 trimmed, got %d", trimmed)
+	}
+
+	// Second trim with same cutoff — should trim 0 (idempotent).
+	trimmed2, err := s.TrimRecords(context.Background(), "user/cache/%", future, false)
+	if err != nil {
+		t.Fatalf("trim2: %v", err)
+	}
+	if trimmed2 != 0 {
+		t.Fatalf("expected 0 trimmed on second run, got %d", trimmed2)
+	}
+}
+
+func TestTrimRecordsDryRun(t *testing.T) {
+	s, err := Open(context.Background(), Config{RootDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	for i := 0; i < 3; i++ {
+		_, _ = s.AppendRecord(context.Background(), AppendInput{
+			Namespace: "user/cache/dry",
+			Key:       fmt.Sprintf("k%d", i),
+			Actor:     "user",
+			Payload:   []byte(`{"v":1}`),
+		})
+	}
+	future := time.Now().UTC().Add(1 * time.Hour).Format(time.RFC3339)
+	count, err := s.TrimRecords(context.Background(), "user/cache/%", future, true)
+	if err != nil {
+		t.Fatalf("dry-run trim: %v", err)
+	}
+	if count != 3 {
+		t.Fatalf("expected dry-run count 3, got %d", count)
+	}
+	// Records must still exist after dry-run.
+	recs, err := s.Select(context.Background(), Selector{
+		Namespaces:    []string{"user/cache/dry"},
+		RevisionScope: "head",
+		Order:         []string{"namespace", "key", "revision"},
+	})
+	if err != nil {
+		t.Fatalf("select: %v", err)
+	}
+	if len(recs) != 3 {
+		t.Fatalf("dry-run should not delete records; got %d remaining", len(recs))
+	}
+}
+
+func TestCompactNamespace(t *testing.T) {
+	s, err := Open(context.Background(), Config{RootDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	// Write 4 revisions for one key.
+	for i := 0; i < 4; i++ {
+		_, _ = s.AppendRecord(context.Background(), AppendInput{
+			Namespace: "app/test/draft",
+			Key:       "pref",
+			Actor:     "app:test",
+			Payload:   []byte(fmt.Sprintf(`{"rev":%d}`, i)),
+		})
+	}
+
+	// Compact to keep 2 revisions.
+	compacted, err := s.CompactNamespace(context.Background(), "app/test/%", 2, false)
+	if err != nil {
+		t.Fatalf("compact: %v", err)
+	}
+	if compacted != 2 {
+		t.Fatalf("expected 2 compacted, got %d", compacted)
+	}
+
+	// Verify 2 revisions remain.
+	hist, err := s.History(context.Background(), "app/test/draft", "pref", 0)
+	if err != nil {
+		t.Fatalf("history: %v", err)
+	}
+	if len(hist) != 2 {
+		t.Fatalf("expected 2 remaining revisions, got %d", len(hist))
+	}
+}
+
 func TestChecksumOnWrite(t *testing.T) {
 	s, err := Open(context.Background(), Config{RootDir: t.TempDir()})
 	if err != nil {
