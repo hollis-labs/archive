@@ -170,13 +170,13 @@ contextd context promote request \
 
 ## 10. Configure MCP for Claude Code
 
-Add to `.mcp.json` in your project root (or `~/.claude/.mcp.json` for global):
+### Add `.mcp.json` to your project
 
 ```json
 {
   "mcpServers": {
     "context": {
-      "command": "/path/to/contextd",
+      "command": "/usr/local/bin/contextd",
       "args": ["mcp", "--token", "<your-token-here>"],
       "env": {
         "CONTEXTD_ROOT": "/Users/<you>/.context"
@@ -186,10 +186,59 @@ Add to `.mcp.json` in your project root (or `~/.claude/.mcp.json` for global):
 }
 ```
 
-The token must have the scopes needed for the operations you want. Read tools
-(`context_head`, `context_history`, `context_view`, `context_packet`) work without
-a token. Write tools (`context_write`, `context_promote_request`) require a token
-with the appropriate scope.
+Place this in your project root (applies to that project only) or in
+`~/.claude/.mcp.json` (applies globally to all Claude Code sessions).
+
+Restart Claude Code after adding or changing `.mcp.json`.
+
+### Available tools
+
+Claude Code discovers tools automatically via MCP — no CLAUDE.md setup required.
+There are 14 tools in three groups:
+
+**No token needed (read-only)**
+
+| Tool | What it does |
+|---|---|
+| `context_head` | Read the latest revision of a record |
+| `context_history` | Read revision history for a record |
+| `context_view` | Query records across multiple namespace globs |
+| `context_packet` | Load a budget-bounded bundle of records (primary boot tool) |
+| `context_promote_list` | List promotion requests by status |
+| `context_broker_plan` | Generate a namespace fetch plan for a given intent |
+| `context_broker_fetch` | Plan + fetch in one call (recommended for session boot) |
+| `context_namespace_show` | Show the ownership policy for a namespace |
+| `context_audit` | Query the audit event log |
+
+**Write token required**
+
+| Tool | Required scope |
+|---|---|
+| `context_write` | `write` |
+| `context_promote_request` | `promote.request` |
+| `context_promote_approve` | `promote.approve` |
+| `context_promote_apply` | `promote.apply` |
+| `context_namespace_register` | `namespace.admin` |
+
+### Token scopes by role
+
+```bash
+# Typical agent (read + write session memory + request promotions)
+contextd context token create --name my-agent \
+  --scopes write,promote.request \
+  --namespaces "app/my-agent/*"
+
+# Human operator (approve and apply promotions, manage namespaces)
+contextd context token create --name operator \
+  --scopes promote.approve,promote.apply,namespace.admin \
+  --namespaces "*"
+```
+
+### Explicit guidance for agents in other projects
+
+MCP exposes tool descriptions automatically, but you can add a CLAUDE.md snippet
+to any project to give agents workflow guidance. See
+[CONTEXT-FOR-PROJECTS.md](./CONTEXT-FOR-PROJECTS.md) for a copy-paste block.
 
 See [AGENT-SETUP.md](./AGENT-SETUP.md) for the full agent workflow and tool reference.
 
