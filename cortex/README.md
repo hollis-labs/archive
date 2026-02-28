@@ -49,7 +49,7 @@ Context Memory Service. Bootstrap deliverables are located at:
 - **Inception workflow** (`/workflow-inception`) — canonical self-building loop
 - **Full workflow lifecycle** — new-feature, docs-review, app-investigation, extension authoring
 - **Workflow authoring** — create/edit/clone/deprecate workflows from within Volon
-- **Task + backlog management** — nanite backend, priority-ordered execution
+- **Task + backlog management** — file-based tasks, priority-ordered execution
 - **Git integration** — worktrees, PR mode, commit-per-task or commit-per-iteration
 - **Pause/resume** — deterministic state externalization; any session can restart cleanly
 - **Quality scans** — correctness, security, dead code, performance smells
@@ -74,7 +74,6 @@ claude \
   --plugin-dir /path/to/volon/plugins/core \
   --plugin-dir /path/to/volon/plugins/workflows \
   --plugin-dir /path/to/volon/plugins/git \
-  --plugin-dir /path/to/volon/plugins/tasks-nanite \
   --plugin-dir /path/to/volon/plugins/docsmith \
   --plugin-dir /path/to/volon/plugins/quality \
   --plugin-dir /path/to/volon/plugins/backlog \

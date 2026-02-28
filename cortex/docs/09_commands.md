@@ -264,7 +264,7 @@ Log these invocations (especially reindex + transitions) in the active task’s 
 
 ### Notes
 - Markdown files remain the single source of truth. The CLI only edits frontmatter and appends to `## Updates`.
-- SQLite cache lives under `.volon/state/volon.db` (index-only; safe to delete/rebuild). It never touches the Nanite-owned `todo.db`, `todo.db-shm`, or `todo.db-wal` at repo root.
+- SQLite cache lives under `.volon/state/volon.db` (index-only; safe to delete/rebuild).
 - Pause/resume flows stay within `/pause-task` and `/resume-task`; the CLI deliberately omits those transitions.
 - Full reference: `docs/tasks.md`
 

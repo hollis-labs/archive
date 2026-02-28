@@ -31,7 +31,7 @@ Use it to bootstrap any Volon workflow without remembering the full prompt struc
 ### Examples
 
 ```
-/volon-prompt "install volon into nanite and run inception for chat addon"
+/volon-prompt "install volon into a new repo and run inception for a chat addon"
 
 /volon-prompt "add layered PCC L0/L2 and wire pause/resume" --mode task
 

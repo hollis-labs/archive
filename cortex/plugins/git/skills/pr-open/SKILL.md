@@ -101,7 +101,12 @@ Run: !`which gh 2>/dev/null`
 
 ### 6a — gh available: create PR
 
-Run: !`gh pr create --title "<pr_title>" --base "<base_branch>" --body "<pr_body>"`
+Write the PR body to a temp file to avoid shell-escaping issues with multi-line content,
+backticks, quotes, or special characters:
+
+Write the `pr_body` content to `/tmp/volon-pr-body.md` using the Write tool (not echo/heredoc).
+
+Run: !`gh pr create --title "<pr_title>" --base "<base_branch>" --body-file /tmp/volon-pr-body.md`
 
 If the command succeeds: capture and output the PR URL.
 

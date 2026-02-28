@@ -26,7 +26,7 @@ iteration: <N>
 updated_at: <ISO-8601>
 config:
   path: volon.yaml
-  storage_backend: files|nanite
+  storage_backend: files
   pcc_path: .volon/pcc
   tasks_path: .volon/tasks
   logs_path: .volon/logs

@@ -8,7 +8,7 @@ audience: humans
 ## Goals
 - Project-agnostic configuration
 - Composable plugin enablement
-- Storage backend selection (Nanite first)
+- Storage backend selection (files)
 - Observability/verbosity policy
 - Git worktree + PR policy
 - PCC (Project Context Cache) policy
@@ -41,13 +41,9 @@ project:
   name: auto
 
 storage:
-  backend: files          # files|nanite
+  backend: files
   files:
-    root: ".volon/tasks"  # task file location (files backend only)
-  nanite:
-    vault: null           # vault name to target; null = nanite's active vault
-    tag_prefix: "volon/"  # prefix applied to all volon-owned tags in nanite
-    default_priority: "B" # A|B|C — default priority for nanite push
+    root: ".volon/tasks"  # task file location
 
 observability:
   verbosity: normal # quiet|normal|verbose|trace
@@ -143,4 +139,4 @@ models:
 - Unrecognized keys should be ignored (forward compatible).
 - Orchestrator mode is a **process role**; enforcement is via prompts + workflow contracts until implemented as tooling.
 - `tasks_dir` / `state_dir` / `db_file` are optional; omit `tasks:` entirely to keep legacy defaults. The SQLite cache is index-only: deleting it is safe because `volon task reindex` rebuilds it from `.volon/tasks/`.
-- `todo.db`, `todo.db-shm`, and `todo.db-wal` in the repo root belong to the Nanite desktop app. They must remain untouched by Volon tooling (including the Tasks CLI).
+- `volon.db`, `volon.db-shm`, and `volon.db-wal` in `.volon/state/` are the Volon SQLite cache. They are safe to delete and rebuild via `volon task reindex`.

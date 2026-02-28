@@ -50,7 +50,6 @@ Pause/resume and PCC capsule generation are still owned by the existing skills. 
 
 - `.volon/tasks/` — Canonical markdown files (`TASK-YYYYMMDD-###.md`). Create/start/done only modify frontmatter and append to `## Updates`.
 - `.volon/state/volon.db` — SQLite index (metadata only). Safe to delete; any CLI command will recreate it, and `volon task reindex` fully rebuilds it.
-- `todo.db`, `todo.db-shm`, `todo.db-wal` — **Nanite app database files** at repo root. They are unrelated to the Volon Tasks CLI and must remain untouched.
 
 ## Reindexing
 
@@ -87,7 +86,6 @@ When in doubt, run any command with `--help` to see the available flags and usag
 - Start every session with `volon task list --status todo --priority A` and cite those counts in the boot confirmation block (`.volon/boot/orchestrator.md`).
 - Run `volon task reindex` before `/bootstrap-update` and after any manual edits or merges that touch `.volon/tasks/`.
 - Append a short `## Updates` entry referencing the CLI command (`Started via volon task start`, `Completed via volon task done`) to keep a human-readable audit trail.
-- Never touch Nanite’s `todo.db*` files — they belong to the Nanite app, not Volon.
 
 ## Embedding the CLI into workflows
 - **Boot/cleanup:** `docs/05_bootstrap.md` now mandates `volon task reindex` + queue review in both the initial boot and recurring cleanup checklists.

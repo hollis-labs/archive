@@ -90,7 +90,6 @@ All PCC files in this table live under `<global_path>/` (default: `.volon/pcc/gl
 | `plugins/core/**` | `01_architecture.md` |
 | `plugins/workflows/**` | `01_architecture.md`, `03_workflows.md` |
 | `plugins/git/**` | `01_architecture.md`, `03_workflows.md` |
-| `plugins/tasks-nanite/**` | `01_architecture.md`, `03_workflows.md` |
 | `plugins/docsmith/**` | `01_architecture.md` |
 | `plugins/quality/**` | `01_architecture.md` |
 | `artifacts/**` | `04_backlog.md` |
@@ -139,7 +138,7 @@ Update when: `docs/03_workflow-contracts.md`, `docs/04_task-model.md`, or `docs/
 - Preserve all other convention blocks verbatim.
 
 ### 03_workflows.md
-Update when: any `plugins/workflows/**`, `plugins/git/**`, `plugins/tasks-nanite/**`, or `docs/03_workflow-contracts.md` changed.
+Update when: any `plugins/workflows/**`, `plugins/git/**`, or `docs/03_workflow-contracts.md` changed.
 - Update only the workflow or skill row that corresponds to the changed file.
 - Do not rewrite steps for workflows whose source files did not change.
 

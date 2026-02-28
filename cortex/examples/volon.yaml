@@ -1,13 +1,9 @@
 version: 1
 
 storage:
-  backend: files          # files|nanite
+  backend: files
   files:
     root: ".volon/tasks"
-  nanite:
-    vault: null           # vault name; null = use nanite's active vault
-    tag_prefix: "volon/"
-    default_priority: "B" # default priority when creating tasks via nanite push
 
 observability:
   verbosity: verbose

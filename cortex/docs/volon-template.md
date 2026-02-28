@@ -36,8 +36,6 @@ Remove the following from the template output (either skip copy or delete post-c
 | `.volon/.gocache/**`, `.volon/.gomodcache/**` | Go build caches should not ship. |
 | `tasks/**` (legacy packets) | Internal history not needed for consumers. |
 | `artifacts/plan/**`, `artifacts/spec/**` tied to past iterations | Unless explicitly referenced by docs, leave out planning history. |
-| `todo.db*` | Nanite app DBs (unrelated). |
-| `todo.db-shm`, `todo.db-wal` | Nanite app WAL files. |
 | `.volon/state`, `.volon/templates/.DS_Store`, similar | Residuals/caches. |
 
 If uncertain, default to excluding writable/runtime directories unless documentation

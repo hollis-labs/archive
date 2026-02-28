@@ -30,15 +30,6 @@ Tasks themselves are internal execution artifacts (not user-facing docs).
 
 See `docs/09_backlog-model.md` for sprint rules and promotion lifecycle.
 
-## Nanite mapping (initial)
-Nanite supports:
-- title
-- body/description
-- tags
-- project
-- context
-- priority (A/B/C todo.txt style)
-
 ## Actions
 - create_task
 - update_task

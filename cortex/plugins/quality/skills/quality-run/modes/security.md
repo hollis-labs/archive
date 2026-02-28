@@ -20,8 +20,8 @@ For each match remaining after all filters:
 
 Run: !`cat volon.yaml 2>/dev/null || cat .volon/volon.yaml 2>/dev/null || true`
 
-Inspect `storage.nanite.vault` value: if it looks like a real credential (length > 8, not `"NaniteVaultName"` or `auto`) flag it.
-→ Add finding: `{ signal: "config_credential_exposure", path: "volon.yaml", detail: "storage.nanite.vault may contain a real credential." }`
+Inspect `volon.yaml` for any values that look like real credentials (tokens, passwords, API keys — length > 16, high entropy, not placeholder strings).
+→ Add finding: `{ signal: "config_credential_exposure", path: "volon.yaml", detail: "<field> may contain a real credential." }`
 
 ### Signal C — Sensitive files present
 

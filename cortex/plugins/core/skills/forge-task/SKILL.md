@@ -19,7 +19,7 @@ Give agents a deterministic checklist for when and how to run the compiled Tasks
 ## Guardrails
 - Markdown files remain canonical: never edit SQLite directly, and never rely on the DB as the primary record.
 - Pause/resume transitions still go through `/pause-task` and `/resume-task`.
-- `todo.db`, `todo.db-shm`, `todo.db-wal` at repo root belong to the Nanite app. Do **not** read, delete, or migrate them.
+- Do **not** read, delete, or migrate files outside `.volon/tasks/` and `.volon/state/`.
 - Only call `volon task start/done` if you own that transition for the identified task.
 - Run commands from the repo root (or pass `--repo <path>`) so the CLI picks up the correct `volon.yaml`.
 

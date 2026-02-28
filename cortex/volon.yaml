@@ -5,13 +5,9 @@ project:
   name: volon
 
 storage:
-  backend: nanite
+  backend: files
   files:
     root: ".volon/tasks"
-  nanite:
-    vault: volon          # vault name to push to; null = use nanite's active vault
-    tag_prefix: "volon/"
-    default_priority: "B"
 
 tasks:
   tasks_dir: ".volon/tasks"
