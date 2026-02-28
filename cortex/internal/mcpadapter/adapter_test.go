@@ -375,3 +375,372 @@ func TestContextPromoteRequest_NoToken(t *testing.T) {
 		t.Errorf("expected auth_required, got %v", body["code"])
 	}
 }
+
+// writeToken creates a scoped token for testing.
+func writeToken(t *testing.T, s *contextstore.Store, scopes, globs []string) string {
+	t.Helper()
+	tok, _, err := s.CreateAuthToken(context.Background(), contextstore.TokenCreateInput{
+		Label:          "test-token",
+		Scopes:         scopes,
+		NamespaceGlobs: globs,
+	})
+	if err != nil {
+		t.Fatalf("create token: %v", err)
+	}
+	return tok
+}
+
+// parseItems extracts "items" from a result body as []any.
+func parseItems(t *testing.T, body map[string]any) []any {
+	t.Helper()
+	items, ok := body["items"].([]any)
+	if !ok {
+		t.Fatalf("expected items array, got %T: %v", body["items"], body["items"])
+	}
+	return items
+}
+
+// --- P0a: Namespace glob filtering in reads ---
+
+func TestContextView_TokenFiltersToMatchingNamespaces(t *testing.T) {
+	s := newTestStore(t)
+	writeRecord(t, s, "app/test/session", "state", `{"v":1}`)
+	writeRecord(t, s, "user/memory/task-001", "state", `{"v":2}`)
+
+	// Token scoped only to app/test/*
+	tok := writeToken(t, s, []string{}, []string{"app/test/*"})
+	a := New(s, tok)
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{
+		"namespaces":     "app/test/*,user/memory/*",
+		"revision_scope": "head",
+	}
+	res, err := a.handleView(context.Background(), req)
+	if err != nil {
+		t.Fatalf("handleView: %v", err)
+	}
+	body := parseResult(t, res)
+	items := parseItems(t, body)
+	if len(items) != 1 {
+		t.Errorf("expected 1 item (token scoped to app/test/*), got %d", len(items))
+	}
+}
+
+func TestContextView_NoToken_ReturnsAll(t *testing.T) {
+	s := newTestStore(t)
+	writeRecord(t, s, "app/test/session", "state", `{"v":1}`)
+	writeRecord(t, s, "user/memory/task-001", "state", `{"v":2}`)
+
+	a := New(s, "") // no token → no filtering
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{
+		"namespaces":     "app/test/*,user/memory/*",
+		"revision_scope": "head",
+	}
+	res, _ := a.handleView(context.Background(), req)
+	body := parseResult(t, res)
+	items := parseItems(t, body)
+	if len(items) != 2 {
+		t.Errorf("expected 2 items (no token), got %d", len(items))
+	}
+}
+
+func TestContextPacket_TokenFiltersToMatchingNamespaces(t *testing.T) {
+	s := newTestStore(t)
+	writeRecord(t, s, "app/agent/session", "state", `{"v":1}`)
+	writeRecord(t, s, "user/memory/task-001", "state", `{"v":2}`)
+	// Pin is in user/pins/* — also should be filtered if not in globs.
+	writeRecord(t, s, "user/pins/brief", "context", `{"brief":"test"}`)
+
+	// Token scoped only to app/agent/*
+	tok := writeToken(t, s, []string{}, []string{"app/agent/*"})
+	a := New(s, tok)
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{
+		"namespaces":   "app/agent/*,user/memory/*",
+		"include_pins": true,
+	}
+	res, err := a.handlePacket(context.Background(), req)
+	if err != nil {
+		t.Fatalf("handlePacket: %v", err)
+	}
+	body := parseResult(t, res)
+	items := parseItems(t, body)
+	// Only app/agent/session record should be returned; user/* filtered out.
+	if len(items) != 1 {
+		t.Errorf("expected 1 item (token scoped to app/agent/*), got %d: %v", len(items), body)
+	}
+}
+
+// --- P0b: Namespace glob check in writes ---
+
+func TestContextWrite_NamespaceNotInTokenGlobs(t *testing.T) {
+	s := newTestStore(t)
+	// Token has write scope but scoped only to app/agent/*
+	tok := writeToken(t, s, []string{"write"}, []string{"app/agent/*"})
+	a := New(s, tok)
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{
+		"namespace": "user/memory/task-001", // outside token globs
+		"key":       "state",
+		"payload":   `{"phase":"start"}`,
+	}
+	res, err := a.handleWrite(context.Background(), req)
+	if err != nil {
+		t.Fatalf("handleWrite: %v", err)
+	}
+	body := parseResult(t, res)
+	if body["code"] != "namespace_not_permitted" {
+		t.Errorf("expected namespace_not_permitted, got %v", body["code"])
+	}
+}
+
+func TestContextWrite_NamespaceInTokenGlobs_Succeeds(t *testing.T) {
+	s := newTestStore(t)
+	tok := writeToken(t, s, []string{"write"}, []string{"app/agent/*"})
+	a := New(s, tok)
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{
+		"namespace": "app/agent/session",
+		"key":       "state",
+		"payload":   `{"phase":"start"}`,
+	}
+	res, err := a.handleWrite(context.Background(), req)
+	if err != nil {
+		t.Fatalf("handleWrite: %v", err)
+	}
+	body := parseResult(t, res)
+	if body["code"] != nil {
+		t.Errorf("expected success, got error: %v", body)
+	}
+	if body["record_id"] == nil {
+		t.Error("expected record_id in response")
+	}
+}
+
+// --- P1: Promotion lifecycle ---
+
+func TestContextPromoteList_Empty(t *testing.T) {
+	s := newTestStore(t)
+	a := New(s, "")
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{}
+
+	res, err := a.handlePromoteList(context.Background(), req)
+	if err != nil {
+		t.Fatalf("handlePromoteList: %v", err)
+	}
+	body := parseResult(t, res)
+	items := parseItems(t, body)
+	if len(items) != 0 {
+		t.Errorf("expected 0 items, got %d", len(items))
+	}
+}
+
+func TestContextPromoteList_ReturnsPendingRequests(t *testing.T) {
+	s := newTestStore(t)
+	tok := writeToken(t, s, []string{"write", "promote.request"}, []string{"app/agent/*"})
+	writeRecord(t, s, "app/agent/session", "summary", `{"text":"ready"}`)
+
+	a := New(s, tok)
+
+	// Create a promotion request.
+	writeReq := mcp.CallToolRequest{}
+	writeReq.Params.Arguments = map[string]any{
+		"source_namespace": "app/agent/session",
+		"source_key":       "summary",
+		"target_namespace": "user/memory/agent",
+		"target_key":       "summary",
+	}
+	_, _ = a.handlePromoteRequest(context.Background(), writeReq)
+
+	// List should return it.
+	listReq := mcp.CallToolRequest{}
+	listReq.Params.Arguments = map[string]any{"status": "pending"}
+	res, err := a.handlePromoteList(context.Background(), listReq)
+	if err != nil {
+		t.Fatalf("handlePromoteList: %v", err)
+	}
+	body := parseResult(t, res)
+	items := parseItems(t, body)
+	if len(items) != 1 {
+		t.Errorf("expected 1 pending request, got %d", len(items))
+	}
+}
+
+func TestContextPromoteApprove_NoToken(t *testing.T) {
+	s := newTestStore(t)
+	a := New(s, "")
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{"request_id": "req-abc"}
+
+	res, err := a.handlePromoteApprove(context.Background(), req)
+	if err != nil {
+		t.Fatalf("handlePromoteApprove: %v", err)
+	}
+	body := parseResult(t, res)
+	if body["code"] != "auth_required" {
+		t.Errorf("expected auth_required, got %v", body["code"])
+	}
+}
+
+func TestContextPromoteApprove_Success(t *testing.T) {
+	s := newTestStore(t)
+	tok := writeToken(t, s, []string{"write", "promote.request", "promote.approve"}, []string{"*"})
+	writeRecord(t, s, "app/agent/session", "summary", `{"text":"ready"}`)
+
+	a := New(s, tok)
+
+	// Create a request first.
+	writeReq := mcp.CallToolRequest{}
+	writeReq.Params.Arguments = map[string]any{
+		"source_namespace": "app/agent/session",
+		"source_key":       "summary",
+		"target_namespace": "user/memory/agent",
+		"target_key":       "summary",
+	}
+	promRes, _ := a.handlePromoteRequest(context.Background(), writeReq)
+	promBody := parseResult(t, promRes)
+	requestID := promBody["request_id"].(string)
+
+	// Approve it.
+	approveReq := mcp.CallToolRequest{}
+	approveReq.Params.Arguments = map[string]any{
+		"request_id": requestID,
+		"notes":      "looks good",
+	}
+	res, err := a.handlePromoteApprove(context.Background(), approveReq)
+	if err != nil {
+		t.Fatalf("handlePromoteApprove: %v", err)
+	}
+	body := parseResult(t, res)
+	if body["code"] != nil {
+		t.Errorf("expected success, got: %v", body)
+	}
+	if body["approval_id"] == nil {
+		t.Error("expected approval_id in response")
+	}
+	if body["status"] != "approved" {
+		t.Errorf("expected status=approved, got %v", body["status"])
+	}
+}
+
+func TestContextPromoteApprove_AlreadyApproved(t *testing.T) {
+	s := newTestStore(t)
+	tok := writeToken(t, s, []string{"write", "promote.request", "promote.approve"}, []string{"*"})
+	writeRecord(t, s, "app/agent/session", "summary", `{"text":"ready"}`)
+	a := New(s, tok)
+
+	writeReq := mcp.CallToolRequest{}
+	writeReq.Params.Arguments = map[string]any{
+		"source_namespace": "app/agent/session",
+		"source_key":       "summary",
+		"target_namespace": "user/memory/agent",
+		"target_key":       "summary",
+	}
+	promRes, _ := a.handlePromoteRequest(context.Background(), writeReq)
+	requestID := parseResult(t, promRes)["request_id"].(string)
+
+	// Approve once.
+	approveReq := mcp.CallToolRequest{}
+	approveReq.Params.Arguments = map[string]any{"request_id": requestID}
+	a.handlePromoteApprove(context.Background(), approveReq) //nolint
+
+	// Approve again — should fail.
+	res, _ := a.handlePromoteApprove(context.Background(), approveReq)
+	body := parseResult(t, res)
+	if body["code"] != "invalid_state" {
+		t.Errorf("expected invalid_state, got %v", body["code"])
+	}
+}
+
+func TestContextPromoteApply_NoToken(t *testing.T) {
+	s := newTestStore(t)
+	a := New(s, "")
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{"request_id": "req-abc"}
+
+	res, _ := a.handlePromoteApply(context.Background(), req)
+	body := parseResult(t, res)
+	if body["code"] != "auth_required" {
+		t.Errorf("expected auth_required, got %v", body["code"])
+	}
+}
+
+func TestContextPromoteApply_NotApproved(t *testing.T) {
+	s := newTestStore(t)
+	tok := writeToken(t, s, []string{"write", "promote.request", "promote.apply"}, []string{"*"})
+	writeRecord(t, s, "app/agent/session", "summary", `{"text":"ready"}`)
+	a := New(s, tok)
+
+	writeReq := mcp.CallToolRequest{}
+	writeReq.Params.Arguments = map[string]any{
+		"source_namespace": "app/agent/session",
+		"source_key":       "summary",
+		"target_namespace": "user/memory/agent",
+		"target_key":       "summary",
+	}
+	promRes, _ := a.handlePromoteRequest(context.Background(), writeReq)
+	requestID := parseResult(t, promRes)["request_id"].(string)
+
+	// Try to apply without approving first.
+	applyReq := mcp.CallToolRequest{}
+	applyReq.Params.Arguments = map[string]any{"request_id": requestID}
+	res, _ := a.handlePromoteApply(context.Background(), applyReq)
+	body := parseResult(t, res)
+	if body["code"] != "invalid_state" {
+		t.Errorf("expected invalid_state, got %v", body["code"])
+	}
+}
+
+func TestContextPromoteApply_Success(t *testing.T) {
+	s := newTestStore(t)
+	tok := writeToken(t, s, []string{"write", "promote.request", "promote.approve", "promote.apply"}, []string{"*"})
+	writeRecord(t, s, "app/agent/session", "summary", `{"text":"approved content"}`)
+	a := New(s, tok)
+
+	// Request.
+	writeReq := mcp.CallToolRequest{}
+	writeReq.Params.Arguments = map[string]any{
+		"source_namespace": "app/agent/session",
+		"source_key":       "summary",
+		"target_namespace": "user/memory/agent",
+		"target_key":       "summary",
+	}
+	promRes, _ := a.handlePromoteRequest(context.Background(), writeReq)
+	requestID := parseResult(t, promRes)["request_id"].(string)
+
+	// Approve.
+	approveReq := mcp.CallToolRequest{}
+	approveReq.Params.Arguments = map[string]any{"request_id": requestID}
+	a.handlePromoteApprove(context.Background(), approveReq) //nolint
+
+	// Apply.
+	applyReq := mcp.CallToolRequest{}
+	applyReq.Params.Arguments = map[string]any{"request_id": requestID}
+	res, err := a.handlePromoteApply(context.Background(), applyReq)
+	if err != nil {
+		t.Fatalf("handlePromoteApply: %v", err)
+	}
+	body := parseResult(t, res)
+	if body["code"] != nil {
+		t.Errorf("expected success, got: %v", body)
+	}
+	if body["record_id"] == nil {
+		t.Error("expected record_id in response")
+	}
+	if body["status"] != "applied" {
+		t.Errorf("expected status=applied, got %v", body["status"])
+	}
+
+	// Verify the record landed in the target namespace.
+	rec, err := s.Head(context.Background(), "user/memory/agent", "summary")
+	if err != nil {
+		t.Fatalf("head at target: %v", err)
+	}
+	var payload map[string]any
+	_ = json.Unmarshal(rec.Payload, &payload)
+	if payload["text"] != "approved content" {
+		t.Errorf("target record payload = %v", payload)
+	}
+}

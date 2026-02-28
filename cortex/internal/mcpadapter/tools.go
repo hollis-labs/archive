@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
 	"strings"
 	"time"
 
@@ -64,6 +65,24 @@ func (a *Adapter) registerTools(s *server.MCPServer) {
 		mcp.WithString("reason", mcp.Description("Human-readable reason for the promotion")),
 		mcp.WithString("actor", mcp.Description("Actor identity (default: mcp-agent)")),
 	), a.handlePromoteRequest)
+
+	s.AddTool(mcp.NewTool("context_promote_list",
+		mcp.WithDescription("List promotion requests. Read-only, no token required."),
+		mcp.WithString("status", mcp.Description("Filter by status: pending|approved|applied|all (default: pending)")),
+	), a.handlePromoteList)
+
+	s.AddTool(mcp.NewTool("context_promote_approve",
+		mcp.WithDescription("Approve a pending promotion request. Requires 'promote.approve' scope."),
+		mcp.WithString("request_id", mcp.Required(), mcp.Description("Promotion request ID to approve")),
+		mcp.WithString("notes", mcp.Description("Optional approval notes")),
+		mcp.WithString("actor", mcp.Description("Actor identity (default: user)")),
+	), a.handlePromoteApprove)
+
+	s.AddTool(mcp.NewTool("context_promote_apply",
+		mcp.WithDescription("Apply an approved promotion request, writing the record to the target namespace. Requires 'promote.apply' scope."),
+		mcp.WithString("request_id", mcp.Required(), mcp.Description("Approved promotion request ID to apply")),
+		mcp.WithString("actor", mcp.Description("Actor identity (default: user)")),
+	), a.handlePromoteApply)
 }
 
 // --- Read tools ---
@@ -129,6 +148,12 @@ func (a *Adapter) handleView(_ context.Context, req mcp.CallToolRequest) (*mcp.C
 	if err != nil {
 		return toolError("selector_error", err.Error()), nil
 	}
+
+	// Filter by token namespace globs if a token is present.
+	if claims, ok := a.loadClaims(ctx); ok {
+		records = filterByGlobs(records, claims.NamespaceGlobs)
+	}
+
 	items := make([]map[string]any, len(records))
 	for i, rec := range records {
 		items[i] = recordJSON(rec)
@@ -155,6 +180,12 @@ func (a *Adapter) handlePacket(_ context.Context, req mcp.CallToolRequest) (*mcp
 	maxItems := req.GetInt("max_items", 50)
 	maxTokens := req.GetInt("max_tokens_estimate", 8000)
 	payloadMode := req.GetString("payload_mode", "full")
+
+	// Load token globs for optional namespace filtering.
+	var tokenGlobs []string
+	if claims, ok := a.loadClaims(ctx); ok {
+		tokenGlobs = claims.NamespaceGlobs
+	}
 
 	reqID := newMCPRequestID()
 	var items []map[string]any
@@ -200,13 +231,16 @@ func (a *Adapter) handlePacket(_ context.Context, req mcp.CallToolRequest) (*mcp
 		return true
 	}
 
-	// Prepend pins.
+	// Prepend pins (filtered by token globs when present).
 	if includePins {
 		pins, err := a.Store.Select(ctx, contextstore.Selector{
 			Namespaces:    []string{"user/pins/*"},
 			RevisionScope: "head",
 		})
 		if err == nil {
+			if len(tokenGlobs) > 0 {
+				pins = filterByGlobs(pins, tokenGlobs)
+			}
 			for _, rec := range pins {
 				if addRecord(rec) {
 					pinsIncluded++
@@ -222,6 +256,11 @@ func (a *Adapter) handlePacket(_ context.Context, req mcp.CallToolRequest) (*mcp
 	})
 	if err != nil {
 		return toolError("selector_error", err.Error()), nil
+	}
+
+	// Filter by token globs when present.
+	if len(tokenGlobs) > 0 {
+		candidates = filterByGlobs(candidates, tokenGlobs)
 	}
 
 	itemsTotal = len(candidates)
@@ -254,7 +293,7 @@ func (a *Adapter) handlePacket(_ context.Context, req mcp.CallToolRequest) (*mcp
 // --- Write tools ---
 
 func (a *Adapter) handleWrite(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	errResult, _ := a.checkScope(ctx, "write")
+	errResult, claims := a.checkScope(ctx, "write")
 	if errResult != nil {
 		return errResult, nil
 	}
@@ -262,6 +301,11 @@ func (a *Adapter) handleWrite(ctx context.Context, req mcp.CallToolRequest) (*mc
 	ns := req.GetString("namespace", "")
 	key := req.GetString("key", "")
 	payloadStr := req.GetString("payload", "")
+
+	// Enforce token namespace globs on write target.
+	if !globsPermit(claims.NamespaceGlobs, ns) {
+		return toolError("namespace_not_permitted", "token namespace globs do not permit writing to: "+ns), nil
+	}
 	if ns == "" || key == "" || payloadStr == "" {
 		return toolError("validation_error", "namespace, key, and payload are required"), nil
 	}
@@ -368,6 +412,181 @@ func (a *Adapter) handlePromoteRequest(ctx context.Context, req mcp.CallToolRequ
 	}), nil
 }
 
+// --- Promote lifecycle tools ---
+
+func (a *Adapter) handlePromoteList(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	ctx := context.Background()
+	status := req.GetString("status", "pending")
+
+	recs, err := a.Store.Select(ctx, contextstore.Selector{
+		Namespaces:    []string{"app/*/promotions"},
+		RevisionScope: "head",
+	})
+	if err != nil {
+		return toolError("internal_error", err.Error()), nil
+	}
+
+	var items []map[string]any
+	for _, rec := range recs {
+		var pr contextstore.PromoteRequest
+		if err := json.Unmarshal(rec.Payload, &pr); err != nil || pr.Type != "promote.request" {
+			continue
+		}
+		if status != "all" && pr.Status != status {
+			continue
+		}
+		items = append(items, map[string]any{
+			"request_id":       pr.RequestID,
+			"status":           pr.Status,
+			"source_namespace": pr.SourceNamespace,
+			"source_key":       pr.SourceKey,
+			"target_namespace": pr.TargetNamespace,
+			"target_key":       pr.TargetKey,
+			"reason":           pr.Reason,
+			"requested_at":     pr.RequestedAt,
+			"requested_by":     pr.RequestedBy,
+		})
+	}
+	if items == nil {
+		items = []map[string]any{}
+	}
+	return toolJSON(map[string]any{"items": items, "count": len(items)}), nil
+}
+
+func (a *Adapter) handlePromoteApprove(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	errResult, _ := a.checkScope(ctx, "promote.approve")
+	if errResult != nil {
+		return errResult, nil
+	}
+
+	requestID := req.GetString("request_id", "")
+	if requestID == "" {
+		return toolError("validation_error", "request_id is required"), nil
+	}
+	notes := req.GetString("notes", "")
+	actor := req.GetString("actor", "user")
+
+	pr, reqNamespace, err := a.Store.GetPromoteRequest(ctx, requestID)
+	if err != nil {
+		return toolError("not_found", err.Error()), nil
+	}
+	if pr.Status != "pending" {
+		return toolError("invalid_state", fmt.Sprintf("request status is %q, must be pending to approve", pr.Status)), nil
+	}
+
+	approvalID := "appr-" + newMCPRequestID()[4:]
+	now := time.Now().UTC().Format(time.RFC3339)
+
+	pa := contextstore.PromoteApproval{
+		Type:             "promote.approve",
+		ApprovalID:       approvalID,
+		RequestID:        requestID,
+		RequestNamespace: reqNamespace,
+		ApprovedAt:       now,
+		ApprovedBy:       actor,
+		Notes:            notes,
+	}
+	approvalPayload, _ := json.Marshal(pa)
+	if _, err := a.Store.AppendRecord(ctx, contextstore.AppendInput{
+		Namespace: "user/promotions",
+		Key:       approvalID,
+		Actor:     actor,
+		Payload:   approvalPayload,
+	}); err != nil {
+		return toolError("approve_failed", err.Error()), nil
+	}
+
+	pr.Status = "approved"
+	pr.ApprovalID = approvalID
+	pr.ApprovedBy = actor
+	updPayload, _ := json.Marshal(pr)
+	if _, err := a.Store.AppendRecord(ctx, contextstore.AppendInput{
+		Namespace: reqNamespace,
+		Key:       requestID,
+		Actor:     actor,
+		Payload:   updPayload,
+	}); err != nil {
+		return toolError("approve_failed", err.Error()), nil
+	}
+
+	_ = a.Store.RecordAuditEvent(ctx, contextstore.AuditEvent{
+		EventType: "promote.approve",
+		Actor:     actor,
+		Namespace: reqNamespace,
+		Key:       requestID,
+		Metadata:  json.RawMessage(fmt.Sprintf(`{"approval_id":%q,"source":"mcp"}`, approvalID)),
+	})
+
+	return toolJSON(map[string]any{
+		"approval_id": approvalID,
+		"request_id":  requestID,
+		"status":      "approved",
+	}), nil
+}
+
+func (a *Adapter) handlePromoteApply(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	errResult, _ := a.checkScope(ctx, "promote.apply")
+	if errResult != nil {
+		return errResult, nil
+	}
+
+	requestID := req.GetString("request_id", "")
+	if requestID == "" {
+		return toolError("validation_error", "request_id is required"), nil
+	}
+	actor := req.GetString("actor", "user")
+
+	pr, reqNamespace, err := a.Store.GetPromoteRequest(ctx, requestID)
+	if err != nil {
+		return toolError("not_found", err.Error()), nil
+	}
+	if pr.Status != "approved" {
+		return toolError("invalid_state", fmt.Sprintf("request status is %q, must be approved to apply", pr.Status)), nil
+	}
+
+	srcRec, err := a.Store.GetByRecordID(ctx, pr.SourceRevisionID)
+	if err != nil {
+		return toolError("not_found", fmt.Sprintf("source record not found: %v", err)), nil
+	}
+
+	newRec, err := a.Store.AppendRecord(ctx, contextstore.AppendInput{
+		Namespace: pr.TargetNamespace,
+		Key:       pr.TargetKey,
+		Actor:     actor,
+		Payload:   srcRec.Payload,
+	})
+	if err != nil {
+		return toolError("apply_failed", err.Error()), nil
+	}
+
+	pr.Status = "applied"
+	appliedPayload, _ := json.Marshal(pr)
+	_, _ = a.Store.AppendRecord(ctx, contextstore.AppendInput{
+		Namespace: reqNamespace,
+		Key:       requestID,
+		Actor:     actor,
+		Payload:   appliedPayload,
+	})
+
+	_ = a.Store.RecordAuditEvent(ctx, contextstore.AuditEvent{
+		EventType: "promote",
+		Actor:     actor,
+		Namespace: pr.TargetNamespace,
+		Key:       pr.TargetKey,
+		RecordID:  newRec.RecordID,
+		Revision:  newRec.Revision,
+		Metadata:  json.RawMessage(fmt.Sprintf(`{"request_id":%q,"source":"mcp"}`, requestID)),
+	})
+
+	return toolJSON(map[string]any{
+		"record_id":        newRec.RecordID,
+		"request_id":       requestID,
+		"status":           "applied",
+		"target_namespace": pr.TargetNamespace,
+		"target_key":       pr.TargetKey,
+	}), nil
+}
+
 // --- Helpers ---
 
 func recordJSON(rec contextstore.Record) map[string]any {
@@ -386,4 +605,58 @@ func newMCPRequestID() string {
 	b := make([]byte, 8)
 	_, _ = rand.Read(b)
 	return "mcp-" + hex.EncodeToString(b)
+}
+
+// loadClaims returns the token claims if a token is configured and valid.
+// Returns false (no error) when no token is set — callers use this for optional filtering.
+func (a *Adapter) loadClaims(ctx context.Context) (contextstore.AuthToken, bool) {
+	if a.Token == "" {
+		return contextstore.AuthToken{}, false
+	}
+	claims, err := a.Store.ValidateAuthTokenWithClaims(ctx, a.Token)
+	if err != nil {
+		return contextstore.AuthToken{}, false
+	}
+	return claims, true
+}
+
+// globsPermit reports whether namespace is permitted by any of the globs.
+// Matches the same logic as the HTTP API's requireNamespaceAccess:
+//   - empty globs slice or glob=="*" → full access
+//   - path.Match(glob, namespace) → exact glob
+//   - glob ending in /* → hierarchical prefix match
+func globsPermit(globs []string, namespace string) bool {
+	if len(globs) == 0 {
+		return true
+	}
+	for _, g := range globs {
+		g = strings.TrimSpace(g)
+		if g == "" || g == "*" || g == namespace {
+			return true
+		}
+		if matched, _ := path.Match(g, namespace); matched {
+			return true
+		}
+		if strings.HasSuffix(g, "/*") {
+			prefix := strings.TrimSuffix(g, "*") // "app/test/"
+			if strings.HasPrefix(namespace, prefix) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// filterByGlobs returns only the records whose namespace is permitted by globs.
+func filterByGlobs(records []contextstore.Record, globs []string) []contextstore.Record {
+	if len(globs) == 0 {
+		return records
+	}
+	out := records[:0:0]
+	for _, rec := range records {
+		if globsPermit(globs, rec.Namespace) {
+			out = append(out, rec)
+		}
+	}
+	return out
 }
