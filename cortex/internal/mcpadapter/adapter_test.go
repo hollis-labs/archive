@@ -744,3 +744,315 @@ func TestContextPromoteApply_Success(t *testing.T) {
 		t.Errorf("target record payload = %v", payload)
 	}
 }
+
+// --- P3: Broker tools ---
+
+func TestContextBrokerPlan_BootProject(t *testing.T) {
+	a := New(newTestStore(t), "")
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{
+		"intent": "boot_project",
+	}
+	res, err := a.handleBrokerPlan(context.Background(), req)
+	if err != nil {
+		t.Fatalf("handleBrokerPlan: %v", err)
+	}
+	body := parseResult(t, res)
+	if body["code"] != nil {
+		t.Fatalf("unexpected error: %v", body)
+	}
+	plan := body["plan"].(map[string]any)
+	ns := plan["namespaces"].([]any)
+	if len(ns) == 0 {
+		t.Error("expected namespaces in plan")
+	}
+	// boot_project must include user/memory/* and user/pins/*
+	found := map[string]bool{}
+	for _, n := range ns {
+		found[n.(string)] = true
+	}
+	if !found["user/memory/*"] {
+		t.Errorf("boot_project plan missing user/memory/*, got %v", ns)
+	}
+	if !found["user/pins/*"] {
+		t.Errorf("boot_project plan missing user/pins/*, got %v", ns)
+	}
+	if body["rationale"] == "" || body["rationale"] == nil {
+		t.Error("expected non-empty rationale")
+	}
+}
+
+func TestContextBrokerPlan_ResumeTask_ExtractsKeywords(t *testing.T) {
+	a := New(newTestStore(t), "")
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{
+		"intent":  "resume_task",
+		"summary": "implementing authentication middleware for the API",
+	}
+	res, _ := a.handleBrokerPlan(context.Background(), req)
+	body := parseResult(t, res)
+	plan := body["plan"].(map[string]any)
+	ns := plan["namespaces"].([]any)
+	// Should derive keyword-based patterns from "implementing authentication middleware api"
+	if len(ns) == 0 {
+		t.Error("expected namespaces from keyword extraction")
+	}
+}
+
+func TestContextBrokerPlan_Custom_ReturnsUserStar(t *testing.T) {
+	a := New(newTestStore(t), "")
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{"intent": "custom"}
+	res, _ := a.handleBrokerPlan(context.Background(), req)
+	body := parseResult(t, res)
+	plan := body["plan"].(map[string]any)
+	ns := plan["namespaces"].([]any)
+	found := false
+	for _, n := range ns {
+		if n.(string) == "user/*" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("custom intent should return user/*, got %v", ns)
+	}
+}
+
+func TestContextBrokerFetch_ReturnsPacketWithManifest(t *testing.T) {
+	s := newTestStore(t)
+	writeRecord(t, s, "user/memory/task-001", "state", `{"v":1}`)
+	writeRecord(t, s, "user/pins/brief", "context", `{"brief":"project"}`)
+
+	a := New(s, "")
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{
+		"intent":       "boot_project",
+		"budget_items": float64(50),
+	}
+	res, err := a.handleBrokerFetch(context.Background(), req)
+	if err != nil {
+		t.Fatalf("handleBrokerFetch: %v", err)
+	}
+	body := parseResult(t, res)
+	if body["code"] != nil {
+		t.Fatalf("unexpected error: %v", body)
+	}
+	items := parseItems(t, body)
+	if len(items) == 0 {
+		t.Error("expected items from boot_project fetch")
+	}
+	manifest := body["manifest"].(map[string]any)
+	if manifest["request_id"] == nil || manifest["request_id"] == "" {
+		t.Error("expected request_id in manifest")
+	}
+	if body["rationale"] == nil || body["rationale"] == "" {
+		t.Error("expected rationale in response")
+	}
+}
+
+func TestContextBrokerFetch_Empty(t *testing.T) {
+	a := New(newTestStore(t), "")
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{"intent": "boot_project"}
+	res, _ := a.handleBrokerFetch(context.Background(), req)
+	body := parseResult(t, res)
+	items := parseItems(t, body)
+	if len(items) != 0 {
+		t.Errorf("expected 0 items in empty store, got %d", len(items))
+	}
+}
+
+// --- P4a: Namespace management ---
+
+func TestContextNamespaceRegister_Success(t *testing.T) {
+	s := newTestStore(t)
+	tok := writeToken(t, s, []string{"namespace.admin"}, []string{"*"})
+	a := New(s, tok)
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{
+		"namespace":  "app/my-agent/session",
+		"owner_type": "app",
+		"owner_id":   "my-agent",
+	}
+	res, err := a.handleNamespaceRegister(context.Background(), req)
+	if err != nil {
+		t.Fatalf("handleNamespaceRegister: %v", err)
+	}
+	body := parseResult(t, res)
+	if body["code"] != nil {
+		t.Fatalf("unexpected error: %v", body)
+	}
+	if body["namespace"] != "app/my-agent/session" {
+		t.Errorf("namespace = %v", body["namespace"])
+	}
+	// Verify it persisted.
+	entry, err := s.GetNamespacePolicy(context.Background(), "app/my-agent/session")
+	if err != nil {
+		t.Fatalf("GetNamespacePolicy: %v", err)
+	}
+	if entry.OwnerID != "my-agent" {
+		t.Errorf("owner_id = %v", entry.OwnerID)
+	}
+}
+
+func TestContextNamespaceRegister_NoToken(t *testing.T) {
+	a := New(newTestStore(t), "")
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{
+		"namespace": "app/agent/session", "owner_type": "app", "owner_id": "agent",
+	}
+	res, _ := a.handleNamespaceRegister(context.Background(), req)
+	body := parseResult(t, res)
+	if body["code"] != "auth_required" {
+		t.Errorf("expected auth_required, got %v", body["code"])
+	}
+}
+
+func TestContextNamespaceRegister_InsufficientScope(t *testing.T) {
+	s := newTestStore(t)
+	tok := writeToken(t, s, []string{"write"}, []string{"*"}) // write scope, not namespace.admin
+	a := New(s, tok)
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{
+		"namespace": "app/agent/session", "owner_type": "app", "owner_id": "agent",
+	}
+	res, _ := a.handleNamespaceRegister(context.Background(), req)
+	body := parseResult(t, res)
+	if body["code"] != "insufficient_scope" {
+		t.Errorf("expected insufficient_scope, got %v", body["code"])
+	}
+}
+
+func TestContextNamespaceRegister_MissingFields(t *testing.T) {
+	s := newTestStore(t)
+	tok := writeToken(t, s, []string{"namespace.admin"}, []string{"*"})
+	a := New(s, tok)
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{
+		"namespace": "app/agent/session",
+		// missing owner_type and owner_id
+	}
+	res, _ := a.handleNamespaceRegister(context.Background(), req)
+	body := parseResult(t, res)
+	if body["code"] != "validation_error" {
+		t.Errorf("expected validation_error, got %v", body["code"])
+	}
+}
+
+func TestContextNamespaceShow_Found(t *testing.T) {
+	s := newTestStore(t)
+	// Pre-register a namespace directly via store.
+	if err := s.UpsertNamespacePolicy(context.Background(), contextstore.NamespacePolicyEntry{
+		Namespace: "app/my-agent/session",
+		OwnerType: "app",
+		OwnerID:   "my-agent",
+	}); err != nil {
+		t.Fatalf("UpsertNamespacePolicy: %v", err)
+	}
+
+	a := New(s, "")
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{"namespace": "app/my-agent/session"}
+	res, err := a.handleNamespaceShow(context.Background(), req)
+	if err != nil {
+		t.Fatalf("handleNamespaceShow: %v", err)
+	}
+	body := parseResult(t, res)
+	if body["namespace"] != "app/my-agent/session" {
+		t.Errorf("namespace = %v", body["namespace"])
+	}
+	if body["owner_type"] != "app" {
+		t.Errorf("owner_type = %v", body["owner_type"])
+	}
+	if body["owner_id"] != "my-agent" {
+		t.Errorf("owner_id = %v", body["owner_id"])
+	}
+}
+
+func TestContextNamespaceShow_NotFound(t *testing.T) {
+	a := New(newTestStore(t), "")
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{"namespace": "app/nonexistent/ns"}
+	res, _ := a.handleNamespaceShow(context.Background(), req)
+	body := parseResult(t, res)
+	if body["code"] != "not_found" {
+		t.Errorf("expected not_found, got %v", body["code"])
+	}
+}
+
+func TestContextNamespaceShow_NoAuthRequired(t *testing.T) {
+	s := newTestStore(t)
+	_ = s.UpsertNamespacePolicy(context.Background(), contextstore.NamespacePolicyEntry{
+		Namespace: "app/open/ns", OwnerType: "app", OwnerID: "test",
+	})
+	a := New(s, "") // no token — should still work
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{"namespace": "app/open/ns"}
+	res, _ := a.handleNamespaceShow(context.Background(), req)
+	body := parseResult(t, res)
+	if body["code"] != nil {
+		t.Errorf("expected success without token, got %v", body)
+	}
+}
+
+// --- P4b: Audit ---
+
+func TestContextAudit_NoAuthRequired(t *testing.T) {
+	s := newTestStore(t)
+	writeRecord(t, s, "app/test/session", "state", `{"v":1}`)
+	_ = s.RecordAuditEvent(context.Background(), contextstore.AuditEvent{
+		EventType: "write", Actor: "test", Namespace: "app/test/session", Key: "state", Revision: 1,
+	})
+
+	a := New(s, "") // no token
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{}
+	res, err := a.handleAudit(context.Background(), req)
+	if err != nil {
+		t.Fatalf("handleAudit: %v", err)
+	}
+	body := parseResult(t, res)
+	if body["code"] != nil {
+		t.Fatalf("unexpected error: %v", body)
+	}
+	items := parseItems(t, body)
+	if len(items) == 0 {
+		t.Error("expected at least 1 audit event")
+	}
+}
+
+func TestContextAudit_FiltersByNamespace(t *testing.T) {
+	s := newTestStore(t)
+	_ = s.RecordAuditEvent(context.Background(), contextstore.AuditEvent{
+		EventType: "write", Actor: "test", Namespace: "app/agent/session", Key: "state", Revision: 1,
+	})
+	_ = s.RecordAuditEvent(context.Background(), contextstore.AuditEvent{
+		EventType: "write", Actor: "test", Namespace: "user/memory/task", Key: "state", Revision: 1,
+	})
+
+	a := New(s, "")
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{"namespace": "app/agent/session"}
+	res, _ := a.handleAudit(context.Background(), req)
+	body := parseResult(t, res)
+	items := parseItems(t, body)
+	if len(items) != 1 {
+		t.Errorf("expected 1 event for namespace filter, got %d", len(items))
+	}
+	event := items[0].(map[string]any)
+	if event["namespace"] != "app/agent/session" {
+		t.Errorf("namespace = %v", event["namespace"])
+	}
+}
+
+func TestContextAudit_Empty(t *testing.T) {
+	a := New(newTestStore(t), "")
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]any{}
+	res, _ := a.handleAudit(context.Background(), req)
+	body := parseResult(t, res)
+	items := parseItems(t, body)
+	if len(items) != 0 {
+		t.Errorf("expected 0 items in empty store, got %d", len(items))
+	}
+}

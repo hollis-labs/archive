@@ -83,6 +83,43 @@ func (a *Adapter) registerTools(s *server.MCPServer) {
 		mcp.WithString("request_id", mcp.Required(), mcp.Description("Approved promotion request ID to apply")),
 		mcp.WithString("actor", mcp.Description("Actor identity (default: user)")),
 	), a.handlePromoteApply)
+
+	s.AddTool(mcp.NewTool("context_broker_plan",
+		mcp.WithDescription("Generate a context fetch plan for a given intent. Returns namespace patterns, budget, and rationale. No auth required."),
+		mcp.WithString("intent", mcp.Description("Intent: resume_task|boot_project|review_session|custom (default: custom)")),
+		mcp.WithString("summary", mcp.Description("Task summary for keyword extraction (used with resume_task intent)")),
+		mcp.WithNumber("budget_items", mcp.Description("Max items budget (default 50)")),
+		mcp.WithNumber("budget_tokens", mcp.Description("Max tokens estimate budget (default 4000)")),
+	), a.handleBrokerPlan)
+
+	s.AddTool(mcp.NewTool("context_broker_fetch",
+		mcp.WithDescription("Execute a broker plan and return a context packet in one call. Combines broker_plan and context_packet. No auth required."),
+		mcp.WithString("intent", mcp.Description("Intent: resume_task|boot_project|review_session|custom (default: custom)")),
+		mcp.WithString("summary", mcp.Description("Task summary for keyword extraction")),
+		mcp.WithNumber("budget_items", mcp.Description("Max items budget (default 50)")),
+		mcp.WithNumber("budget_tokens", mcp.Description("Max tokens estimate budget (default 4000)")),
+		mcp.WithString("payload_mode", mcp.Description("full or head_only (default: full)")),
+	), a.handleBrokerFetch)
+
+	s.AddTool(mcp.NewTool("context_namespace_register",
+		mcp.WithDescription("Register a namespace with ownership policy. Requires 'namespace.admin' scope."),
+		mcp.WithString("namespace", mcp.Required(), mcp.Description("Namespace path to register")),
+		mcp.WithString("owner_type", mcp.Required(), mcp.Description("Ownership type: user or app")),
+		mcp.WithString("owner_id", mcp.Required(), mcp.Description("Owner identity (e.g. my-agent)")),
+	), a.handleNamespaceRegister)
+
+	s.AddTool(mcp.NewTool("context_namespace_show",
+		mcp.WithDescription("Show the ownership policy for a registered namespace. No auth required."),
+		mcp.WithString("namespace", mcp.Required(), mcp.Description("Namespace path to inspect")),
+	), a.handleNamespaceShow)
+
+	s.AddTool(mcp.NewTool("context_audit",
+		mcp.WithDescription("Query the audit event log. No auth required."),
+		mcp.WithString("namespace", mcp.Description("Filter by exact namespace")),
+		mcp.WithString("event_type", mcp.Description("Filter by event type (e.g. write, promote)")),
+		mcp.WithNumber("limit", mcp.Description("Max events to return (default 50, max 200)")),
+		mcp.WithNumber("cursor", mcp.Description("Pagination cursor (ID from previous response's next_cursor)")),
+	), a.handleAudit)
 }
 
 // --- Read tools ---
@@ -605,6 +642,321 @@ func newMCPRequestID() string {
 	b := make([]byte, 8)
 	_, _ = rand.Read(b)
 	return "mcp-" + hex.EncodeToString(b)
+}
+
+// --- Broker tools ---
+
+func (a *Adapter) handleBrokerPlan(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	intent := req.GetString("intent", "custom")
+	summary := req.GetString("summary", "")
+	maxItems := req.GetInt("budget_items", 50)
+	maxTokens := req.GetInt("budget_tokens", 4000)
+
+	namespaces, includePins, rationale := brokerBuildPlan(intent, summary, maxItems, maxTokens)
+
+	return toolJSON(map[string]any{
+		"plan": map[string]any{
+			"namespaces":   namespaces,
+			"include_pins": includePins,
+			"budget": map[string]any{
+				"max_items":           maxItems,
+				"max_tokens_estimate": maxTokens,
+			},
+		},
+		"rationale": rationale,
+	}), nil
+}
+
+func (a *Adapter) handleBrokerFetch(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	ctx := context.Background()
+	intent := req.GetString("intent", "custom")
+	summary := req.GetString("summary", "")
+	maxItems := req.GetInt("budget_items", 50)
+	maxTokens := req.GetInt("budget_tokens", 4000)
+	payloadMode := req.GetString("payload_mode", "full")
+
+	namespaces, includePins, rationale := brokerBuildPlan(intent, summary, maxItems, maxTokens)
+
+	// Load optional token globs for filtering.
+	var tokenGlobs []string
+	if claims, ok := a.loadClaims(ctx); ok {
+		tokenGlobs = claims.NamespaceGlobs
+	}
+
+	reqID := newMCPRequestID()
+	var items []map[string]any
+	pinsIncluded := 0
+	bytesSoFar, tokensSoFar := 0, 0
+	truncated := false
+	truncationReason := ""
+	sources := map[string]int{}
+
+	budgetExceeded := func() bool {
+		if maxItems > 0 && len(items) >= maxItems {
+			truncationReason = "budget.max_items"
+			return true
+		}
+		if maxTokens > 0 && tokensSoFar >= maxTokens {
+			truncationReason = "budget.max_tokens_estimate"
+			return true
+		}
+		return false
+	}
+
+	addRecord := func(rec contextstore.Record) bool {
+		if budgetExceeded() {
+			return false
+		}
+		payload := rec.Payload
+		if payloadMode == "head_only" && len(payload) > 512 {
+			payload = payload[:512]
+		}
+		item := recordJSON(rec)
+		item["payload"] = json.RawMessage(payload)
+		items = append(items, item)
+		bytesSoFar += len(payload)
+		tokensSoFar += contextstore.EstimateTokens(payload)
+		parts := strings.SplitN(rec.Namespace, "/", 3)
+		nsKey := rec.Namespace
+		if len(parts) >= 2 {
+			nsKey = parts[0] + "/" + parts[1]
+		}
+		sources[nsKey]++
+		return true
+	}
+
+	// Pins first (when broker plan includes them).
+	if includePins {
+		pins, err := a.Store.Select(ctx, contextstore.Selector{
+			Namespaces:    []string{"user/pins/*"},
+			RevisionScope: "head",
+		})
+		if err == nil {
+			if len(tokenGlobs) > 0 {
+				pins = filterByGlobs(pins, tokenGlobs)
+			}
+			for _, rec := range pins {
+				if addRecord(rec) {
+					pinsIncluded++
+				}
+			}
+		}
+	}
+
+	// Main namespaces from broker plan.
+	seen := map[string]bool{}
+	for _, ns := range namespaces {
+		if budgetExceeded() {
+			truncated = true
+			break
+		}
+		recs, err := a.Store.Select(ctx, contextstore.Selector{
+			Namespaces:    []string{ns},
+			RevisionScope: "head",
+		})
+		if err != nil {
+			continue
+		}
+		if len(tokenGlobs) > 0 {
+			recs = filterByGlobs(recs, tokenGlobs)
+		}
+		for _, rec := range recs {
+			if seen[rec.RecordID] {
+				continue
+			}
+			seen[rec.RecordID] = true
+			if !addRecord(rec) {
+				truncated = true
+				break
+			}
+		}
+	}
+
+	if items == nil {
+		items = []map[string]any{}
+	}
+
+	manifest := map[string]any{
+		"request_id":        reqID,
+		"pins_included":     pinsIncluded,
+		"items_returned":    len(items) - pinsIncluded,
+		"bytes_returned":    bytesSoFar,
+		"tokens_estimate":   tokensSoFar,
+		"truncated":         truncated,
+		"truncation_reason": truncationReason,
+		"sources":           sources,
+	}
+
+	return toolJSON(map[string]any{
+		"items":     items,
+		"manifest":  manifest,
+		"rationale": rationale,
+	}), nil
+}
+
+// brokerBuildPlan derives namespace patterns and fetch strategy from an intent.
+// Mirrors the CLI's brokerBuildPlan for deterministic behavior.
+func brokerBuildPlan(intent, summary string, maxItems, maxTokens int) (namespaces []string, includePins bool, rationale string) {
+	switch intent {
+	case "resume_task":
+		keywords := brokerExtractKeywords(summary, 3)
+		for _, kw := range keywords {
+			namespaces = append(namespaces, "user/memory/"+kw+"*")
+		}
+		namespaces = append(namespaces, "user/pins/*")
+		includePins = true
+		if len(keywords) > 0 {
+			rationale = fmt.Sprintf("resume_task: patterns from keywords [%s] + user/pins/*", strings.Join(keywords, ", "))
+		} else {
+			namespaces = append(namespaces, "user/memory/*")
+			rationale = "resume_task: no keywords extracted; using user/memory/* + user/pins/*"
+		}
+	case "boot_project":
+		namespaces = []string{"user/memory/*", "user/pins/*"}
+		includePins = true
+		if maxItems < 100 {
+			maxItems = 100
+		}
+		rationale = "boot_project: user/memory/* + user/pins/* for full project boot"
+	case "review_session":
+		namespaces = []string{"user/cache/*", "user/pins/*"}
+		includePins = true
+		rationale = "review_session: user/cache/* + user/pins/*"
+	default:
+		namespaces = []string{"user/*"}
+		rationale = "custom: using user/* (no explicit constraints provided)"
+	}
+	return namespaces, includePins, rationale
+}
+
+// brokerExtractKeywords pulls up to n meaningful words from text, skipping stopwords.
+var brokerStopwords = map[string]bool{
+	"a": true, "an": true, "and": true, "are": true, "as": true,
+	"at": true, "be": true, "by": true, "for": true, "from": true,
+	"has": true, "have": true, "in": true, "is": true, "it": true,
+	"its": true, "of": true, "on": true, "or": true, "the": true,
+	"this": true, "that": true, "to": true, "was": true, "with": true,
+	"we": true, "i": true, "my": true, "me": true, "our": true,
+	"will": true, "not": true, "but": true, "into": true, "just": true,
+	"task": true, "work": true, "previous": true, "new": true,
+	"using": true, "use": true, "via": true, "which": true, "all": true,
+}
+
+func brokerExtractKeywords(text string, n int) []string {
+	words := strings.FieldsFunc(strings.ToLower(text), func(r rune) bool {
+		return !('a' <= r && r <= 'z') && !('0' <= r && r <= '9') && r != '-' && r != '_'
+	})
+	seen := map[string]bool{}
+	var out []string
+	for _, w := range words {
+		if len(w) < 3 || brokerStopwords[w] || seen[w] {
+			continue
+		}
+		seen[w] = true
+		out = append(out, w)
+		if len(out) >= n {
+			break
+		}
+	}
+	return out
+}
+
+// --- Namespace management tools ---
+
+func (a *Adapter) handleNamespaceRegister(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	errResult, _ := a.checkScope(ctx, "namespace.admin")
+	if errResult != nil {
+		return errResult, nil
+	}
+
+	ns := req.GetString("namespace", "")
+	ownerType := req.GetString("owner_type", "")
+	ownerID := req.GetString("owner_id", "")
+
+	if ns == "" || ownerType == "" || ownerID == "" {
+		return toolError("validation_error", "namespace, owner_type, and owner_id are required"), nil
+	}
+
+	entry := contextstore.NamespacePolicyEntry{
+		Namespace: ns,
+		OwnerType: ownerType,
+		OwnerID:   ownerID,
+	}
+	if err := a.Store.UpsertNamespacePolicy(ctx, entry); err != nil {
+		return toolError("register_failed", err.Error()), nil
+	}
+
+	return toolJSON(map[string]any{
+		"namespace":  ns,
+		"owner_type": ownerType,
+		"owner_id":   ownerID,
+	}), nil
+}
+
+func (a *Adapter) handleNamespaceShow(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	ctx := context.Background()
+	ns := req.GetString("namespace", "")
+	if ns == "" {
+		return toolError("validation_error", "namespace is required"), nil
+	}
+
+	entry, err := a.Store.GetNamespacePolicy(ctx, ns)
+	if err != nil {
+		return toolError("not_found", fmt.Sprintf("namespace policy not found: %v", err)), nil
+	}
+
+	return toolJSON(map[string]any{
+		"namespace":  entry.Namespace,
+		"owner_type": entry.OwnerType,
+		"owner_id":   entry.OwnerID,
+		"policy":     entry.Policy,
+	}), nil
+}
+
+// --- Audit tool ---
+
+func (a *Adapter) handleAudit(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	ctx := context.Background()
+	ns := req.GetString("namespace", "")
+	eventType := req.GetString("event_type", "")
+	limit := req.GetInt("limit", 50)
+	cursor := req.GetInt("cursor", 0)
+
+	events, nextCursor, err := a.Store.QueryAuditEvents(ctx, contextstore.AuditQuery{
+		Limit:     limit,
+		Cursor:    int64(cursor),
+		Namespace: ns,
+		EventType: eventType,
+	})
+	if err != nil {
+		return toolError("internal_error", err.Error()), nil
+	}
+
+	items := make([]map[string]any, len(events))
+	for i, ev := range events {
+		item := map[string]any{
+			"id":         ev.ID,
+			"event_type": ev.EventType,
+			"actor":      ev.Actor,
+			"namespace":  ev.Namespace,
+			"key":        ev.Key,
+			"revision":   ev.Revision,
+			"created_at": ev.CreatedAt,
+		}
+		if ev.RecordID != "" {
+			item["record_id"] = ev.RecordID
+		}
+		items[i] = item
+	}
+
+	result := map[string]any{
+		"items": items,
+		"count": len(items),
+	}
+	if nextCursor != nil {
+		result["next_cursor"] = *nextCursor
+	}
+	return toolJSON(result), nil
 }
 
 // loadClaims returns the token claims if a token is configured and valid.

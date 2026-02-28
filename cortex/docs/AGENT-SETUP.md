@@ -213,12 +213,142 @@ Response:
 {"request_id": "req-abc123", "status": "pending"}
 ```
 
-A human must then approve and apply the promotion via the CLI:
-```bash
-contextd context promote list
-contextd context promote approve <request-id>
-contextd context promote apply <request-id>
+---
+
+#### `context_promote_list`
+List promotion requests. No token required.
+
+```json
+{"status": "pending"}
 ```
+
+`status` is `pending` (default), `approved`, `applied`, or `all`.
+
+Response: `{"items": [...], "count": 3}`
+
+---
+
+#### `context_promote_approve`
+Approve a pending promotion request. Requires `promote.approve` scope.
+
+```json
+{
+  "request_id": "req-abc123",
+  "notes": "looks good",
+  "actor": "user"
+}
+```
+
+Response: `{"request_id": "req-abc123", "status": "approved"}`
+
+---
+
+#### `context_promote_apply`
+Apply an approved promotion, writing the record to its target namespace.
+Requires `promote.apply` scope.
+
+```json
+{
+  "request_id": "req-abc123",
+  "actor": "user"
+}
+```
+
+Response: `{"request_id": "req-abc123", "status": "applied", "record_id": "rec_..."}`
+
+---
+
+#### `context_broker_plan`
+Generate a context fetch plan for a given intent. Returns namespace patterns,
+budget parameters, and rationale. No token required.
+
+```json
+{
+  "intent": "resume_task",
+  "summary": "Fix the authentication middleware",
+  "budget_items": 50,
+  "budget_tokens": 4000
+}
+```
+
+`intent` is `resume_task`, `boot_project`, `review_session`, or `custom`.
+When `intent` is `resume_task`, keywords are extracted from `summary` to filter
+namespace patterns.
+
+Response:
+```json
+{
+  "intent": "resume_task",
+  "namespaces": ["app/*/session/*", "user/memory/*", "user/pins/*"],
+  "budget_items": 50,
+  "budget_tokens": 4000,
+  "rationale": "session continuity with memory and pins"
+}
+```
+
+---
+
+#### `context_broker_fetch`
+Execute a broker plan and return a context packet in one call. Combines
+`context_broker_plan` and `context_packet`. No token required.
+
+```json
+{
+  "intent": "resume_task",
+  "summary": "Fix the authentication middleware",
+  "budget_items": 50,
+  "budget_tokens": 4000,
+  "payload_mode": "full"
+}
+```
+
+Response: same shape as `context_packet` (items + manifest).
+
+---
+
+#### `context_namespace_register`
+Register a namespace with an ownership policy.
+Requires `namespace.admin` scope.
+
+```json
+{
+  "namespace": "app/my-agent/session",
+  "owner_type": "app",
+  "owner_id": "my-agent"
+}
+```
+
+Response: `{"namespace": "app/my-agent/session", "owner_type": "app", "owner_id": "my-agent"}`
+
+---
+
+#### `context_namespace_show`
+Show the ownership policy for a registered namespace. No token required.
+
+```json
+{"namespace": "app/my-agent/session"}
+```
+
+Response: `{"namespace": "...", "owner_type": "app", "owner_id": "my-agent"}`
+
+---
+
+#### `context_audit`
+Query the audit event log. No token required.
+
+```json
+{
+  "namespace": "app/claude/session/task-001",
+  "event_type": "write",
+  "limit": 50,
+  "cursor": 0
+}
+```
+
+All fields are optional. `cursor` is the `next_cursor` from a previous response
+for pagination.
+
+Response: `{"items": [...], "count": 5, "next_cursor": 42}`
 
 ---
 
@@ -246,10 +376,12 @@ Example: a token with `namespaces: ["app/claude/*"]` can write to any
 | `write` | `context_write` — append records |
 | `packet` | (reserved for future gating; currently all agents can call `context_packet`) |
 | `promote.request` | `context_promote_request` — request promotions |
-| `promote.approve` | Approve pending promotion requests (human/admin) |
-| `promote.apply` | Apply approved promotions (human/admin) |
+| `promote.approve` | `context_promote_approve` — approve pending promotions (human/admin) |
+| `promote.apply` | `context_promote_apply` — apply approved promotions (human/admin) |
+| `namespace.admin` | `context_namespace_register` — register namespace policies |
 
 Minimum recommended token for a typical agent: `--scopes write,promote.request`.
+Admin token for namespace setup or promotion approval: `--scopes namespace.admin,promote.approve,promote.apply`.
 
 ---
 
@@ -278,6 +410,8 @@ Minimum recommended token for a typical agent: `--scopes write,promote.request`.
 1. Write a summary record to your session namespace
 2. Call context_promote_request to request promotion to user/memory/*
 3. Include a clear reason explaining why this should be long-term memory
+4. A human or admin agent can then call context_promote_approve + context_promote_apply
+   (or use the CLI: contextd context promote approve <id> && contextd context promote apply <id>)
 ```
 
 ### Example agent session (pseudocode)
