@@ -17,6 +17,7 @@ import (
 	"github.com/hollis-labs/volon-dev/internal/contextcli"
 	"github.com/hollis-labs/volon-dev/internal/contextpolicy"
 	"github.com/hollis-labs/volon-dev/internal/contextstore"
+	"github.com/hollis-labs/volon-dev/internal/mcpadapter"
 )
 
 type serveConfig struct {
@@ -61,6 +62,15 @@ func run(ctx context.Context, args []string, stdout, stderr *os.File) int {
 		return runServe(ctx, store, stderr, cfg)
 	}
 
+	if len(args) > 0 && args[0] == "mcp" {
+		token, err := parseMCPArgs(args[1:])
+		if err != nil {
+			_, _ = stderr.WriteString("error: " + err.Error() + "\n")
+			return 1
+		}
+		return runMCP(ctx, store, stderr, token)
+	}
+
 	cli := &contextcli.CLI{
 		Store:  store,
 		Policy: contextpolicy.New(),
@@ -99,6 +109,26 @@ func parseServeArgs(args []string) (serveConfig, error) {
 		RequestLogMode:    mode,
 		ShutdownTimeout:   *shutdownTimeout,
 	}, nil
+}
+
+func parseMCPArgs(args []string) (string, error) {
+	fs := flag.NewFlagSet("mcp", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	token := fs.String("token", "", "capability token for mutating MCP tools")
+	if err := fs.Parse(args); err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(*token), nil
+}
+
+func runMCP(ctx context.Context, store *contextstore.Store, stderr *os.File, token string) int {
+	_, _ = stderr.WriteString("contextd MCP adapter starting (stdio)\n")
+	adapter := mcpadapter.New(store, token)
+	if err := adapter.Run(ctx); err != nil {
+		_, _ = stderr.WriteString("error: " + err.Error() + "\n")
+		return 1
+	}
+	return 0
 }
 
 func runServe(ctx context.Context, store *contextstore.Store, stderr *os.File, cfg serveConfig) int {

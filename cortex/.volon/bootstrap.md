@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 190
-updated_at: 2026-02-27T20:00:00Z
+iteration: 191
+updated_at: 2026-02-27T21:00:00Z
 config:
   path: volon.yaml
   storage_backend: files
@@ -18,9 +18,8 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- MCP sprint active. Start TASK-20260228-020 (adapter foundation).
-- Execute in order: 020 → 021 → 022. Commit at end of sprint.
-- Docs backlog: BACKLOG-20260228-001 (write after MCP sprint completes).
+- MCP sprint complete. All 3 tasks done (020, 021, 022).
+- Next: BACKLOG-20260228-001 — user/agent docs (promote to task when ready).
 - GUI sprint (TASK-20260225-239..242, TASK-20260228-001..004) remains deferred.
 
 ## MVP Sprint Plan (re-focused 2026-02-27, audited 2026-02-27)
@@ -30,7 +29,7 @@ Plan: `artifacts/plan/mvp-replan-2026-02-27.md`
 
 ## Current state summary
 - PCC: present
-- Tasks: 3 todo, 0 blocked, 251 done (5 cancelled, 8 deferred: GUI only)
+- Tasks: 0 todo, 0 blocked, 254 done (5 cancelled, 8 deferred: GUI only)
 - Active todo series: TASK-20260228-020 through TASK-20260228-022 (MCP sprint)
 - Cancelled: TASK-20260227-019..020 (superseded by 020..022)
 - Deferred: TASK-20260225-239..242 + TASK-20260228-001..004 (GUI only)
@@ -88,6 +87,6 @@ Plan: `artifacts/plan/mcp-sprint-plan-2026-02-27.md`
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `a870dd5` (sprint-10 MVP verify — MVP complete)
+- Last implementation commit: sprint-post-mvp-mcp (pending commit)
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
