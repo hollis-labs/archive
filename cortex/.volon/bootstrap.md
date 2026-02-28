@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 189
-updated_at: 2026-02-27T19:00:00Z
+iteration: 190
+updated_at: 2026-02-27T20:00:00Z
 config:
   path: volon.yaml
   storage_backend: files
@@ -18,8 +18,9 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- MVP CLI is complete. All 15 sprint tasks (TASK-20260228-005 through TASK-20260228-019) are done.
-- Next: MCP adapter phase-1 (TASK-20260227-019) when ready to start post-MVP work.
+- MCP sprint active. Start TASK-20260228-020 (adapter foundation).
+- Execute in order: 020 → 021 → 022. Commit at end of sprint.
+- Docs backlog: BACKLOG-20260228-001 (write after MCP sprint completes).
 - GUI sprint (TASK-20260225-239..242, TASK-20260228-001..004) remains deferred.
 
 ## MVP Sprint Plan (re-focused 2026-02-27, audited 2026-02-27)
@@ -29,9 +30,11 @@ Plan: `artifacts/plan/mvp-replan-2026-02-27.md`
 
 ## Current state summary
 - PCC: present
-- Tasks: 0 todo, 0 blocked, 251 done (3 cancelled, 10 deferred: 8 GUI + 2 MCP)
-- Active todo series: TASK-20260228-005 through TASK-20260228-019 (no duplicates, all in-sprint)
-- Deferred: TASK-20260225-239..242 + TASK-20260228-001..004 (GUI); TASK-20260227-019..020 (MCP)
+- Tasks: 3 todo, 0 blocked, 251 done (5 cancelled, 8 deferred: GUI only)
+- Active todo series: TASK-20260228-020 through TASK-20260228-022 (MCP sprint)
+- Cancelled: TASK-20260227-019..020 (superseded by 020..022)
+- Deferred: TASK-20260225-239..242 + TASK-20260228-001..004 (GUI only)
+- Backlog: BACKLOG-20260228-001 (user/agent docs — write after MCP sprint)
 - Last run log: `.volon/logs/run-iteration-189-2026-02-27.md`
 - Replan log: `artifacts/plan/mvp-replan-2026-02-27.md`
 
@@ -65,9 +68,13 @@ Plan: `artifacts/plan/mvp-replan-2026-02-27.md`
 ### sprint-2026-10-mvp-verify — MVP verification gate (run after all phases complete)
 - TASK-20260228-019 — MVP end-to-end verification: full agent workflow via CLI (A)
 
-### sprint-post-mvp-mcp — Deferred (do not start until MVP CLI is complete)
-- TASK-20260227-019 — MCP adapter phase-1: read/view tools (deferred)
-- TASK-20260227-020 — MCP adapter phase-2+3: write/packet/promote tools (deferred)
+### sprint-post-mvp-mcp — ACTIVE
+Plan: `artifacts/plan/mcp-sprint-plan-2026-02-27.md`
+- TASK-20260228-020 — MCP adapter foundation: stdio transport, Store wiring, --mcp flag (A) ← START
+- TASK-20260228-021 — MCP read tools: context_head, context_history, context_view (A)
+- TASK-20260228-022 — MCP write + packet + promote tools (A)
+- TASK-20260227-019 — cancelled (superseded by 020)
+- TASK-20260227-020 — cancelled (superseded by 022)
 
 ### sprint-post-mvp-gui — Deferred (do not start until MVP complete)
 - TASK-20260225-239 through 242, TASK-20260228-001 through 004 (8 tasks, all deferred)
