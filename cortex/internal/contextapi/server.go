@@ -101,10 +101,22 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		s.handleWrite(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/promote":
+		s.handlePromoteDeprecated(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/promote/request":
 		if !s.authorizeMutatingRequest(w, r) {
 			return
 		}
-		s.handlePromote(w, r)
+		s.handlePromoteRequest(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/promote/approve":
+		if !s.authorizeMutatingRequest(w, r) {
+			return
+		}
+		s.handlePromoteApprove(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/promote/apply":
+		if !s.authorizeMutatingRequest(w, r) {
+			return
+		}
+		s.handlePromoteApply(w, r)
 	case r.Method == http.MethodGet && r.URL.Path == "/v1/context/head":
 		s.handleHead(w, r)
 	case r.Method == http.MethodGet && r.URL.Path == "/v1/context/history":

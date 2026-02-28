@@ -429,57 +429,281 @@ func (c *CLI) runView(ctx context.Context, args []string) int {
 }
 
 func (c *CLI) runPromote(ctx context.Context, args []string) int {
-	fs := flag.NewFlagSet("promote", flag.ContinueOnError)
+	if len(args) == 0 {
+		return c.fail("usage: context promote <request|list|approve|apply|accept> ...")
+	}
+	switch args[0] {
+	case "request":
+		return c.runPromoteRequest(ctx, args[1:])
+	case "list":
+		return c.runPromoteList(ctx, args[1:])
+	case "approve":
+		return c.runPromoteApprove(ctx, args[1:])
+	case "apply":
+		return c.runPromoteApply(ctx, args[1:])
+	case "accept":
+		return c.runPromoteAccept(ctx, args[1:])
+	default:
+		return c.fail("usage: context promote <request|list|approve|apply|accept> ...")
+	}
+}
+
+func (c *CLI) runPromoteRequest(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("promote request", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
-	clientID := fs.String("client-id", "", "client-id")
-	actor := fs.String("actor", "", "actor")
-	fromNamespace := fs.String("from-namespace", "", "from-namespace")
-	fromKey := fs.String("from-key", "", "from-key")
-	toNamespace := fs.String("to-namespace", "", "to-namespace")
-	toKey := fs.String("to-key", "", "to-key")
+	actor := fs.String("actor", "cli", "actor creating the request")
+	clientID := fs.String("client-id", "cli", "client identifier for namespace path")
+	srcNS := fs.String("source-namespace", "", "source namespace (required)")
+	srcKey := fs.String("source-key", "", "source key (required)")
+	tgtNS := fs.String("target-namespace", "", "target namespace (required)")
+	tgtKey := fs.String("target-key", "", "target key (required)")
+	reason := fs.String("reason", "", "reason for the promotion")
+	summary := fs.String("summary", "", "proposed summary of the record")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	if *srcNS == "" || *srcKey == "" || *tgtNS == "" || *tgtKey == "" {
+		return c.fail("--source-namespace, --source-key, --target-namespace, --target-key required")
+	}
+
+	src, err := c.Store.Head(ctx, *srcNS, *srcKey)
+	if err != nil {
+		return c.fail(fmt.Sprintf("source record not found: %v", err))
+	}
+
+	requestID := "req-" + fmt.Sprintf("%d", time.Now().UnixNano())
+	now := time.Now().UTC().Format(time.RFC3339)
+	pr := contextstore.PromoteRequest{
+		Type:             "promote.request",
+		RequestID:        requestID,
+		SourceNamespace:  src.Namespace,
+		SourceKey:        src.Key,
+		SourceRevisionID: src.RecordID,
+		SourceChecksum:   src.Checksum,
+		TargetNamespace:  *tgtNS,
+		TargetKey:        *tgtKey,
+		Reason:           *reason,
+		ProposedSummary:  *summary,
+		Status:           "pending",
+		RequestedAt:      now,
+		RequestedBy:      *actor,
+	}
+	payload, _ := json.Marshal(pr)
+	namespace := "app/" + *clientID + "/promotions"
+	if _, err := c.Store.AppendRecord(ctx, contextstore.AppendInput{
+		Namespace: namespace,
+		Key:       requestID,
+		Actor:     *actor,
+		Payload:   payload,
+	}); err != nil {
+		return c.fail(err.Error())
+	}
+
+	_, _ = fmt.Fprintf(c.Stdout, "Promotion request created.\n")
+	_, _ = fmt.Fprintf(c.Stdout, "  Request ID:  %s\n", requestID)
+	_, _ = fmt.Fprintf(c.Stdout, "  Status:      pending\n")
+	_, _ = fmt.Fprintf(c.Stdout, "  Source:      %s/%s (rev %s)\n", src.Namespace, src.Key, src.RecordID)
+	_, _ = fmt.Fprintf(c.Stdout, "  Target:      %s/%s\n", *tgtNS, *tgtKey)
+	if *reason != "" {
+		_, _ = fmt.Fprintf(c.Stdout, "  Reason:      %s\n", *reason)
+	}
+	_, _ = fmt.Fprintf(c.Stdout, "  Next step:   context promote approve %s\n", requestID)
+	return 0
+}
+
+func (c *CLI) runPromoteList(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("promote list", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	status := fs.String("status", "pending", "filter by status: pending|approved|applied|all")
 	if err := fs.Parse(args); err != nil {
 		return c.fail(err.Error())
 	}
 
-	if err := c.Policy.CanPromote(*actor, *toNamespace); err != nil {
-		return c.fail(err.Error())
-	}
-	src, err := c.Store.Head(ctx, *fromNamespace, *fromKey)
-	if err != nil {
-		return c.fail(err.Error())
-	}
-	if err := c.Policy.CanWrite(*clientID, *actor, *toNamespace); err != nil {
-		return c.fail(err.Error())
-	}
-	if err := c.Policy.ValidatePayload(*toNamespace, src.Payload); err != nil {
-		return c.fail(err.Error())
-	}
-	out, err := c.Store.AppendRecord(ctx, contextstore.AppendInput{
-		Namespace: *toNamespace,
-		Key:       *toKey,
-		Actor:     *actor,
-		Payload:   src.Payload,
+	recs, err := c.Store.Select(ctx, contextstore.Selector{
+		Namespaces:    []string{"app/*/promotions"},
+		RevisionScope: "head",
 	})
 	if err != nil {
 		return c.fail(err.Error())
 	}
+
+	tw := tabwriter.NewWriter(c.Stdout, 0, 0, 2, ' ', 0)
+	_, _ = fmt.Fprintln(tw, "ID\tSTATUS\tSOURCE\tTARGET\tREQUESTED")
+	count := 0
+	for _, rec := range recs {
+		var pr contextstore.PromoteRequest
+		if err := json.Unmarshal(rec.Payload, &pr); err != nil || pr.Type != "promote.request" {
+			continue
+		}
+		if *status != "all" && pr.Status != *status {
+			continue
+		}
+		reqAt := pr.RequestedAt
+		if len(reqAt) > 16 {
+			reqAt = reqAt[:16]
+		}
+		_, _ = fmt.Fprintf(tw, "%s\t%s\t%s/%s\t%s/%s\t%s\n",
+			pr.RequestID, pr.Status,
+			pr.SourceNamespace, pr.SourceKey,
+			pr.TargetNamespace, pr.TargetKey,
+			reqAt)
+		count++
+	}
+	_ = tw.Flush()
+	if count == 0 {
+		_, _ = fmt.Fprintf(c.Stdout, "(no promotion requests with status=%q)\n", *status)
+	}
+	return 0
+}
+
+func (c *CLI) runPromoteApprove(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("promote approve", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	actor := fs.String("actor", "user", "actor approving the request")
+	notes := fs.String("notes", "", "optional approval notes")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	if fs.NArg() == 0 {
+		return c.fail("usage: context promote approve <request-id> [--notes N]")
+	}
+	requestID := fs.Arg(0)
+
+	pr, reqNamespace, err := c.Store.GetPromoteRequest(ctx, requestID)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+	if pr.Status != "pending" {
+		return c.fail(fmt.Sprintf("request status is %q, cannot approve", pr.Status))
+	}
+
+	approvalID := "appr-" + fmt.Sprintf("%d", time.Now().UnixNano())
+	now := time.Now().UTC().Format(time.RFC3339)
+	pa := contextstore.PromoteApproval{
+		Type:             "promote.approve",
+		ApprovalID:       approvalID,
+		RequestID:        requestID,
+		RequestNamespace: reqNamespace,
+		ApprovedAt:       now,
+		ApprovedBy:       *actor,
+		Notes:            *notes,
+	}
+	approvalPayload, _ := json.Marshal(pa)
+	if _, err := c.Store.AppendRecord(ctx, contextstore.AppendInput{
+		Namespace: "user/promotions",
+		Key:       approvalID,
+		Actor:     *actor,
+		Payload:   approvalPayload,
+	}); err != nil {
+		return c.fail(err.Error())
+	}
+
+	pr.Status = "approved"
+	pr.ApprovalID = approvalID
+	pr.ApprovedBy = *actor
+	updPayload, _ := json.Marshal(pr)
+	if _, err := c.Store.AppendRecord(ctx, contextstore.AppendInput{
+		Namespace: reqNamespace,
+		Key:       requestID,
+		Actor:     *actor,
+		Payload:   updPayload,
+	}); err != nil {
+		return c.fail(err.Error())
+	}
+
+	_, _ = fmt.Fprintf(c.Stdout, "Approved promotion request %s.\n", requestID)
+	_, _ = fmt.Fprintf(c.Stdout, "  Approval ID: %s\n", approvalID)
+	_, _ = fmt.Fprintf(c.Stdout, "  Next step:   context promote apply %s\n", requestID)
+	return 0
+}
+
+func (c *CLI) runPromoteApply(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("promote apply", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	actor := fs.String("actor", "user", "actor applying the promotion")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	if fs.NArg() == 0 {
+		return c.fail("usage: context promote apply <request-id>")
+	}
+	requestID := fs.Arg(0)
+
+	pr, reqNamespace, err := c.Store.GetPromoteRequest(ctx, requestID)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+	if pr.Status != "approved" {
+		return c.fail(fmt.Sprintf("request status is %q; must be approved first", pr.Status))
+	}
+
+	pa, err := c.Store.GetPromoteApproval(ctx, requestID)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+
+	srcRec, err := c.Store.GetByRecordID(ctx, pr.SourceRevisionID)
+	if err != nil {
+		return c.fail(fmt.Sprintf("source record not found: %v", err))
+	}
+
+	newRec, err := c.Store.AppendRecord(ctx, contextstore.AppendInput{
+		Namespace: pr.TargetNamespace,
+		Key:       pr.TargetKey,
+		Actor:     *actor,
+		Payload:   srcRec.Payload,
+	})
+	if err != nil {
+		return c.fail(err.Error())
+	}
+
+	pr.Status = "applied"
+	appliedPayload, _ := json.Marshal(pr)
+	_, _ = c.Store.AppendRecord(ctx, contextstore.AppendInput{
+		Namespace: reqNamespace,
+		Key:       requestID,
+		Actor:     *actor,
+		Payload:   appliedPayload,
+	})
+
 	_ = c.Store.RecordAuditEvent(ctx, contextstore.AuditEvent{
 		EventType: "promote",
 		Actor:     *actor,
-		Namespace: *toNamespace,
-		Key:       *toKey,
-		Revision:  out.Revision,
-		RecordID:  out.RecordID,
-		Metadata: json.RawMessage(func() []byte {
-			b, _ := json.Marshal(map[string]any{
-				"source":         "cli",
-				"from_namespace": *fromNamespace,
-				"from_key":       *fromKey,
-			})
-			return b
-		}()),
+		Namespace: pr.TargetNamespace,
+		Key:       pr.TargetKey,
+		RecordID:  newRec.RecordID,
+		Revision:  newRec.Revision,
 	})
-	return c.writeJSON(map[string]any{"promoted_record_id": out.RecordID, "target_revision": out.Revision})
+
+	_, _ = fmt.Fprintf(c.Stdout, "Promotion applied.\n")
+	_, _ = fmt.Fprintf(c.Stdout, "  Record ID:   %s\n", newRec.RecordID)
+	_, _ = fmt.Fprintf(c.Stdout, "  Target:      %s/%s\n", pr.TargetNamespace, pr.TargetKey)
+	_, _ = fmt.Fprintf(c.Stdout, "  Audit trail: %s → %s → %s\n", requestID, pa.ApprovalID, newRec.RecordID)
+	return 0
+}
+
+func (c *CLI) runPromoteAccept(ctx context.Context, args []string) int {
+	// accept = approve + apply in sequence
+	fs := flag.NewFlagSet("promote accept", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	actor := fs.String("actor", "user", "actor")
+	notes := fs.String("notes", "", "approval notes")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	if fs.NArg() == 0 {
+		return c.fail("usage: context promote accept <request-id> [--notes N]")
+	}
+	requestID := fs.Arg(0)
+
+	approveArgs := []string{requestID, "--actor", *actor}
+	if *notes != "" {
+		approveArgs = append(approveArgs, "--notes", *notes)
+	}
+	if code := c.runPromoteApprove(ctx, approveArgs); code != 0 {
+		return code
+	}
+	return c.runPromoteApply(ctx, []string{requestID, "--actor", *actor})
 }
 
 func (c *CLI) runDoctor(ctx context.Context, args []string) int {

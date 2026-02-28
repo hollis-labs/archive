@@ -178,16 +178,24 @@ func TestAuditCommandShowsWriteAndPromote(t *testing.T) {
 		t.Fatalf("put failed: %s", errOut.String())
 	}
 
+	out.Reset()
 	if code := cli.Run(context.Background(), []string{
-		"context", "promote",
+		"context", "promote", "request",
 		"--client-id", "editor",
-		"--actor", "user",
-		"--from-namespace", "app/editor/session",
-		"--from-key", "summary",
-		"--to-namespace", "user/notes",
-		"--to-key", "daily",
+		"--actor", "app:editor",
+		"--source-namespace", "app/editor/session",
+		"--source-key", "summary",
+		"--target-namespace", "user/notes",
+		"--target-key", "daily",
 	}); code != 0 {
-		t.Fatalf("promote failed: %s", errOut.String())
+		t.Fatalf("promote request failed: %s", errOut.String())
+	}
+	requestID := extractCLIRequestID(t, out.String())
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{
+		"context", "promote", "accept", requestID, "--actor", "user",
+	}); code != 0 {
+		t.Fatalf("promote accept failed: %s", errOut.String())
 	}
 
 	out.Reset()
@@ -215,16 +223,24 @@ func TestAuditCommandSupportsFiltersAndCursor(t *testing.T) {
 			t.Fatalf("put %d failed: %s", i, errOut.String())
 		}
 	}
+	out.Reset()
 	if code := cli.Run(context.Background(), []string{
-		"context", "promote",
+		"context", "promote", "request",
 		"--client-id", "editor",
-		"--actor", "user",
-		"--from-namespace", "app/editor/session",
-		"--from-key", "summary",
-		"--to-namespace", "user/notes",
-		"--to-key", "daily",
+		"--actor", "app:editor",
+		"--source-namespace", "app/editor/session",
+		"--source-key", "summary",
+		"--target-namespace", "user/notes",
+		"--target-key", "daily",
 	}); code != 0 {
-		t.Fatalf("promote failed: %s", errOut.String())
+		t.Fatalf("promote request failed: %s", errOut.String())
+	}
+	requestID := extractCLIRequestID(t, out.String())
+	out.Reset()
+	if code := cli.Run(context.Background(), []string{
+		"context", "promote", "accept", requestID, "--actor", "user",
+	}); code != 0 {
+		t.Fatalf("promote accept failed: %s", errOut.String())
 	}
 
 	out.Reset()
@@ -549,4 +565,20 @@ func TestContractRunExecuteUsesInjectedRunner(t *testing.T) {
 	if !strings.Contains(out.String(), "\"executed\":true") || !strings.Contains(out.String(), "\"ok\":true") {
 		t.Fatalf("unexpected execute output: %s", out.String())
 	}
+}
+
+// extractCLIRequestID parses the request_id from the output of "context promote request".
+// The output contains a line like "  Request ID:  req-...".
+func extractCLIRequestID(t *testing.T, output string) string {
+	t.Helper()
+	for _, line := range strings.Split(output, "\n") {
+		if strings.Contains(line, "Request ID:") {
+			parts := strings.Fields(line)
+			if len(parts) >= 3 {
+				return parts[len(parts)-1]
+			}
+		}
+	}
+	t.Fatalf("request_id not found in promote request output: %s", output)
+	return ""
 }

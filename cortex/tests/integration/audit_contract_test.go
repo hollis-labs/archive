@@ -37,13 +37,22 @@ func TestAuditContractAgainstGolden(t *testing.T) {
 		checkKeys(t, res, []string{"record_id", "revision"})
 	}
 
-	_ = callJSON(t, srv, http.MethodPost, "/v1/context/promote", map[string]any{
-		"client_id":      "editor",
-		"actor":          "user",
-		"from_namespace": "app/editor/session",
-		"from_key":       "summary",
-		"to_namespace":   "user/notes",
-		"to_key":         "daily",
+	reqRes := callJSON(t, srv, http.MethodPost, "/v1/context/promote/request", map[string]any{
+		"actor":            "app:editor",
+		"client_id":        "editor",
+		"source_namespace": "app/editor/session",
+		"source_key":       "summary",
+		"target_namespace": "user/notes",
+		"target_key":       "daily",
+	})
+	requestID := reqRes["request_id"].(string)
+	callJSON(t, srv, http.MethodPost, "/v1/context/promote/approve", map[string]any{
+		"actor":      "user",
+		"request_id": requestID,
+	})
+	callJSON(t, srv, http.MethodPost, "/v1/context/promote/apply", map[string]any{
+		"actor":      "user",
+		"request_id": requestID,
 	})
 
 	pageOne := callJSON(t, srv, http.MethodGet, "/v1/context/audit?limit="+strconv.Itoa(golden.PageSize), nil)

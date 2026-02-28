@@ -1879,3 +1879,100 @@ func extractTags(metadata json.RawMessage) []string {
 	}
 	return out
 }
+
+// PromoteRequest is the structured payload for a promote.request record.
+type PromoteRequest struct {
+	Type             string `json:"type"`
+	RequestID        string `json:"request_id"`
+	SourceNamespace  string `json:"source_namespace"`
+	SourceKey        string `json:"source_key"`
+	SourceRevisionID string `json:"source_revision_id"`
+	SourceChecksum   string `json:"source_checksum,omitempty"`
+	TargetNamespace  string `json:"target_namespace"`
+	TargetKey        string `json:"target_key"`
+	Reason           string `json:"reason,omitempty"`
+	ProposedSummary  string `json:"proposed_summary,omitempty"`
+	Status           string `json:"status"` // pending|approved|applied
+	RequestedAt      string `json:"requested_at"`
+	RequestedBy      string `json:"requested_by"`
+	ApprovalID       string `json:"approval_id,omitempty"`
+	ApprovedBy       string `json:"approved_by,omitempty"`
+}
+
+// PromoteApproval is the structured payload for a promote.approve record.
+type PromoteApproval struct {
+	Type             string `json:"type"`
+	ApprovalID       string `json:"approval_id"`
+	RequestID        string `json:"request_id"`
+	RequestNamespace string `json:"request_namespace"`
+	ApprovedAt       string `json:"approved_at"`
+	ApprovedBy       string `json:"approved_by"`
+	Notes            string `json:"notes,omitempty"`
+}
+
+// GetByRecordID fetches a single record by its record_id.
+func (s *Store) GetByRecordID(ctx context.Context, recordID string) (Record, error) {
+	var rec Record
+	var relPath string
+	err := s.db.QueryRowContext(ctx, `
+SELECT record_id, namespace, key_name, revision, actor, created_at, checksum, file_path
+FROM records WHERE record_id = ?`, recordID).Scan(
+		&rec.RecordID, &rec.Namespace, &rec.Key, &rec.Revision, &rec.Actor, &rec.CreatedAt, &rec.Checksum, &relPath)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Record{}, fmt.Errorf("record %s not found", recordID)
+		}
+		return Record{}, err
+	}
+	payload, err := os.ReadFile(filepath.Join(s.recordsDir, relPath))
+	if err != nil {
+		return Record{}, err
+	}
+	rec.Payload = payload
+	return rec, nil
+}
+
+// GetPromoteRequest looks up the head promote.request record by request_id
+// across all app/*/promotions namespaces.
+func (s *Store) GetPromoteRequest(ctx context.Context, requestID string) (PromoteRequest, string, error) {
+	// request_id is stored as the key in app/*/promotions namespace.
+	recs, err := s.Select(ctx, Selector{
+		Namespaces:    []string{"app/*/promotions"},
+		Keys:          []string{requestID},
+		RevisionScope: "head",
+	})
+	if err != nil {
+		return PromoteRequest{}, "", err
+	}
+	for _, rec := range recs {
+		var pr PromoteRequest
+		if err := json.Unmarshal(rec.Payload, &pr); err != nil {
+			continue
+		}
+		if pr.Type == "promote.request" {
+			return pr, rec.Namespace, nil
+		}
+	}
+	return PromoteRequest{}, "", fmt.Errorf("promote request %s not found", requestID)
+}
+
+// GetPromoteApproval looks up the head promote.approve record by request_id.
+func (s *Store) GetPromoteApproval(ctx context.Context, requestID string) (PromoteApproval, error) {
+	recs, err := s.Select(ctx, Selector{
+		Namespaces:    []string{"user/promotions"},
+		RevisionScope: "head",
+	})
+	if err != nil {
+		return PromoteApproval{}, err
+	}
+	for _, rec := range recs {
+		var pa PromoteApproval
+		if err := json.Unmarshal(rec.Payload, &pa); err != nil {
+			continue
+		}
+		if pa.Type == "promote.approve" && pa.RequestID == requestID {
+			return pa, nil
+		}
+	}
+	return PromoteApproval{}, fmt.Errorf("approval for request %s not found", requestID)
+}

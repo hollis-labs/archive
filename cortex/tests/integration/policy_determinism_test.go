@@ -40,26 +40,44 @@ func TestPolicyAndDeterminismEndToEnd(t *testing.T) {
 		}
 	}
 
-	if got := perform(t, srv, http.MethodPost, "/v1/context/promote", map[string]any{
-		"client_id":      "editor",
-		"actor":          "app:editor",
-		"from_namespace": "app/editor/session",
-		"from_key":       "summary",
-		"to_namespace":   "user/notes",
-		"to_key":         "daily",
-	}); got.Code != http.StatusForbidden {
-		t.Fatalf("promote without user actor expected 403 got %d body=%s", got.Code, got.Body.String())
+	// Gated promotion: request by app actor, approve + apply by user.
+	reqRes := perform(t, srv, http.MethodPost, "/v1/context/promote/request", map[string]any{
+		"actor":            "app:editor",
+		"client_id":        "editor",
+		"source_namespace": "app/editor/session",
+		"source_key":       "summary",
+		"target_namespace": "user/notes",
+		"target_key":       "daily",
+	})
+	if reqRes.Code != http.StatusOK {
+		t.Fatalf("promote/request expected 200 got %d body=%s", reqRes.Code, reqRes.Body.String())
+	}
+	var reqResp map[string]any
+	json.Unmarshal(reqRes.Body.Bytes(), &reqResp)
+	requestID := reqResp["request_id"].(string)
+
+	apprRes := perform(t, srv, http.MethodPost, "/v1/context/promote/approve", map[string]any{
+		"actor":      "user",
+		"request_id": requestID,
+	})
+	if apprRes.Code != http.StatusOK {
+		t.Fatalf("promote/approve expected 200 got %d body=%s", apprRes.Code, apprRes.Body.String())
 	}
 
-	if got := perform(t, srv, http.MethodPost, "/v1/context/promote", map[string]any{
-		"client_id":      "editor",
-		"actor":          "user",
-		"from_namespace": "app/editor/session",
-		"from_key":       "summary",
-		"to_namespace":   "user/notes",
-		"to_key":         "daily",
+	// Apply without user actor to user/* target must be forbidden.
+	if got := perform(t, srv, http.MethodPost, "/v1/context/promote/apply", map[string]any{
+		"actor":      "app:editor",
+		"request_id": requestID,
+	}); got.Code != http.StatusForbidden {
+		t.Fatalf("promote/apply without user actor expected 403 got %d body=%s", got.Code, got.Body.String())
+	}
+
+	// Apply with user actor must succeed.
+	if got := perform(t, srv, http.MethodPost, "/v1/context/promote/apply", map[string]any{
+		"actor":      "user",
+		"request_id": requestID,
 	}); got.Code != http.StatusOK {
-		t.Fatalf("promote with user actor expected 200 got %d body=%s", got.Code, got.Body.String())
+		t.Fatalf("promote/apply with user actor expected 200 got %d body=%s", got.Code, got.Body.String())
 	}
 
 	headBefore := perform(t, srv, http.MethodGet, "/v1/context/head?namespace=app/editor/session&key=summary", nil)
@@ -127,28 +145,28 @@ func TestAuthGateForWriteAndPromote(t *testing.T) {
 		t.Fatalf("write with token expected 200 got %d body=%s", withToken.Code, withToken.Body.String())
 	}
 
-	promoteDenied := performWithHeaders(t, srv, http.MethodPost, "/v1/context/promote", map[string]any{
-		"client_id":      "editor",
-		"actor":          "user",
-		"from_namespace": "app/editor/session",
-		"from_key":       "summary",
-		"to_namespace":   "user/notes",
-		"to_key":         "daily",
+	promoteDenied := performWithHeaders(t, srv, http.MethodPost, "/v1/context/promote/request", map[string]any{
+		"actor":            "app:editor",
+		"client_id":        "editor",
+		"source_namespace": "app/editor/session",
+		"source_key":       "summary",
+		"target_namespace": "user/notes",
+		"target_key":       "daily",
 	}, map[string]string{"Authorization": "Bearer wrong"})
 	if promoteDenied.Code != http.StatusUnauthorized {
-		t.Fatalf("promote with wrong token expected 401 got %d body=%s", promoteDenied.Code, promoteDenied.Body.String())
+		t.Fatalf("promote/request with wrong token expected 401 got %d body=%s", promoteDenied.Code, promoteDenied.Body.String())
 	}
 
-	promoteAllowed := performWithHeaders(t, srv, http.MethodPost, "/v1/context/promote", map[string]any{
-		"client_id":      "editor",
-		"actor":          "user",
-		"from_namespace": "app/editor/session",
-		"from_key":       "summary",
-		"to_namespace":   "user/notes",
-		"to_key":         "daily",
+	promoteAllowed := performWithHeaders(t, srv, http.MethodPost, "/v1/context/promote/request", map[string]any{
+		"actor":            "app:editor",
+		"client_id":        "editor",
+		"source_namespace": "app/editor/session",
+		"source_key":       "summary",
+		"target_namespace": "user/notes",
+		"target_key":       "daily",
 	}, map[string]string{"Authorization": "Bearer top-secret"})
 	if promoteAllowed.Code != http.StatusOK {
-		t.Fatalf("promote with token expected 200 got %d body=%s", promoteAllowed.Code, promoteAllowed.Body.String())
+		t.Fatalf("promote/request with token expected 200 got %d body=%s", promoteAllowed.Code, promoteAllowed.Body.String())
 	}
 }
 

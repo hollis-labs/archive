@@ -246,17 +246,7 @@ func TestAuditEndpointIncludesWriteAndPromoteEvents(t *testing.T) {
 		t.Fatalf("write status=%d body=%s", write.Code, write.Body.String())
 	}
 
-	promote := performJSON(t, srv, http.MethodPost, "/v1/context/promote", map[string]any{
-		"client_id":      "editor",
-		"actor":          "user",
-		"from_namespace": "app/editor/session",
-		"from_key":       "summary",
-		"to_namespace":   "user/notes",
-		"to_key":         "daily",
-	})
-	if promote.Code != http.StatusOK {
-		t.Fatalf("promote status=%d body=%s", promote.Code, promote.Body.String())
-	}
+	doGatedPromote(t, srv, "editor", "app/editor/session", "summary", "user/notes", "daily")
 
 	audit := performJSON(t, srv, http.MethodGet, "/v1/context/audit?limit=10", nil)
 	if audit.Code != http.StatusOK {
@@ -309,17 +299,7 @@ func TestAuditEndpointFiltersAndPagination(t *testing.T) {
 			t.Fatalf("write status=%d body=%s", write.Code, write.Body.String())
 		}
 	}
-	promote := performJSON(t, srv, http.MethodPost, "/v1/context/promote", map[string]any{
-		"client_id":      "editor",
-		"actor":          "user",
-		"from_namespace": "app/editor/session",
-		"from_key":       "summary",
-		"to_namespace":   "user/notes",
-		"to_key":         "daily",
-	})
-	if promote.Code != http.StatusOK {
-		t.Fatalf("promote status=%d body=%s", promote.Code, promote.Body.String())
-	}
+	doGatedPromote(t, srv, "editor", "app/editor/session", "summary", "user/notes", "daily")
 
 	pageOne := performJSON(t, srv, http.MethodGet, "/v1/context/audit?limit=2", nil)
 	if pageOne.Code != http.StatusOK {
@@ -751,6 +731,42 @@ func performJSONWithHeaders(t *testing.T, h http.Handler, method, path string, b
 	return res
 }
 
+// doGatedPromote performs the full 3-step gated promotion flow (request → approve → apply).
+// The source record must already exist. clientID determines the app/* promotions namespace.
+func doGatedPromote(t *testing.T, s *Server, clientID, fromNS, fromKey, toNS, toKey string) {
+	t.Helper()
+	reqRes := performJSON(t, s, http.MethodPost, "/v1/context/promote/request", map[string]any{
+		"actor":            "app:" + clientID,
+		"client_id":        clientID,
+		"source_namespace": fromNS,
+		"source_key":       fromKey,
+		"target_namespace": toNS,
+		"target_key":       toKey,
+	})
+	if reqRes.Code != http.StatusOK {
+		t.Fatalf("doGatedPromote/request: %s", reqRes.Body)
+	}
+	var reqResp map[string]any
+	json.NewDecoder(reqRes.Body).Decode(&reqResp)
+	requestID := reqResp["request_id"].(string)
+
+	apprRes := performJSON(t, s, http.MethodPost, "/v1/context/promote/approve", map[string]any{
+		"actor":      "user",
+		"request_id": requestID,
+	})
+	if apprRes.Code != http.StatusOK {
+		t.Fatalf("doGatedPromote/approve: %s", apprRes.Body)
+	}
+
+	applyRes := performJSON(t, s, http.MethodPost, "/v1/context/promote/apply", map[string]any{
+		"actor":      "user",
+		"request_id": requestID,
+	})
+	if applyRes.Code != http.StatusOK {
+		t.Fatalf("doGatedPromote/apply: %s", applyRes.Body)
+	}
+}
+
 func TestPacketEndpointBudgetCutoff(t *testing.T) {
 	s := newTestServer(t)
 
@@ -830,5 +846,125 @@ func TestEstimateEndpoint(t *testing.T) {
 	}
 	if int(resp["total_bytes"].(float64)) == 0 {
 		t.Errorf("want total_bytes > 0")
+	}
+}
+
+func TestGatedPromotionHappyPath(t *testing.T) {
+	s := newTestServer(t)
+
+	// Write a source record in app namespace.
+	writeRes := performJSON(t, s, "POST", "/v1/context/write", map[string]any{
+		"actor":     "app:myapp",
+		"client_id": "myapp",
+		"namespace": "app/myapp/draft",
+		"key":       "pref-v2",
+		"payload":   map[string]any{"v": 1},
+	})
+	if writeRes.Code != http.StatusOK {
+		t.Fatalf("write: %s", writeRes.Body)
+	}
+	var writeResp map[string]any
+	json.NewDecoder(writeRes.Body).Decode(&writeResp)
+	srcRecordID := writeResp["record_id"].(string)
+
+	// Create a promotion request.
+	reqRes := performJSON(t, s, "POST", "/v1/context/promote/request", map[string]any{
+		"actor":             "app:myapp",
+		"client_id":         "myapp",
+		"source_namespace":  "app/myapp/draft",
+		"source_key":        "pref-v2",
+		"source_revision_id": srcRecordID,
+		"target_namespace":  "user/memory/preferences",
+		"target_key":        "user-prefs",
+		"reason":            "user confirmed",
+	})
+	if reqRes.Code != http.StatusOK {
+		t.Fatalf("promote/request: %s", reqRes.Body)
+	}
+	var reqResp map[string]any
+	json.NewDecoder(reqRes.Body).Decode(&reqResp)
+	requestID := reqResp["request_id"].(string)
+	if reqResp["status"] != "pending" {
+		t.Errorf("want status=pending, got %v", reqResp["status"])
+	}
+
+	// Approve the request.
+	apprRes := performJSON(t, s, "POST", "/v1/context/promote/approve", map[string]any{
+		"actor":      "user",
+		"request_id": requestID,
+		"notes":      "LGTM",
+	})
+	if apprRes.Code != http.StatusOK {
+		t.Fatalf("promote/approve: %s", apprRes.Body)
+	}
+	var apprResp map[string]any
+	json.NewDecoder(apprRes.Body).Decode(&apprResp)
+	approvalID := apprResp["approval_id"].(string)
+	if apprResp["status"] != "approved" {
+		t.Errorf("want status=approved, got %v", apprResp["status"])
+	}
+
+	// Apply the approved promotion.
+	applyRes := performJSON(t, s, "POST", "/v1/context/promote/apply", map[string]any{
+		"actor":      "user",
+		"request_id": requestID,
+	})
+	if applyRes.Code != http.StatusOK {
+		t.Fatalf("promote/apply: %s", applyRes.Body)
+	}
+	var applyResp map[string]any
+	json.NewDecoder(applyRes.Body).Decode(&applyResp)
+	if applyResp["request_id"] != requestID {
+		t.Errorf("apply: want request_id=%s, got %v", requestID, applyResp["request_id"])
+	}
+	if applyResp["approval_id"] != approvalID {
+		t.Errorf("apply: want approval_id=%s, got %v", approvalID, applyResp["approval_id"])
+	}
+
+	// Verify the record appears in the target namespace.
+	headRes := performJSON(t, s, "GET", "/v1/context/head?namespace=user/memory/preferences&key=user-prefs", nil)
+	if headRes.Code != http.StatusOK {
+		t.Fatalf("head: %s", headRes.Body)
+	}
+}
+
+func TestGatedPromotionApplyWithoutApprovalFails(t *testing.T) {
+	s := newTestServer(t)
+
+	performJSON(t, s, "POST", "/v1/context/write", map[string]any{
+		"actor":     "app:myapp",
+		"client_id": "myapp",
+		"namespace": "app/myapp/draft",
+		"key":       "pref-v3",
+		"payload":   map[string]any{"v": 1},
+	})
+
+	reqRes := performJSON(t, s, "POST", "/v1/context/promote/request", map[string]any{
+		"actor":            "app:myapp",
+		"client_id":        "myapp",
+		"source_namespace": "app/myapp/draft",
+		"source_key":       "pref-v3",
+		"target_namespace": "user/memory/preferences",
+		"target_key":       "user-prefs",
+	})
+	var reqResp map[string]any
+	json.NewDecoder(reqRes.Body).Decode(&reqResp)
+	requestID := reqResp["request_id"].(string)
+
+	// Try to apply without approving first.
+	applyRes := performJSON(t, s, "POST", "/v1/context/promote/apply", map[string]any{
+		"actor":      "user",
+		"request_id": requestID,
+	})
+	if applyRes.Code == http.StatusOK {
+		t.Errorf("expected non-200 when applying unapproved request, got 200")
+	}
+}
+
+func TestOldPromoteEndpointReturnsGone(t *testing.T) {
+	s := newTestServer(t)
+	res := performJSON(t, s, "POST", "/v1/context/promote", map[string]any{})
+	if res.Code != http.StatusGone {
+		t.Errorf("want 410 Gone, got %d: %s", res.Code, res.Body)
 	}
 }
