@@ -81,6 +81,6 @@ Plan: `artifacts/plan/mvp-replan-2026-02-27.md`
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `f54c613` (sprint-09; sprint-10 MVP verify commit pending)
+- Last implementation commit: `a870dd5` (sprint-10 MVP verify — MVP complete)
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
