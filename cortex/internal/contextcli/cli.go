@@ -1645,7 +1645,218 @@ func (c *CLI) runPacket(ctx context.Context, args []string) int {
 	return 0
 }
 
-// runBroker is implemented in sprint-2026-09 (TASK-20260228-017).
 func (c *CLI) runBroker(ctx context.Context, args []string) int {
-	return c.fail("context broker: not yet implemented (sprint-2026-09)")
+	if len(args) == 0 {
+		return c.fail("usage: context broker <plan|fetch> ...")
+	}
+	switch args[0] {
+	case "plan":
+		return c.runBrokerPlan(ctx, args[1:])
+	case "fetch":
+		return c.runBrokerFetch(ctx, args[1:])
+	default:
+		return c.fail("unknown broker command: " + args[0])
+	}
+}
+
+// brokerStopwords mirrors the server-side stopword list for deterministic keyword extraction in the CLI.
+var brokerStopwords = map[string]bool{
+	"a": true, "an": true, "and": true, "are": true, "as": true,
+	"at": true, "be": true, "by": true, "for": true, "from": true,
+	"has": true, "have": true, "in": true, "is": true, "it": true,
+	"its": true, "of": true, "on": true, "or": true, "the": true,
+	"this": true, "that": true, "to": true, "was": true, "with": true,
+	"we": true, "i": true, "my": true, "me": true, "our": true,
+	"will": true, "not": true, "but": true, "into": true, "just": true,
+	"task": true, "work": true, "previous": true, "new": true,
+	"using": true, "use": true, "via": true, "which": true, "all": true,
+}
+
+func brokerExtractKeywords(text string, n int) []string {
+	words := strings.FieldsFunc(strings.ToLower(text), func(r rune) bool {
+		return !('a' <= r && r <= 'z') && !('0' <= r && r <= '9') && r != '-' && r != '_'
+	})
+	seen := map[string]bool{}
+	var out []string
+	for _, w := range words {
+		if len(w) < 3 || brokerStopwords[w] || seen[w] {
+			continue
+		}
+		seen[w] = true
+		out = append(out, w)
+		if len(out) >= n {
+			break
+		}
+	}
+	return out
+}
+
+func brokerBuildPlan(intent, summary string, maxItems, maxTokens int) (namespaces []string, includePins bool, rationale string) {
+	switch intent {
+	case "resume_task":
+		keywords := brokerExtractKeywords(summary, 3)
+		for _, kw := range keywords {
+			namespaces = append(namespaces, "user/memory/"+kw+"*")
+		}
+		namespaces = append(namespaces, "user/pins/*")
+		includePins = true
+		if len(keywords) > 0 {
+			rationale = fmt.Sprintf("resume_task: patterns from keywords [%s] + user/pins/*", strings.Join(keywords, ", "))
+		} else {
+			namespaces = append(namespaces, "user/memory/*")
+			rationale = "resume_task: no keywords extracted; using user/memory/* + user/pins/*"
+		}
+	case "boot_project":
+		namespaces = []string{"user/memory/*", "user/pins/*"}
+		includePins = true
+		if maxItems < 100 {
+			maxItems = 100
+		}
+		rationale = "boot_project: user/memory/* + user/pins/* for full project boot"
+	case "review_session":
+		namespaces = []string{"user/cache/*", "user/pins/*"}
+		includePins = true
+		rationale = "review_session: user/cache/* (last 24h) + user/pins/*"
+	default:
+		namespaces = []string{"user/*"}
+		rationale = "custom: using user/* (no explicit constraints provided)"
+	}
+	return namespaces, includePins, rationale
+}
+
+func (c *CLI) runBrokerPlan(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("broker plan", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	intent := fs.String("intent", "custom", "intent: resume_task|boot_project|review_session|custom")
+	summary := fs.String("summary", "", "task summary for keyword extraction (resume_task intent)")
+	maxItems := fs.Int("budget-items", 50, "max items budget")
+	maxTokens := fs.Int("budget-tokens", 4000, "max tokens estimate budget")
+	output := fs.String("output", "human", "human|json")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+
+	namespaces, includePins, rationale := brokerBuildPlan(*intent, *summary, *maxItems, *maxTokens)
+
+	planNS := strings.Join(namespaces, ", ")
+	pinsStr := "no"
+	if includePins {
+		pinsStr = "yes"
+	}
+
+	switch strings.TrimSpace(*output) {
+	case "json":
+		return c.writeJSON(map[string]any{
+			"plan": map[string]any{
+				"selector": map[string]any{
+					"namespaces":     namespaces,
+					"revision_scope": "head",
+					"order":          []string{"created_desc"},
+					"limit":          *maxItems,
+				},
+				"assembly": map[string]any{
+					"include_pins": includePins,
+					"budget":       map[string]any{"max_items": *maxItems, "max_tokens_estimate": *maxTokens},
+					"shape":        map[string]any{"include_payload": true, "payload_mode": "full"},
+					"manifest_level": "summary",
+				},
+			},
+			"rationale": rationale,
+			"warnings":  []string{},
+		})
+	default:
+		_, _ = fmt.Fprintf(c.Stdout, "Broker plan for intent: %s\n\n", *intent)
+		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
+		_, _ = fmt.Fprintf(w, "  Namespaces:\t%s\n", planNS)
+		_, _ = fmt.Fprintf(w, "  Include pins:\t%s\n", pinsStr)
+		_, _ = fmt.Fprintf(w, "  Budget:\t%d items, %d tokens estimate\n", *maxItems, *maxTokens)
+		_, _ = fmt.Fprintf(w, "  Rationale:\t%s\n", rationale)
+		_ = w.Flush()
+		_, _ = fmt.Fprintln(c.Stdout)
+		_, _ = fmt.Fprintln(c.Stdout, "  To execute this plan:")
+		for _, ns := range namespaces {
+			_, _ = fmt.Fprintf(c.Stdout, "    context packet --namespace %q", ns)
+		}
+		_, _ = fmt.Fprintf(c.Stdout, " --budget-items %d --budget-tokens %d\n", *maxItems, *maxTokens)
+		_, _ = fmt.Fprintln(c.Stdout)
+		_, _ = fmt.Fprintln(c.Stdout, "  Or: context broker fetch --intent "+*intent+" --summary \""+*summary+"\"")
+		return 0
+	}
+}
+
+func (c *CLI) runBrokerFetch(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("broker fetch", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	intent := fs.String("intent", "custom", "intent: resume_task|boot_project|review_session|custom")
+	summary := fs.String("summary", "", "task summary for keyword extraction")
+	maxItems := fs.Int("budget-items", 50, "max items budget")
+	maxTokens := fs.Int("budget-tokens", 4000, "max tokens estimate budget")
+	output := fs.String("output", "human", "human|json")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+
+	namespaces, _, rationale := brokerBuildPlan(*intent, *summary, *maxItems, *maxTokens)
+
+	_, _ = fmt.Fprintln(c.Stdout, "Fetching context via broker plan...")
+	_, _ = fmt.Fprintf(c.Stdout, "  Plan: %s → %d namespace pattern(s)\n", *intent, len(namespaces))
+
+	// Execute: select from all namespaces, apply budget.
+	var allRecs []contextstore.Record
+	seen := map[string]bool{}
+	for _, ns := range namespaces {
+		recs, err := c.Store.Select(ctx, contextstore.Selector{
+			Namespaces:    []string{ns},
+			RevisionScope: "head",
+			Limit:         *maxItems,
+		})
+		if err != nil {
+			return c.fail(err.Error())
+		}
+		for _, rec := range recs {
+			if !seen[rec.RecordID] {
+				seen[rec.RecordID] = true
+				allRecs = append(allRecs, rec)
+			}
+		}
+	}
+
+	// Apply budget.
+	var items []contextstore.Record
+	bytesSoFar, tokensSoFar := 0, 0
+	truncated := false
+	for _, rec := range allRecs {
+		if *maxItems > 0 && len(items) >= *maxItems {
+			truncated = true
+			break
+		}
+		if *maxTokens > 0 && tokensSoFar >= *maxTokens {
+			truncated = true
+			break
+		}
+		items = append(items, rec)
+		bytesSoFar += len(rec.Payload)
+		tokensSoFar += (len(rec.Payload) + 3) / 4
+	}
+
+	truncStr := "No"
+	if truncated {
+		truncStr = "Yes"
+	}
+
+	switch strings.TrimSpace(*output) {
+	case "json":
+		return c.writeJSON(map[string]any{
+			"items":     items,
+			"count":     len(items),
+			"bytes":     bytesSoFar,
+			"tokens":    tokensSoFar,
+			"truncated": truncated,
+			"rationale": rationale,
+		})
+	default:
+		_, _ = fmt.Fprintf(c.Stdout, "  Result: %d items, %dB (~%d tokens). Truncated: %s\n",
+			len(items), bytesSoFar, tokensSoFar, truncStr)
+		return 0
+	}
 }

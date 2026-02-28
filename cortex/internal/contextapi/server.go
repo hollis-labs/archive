@@ -80,6 +80,8 @@ type Server struct {
 	AuthToken string
 	// ManagedAuth enables token lifecycle validation using store-backed auth_tokens.
 	ManagedAuth bool
+	// Broker holds server-side caps for broker plan validation.
+	Broker BrokerConfig
 	// EnableMetrics exposes /v1/metrics and records per-route request/latency counters.
 	EnableMetrics bool
 	// EnableRequestLogging emits one structured line per request.
@@ -210,6 +212,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.handleTokenRevoke(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/broker/plan":
+		s.handleBrokerPlan(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/packet":
 		s.handlePacket(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/estimate":

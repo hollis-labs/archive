@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -1197,5 +1198,170 @@ func TestWildcardNamespaceGlobAllowsAnyNamespace(t *testing.T) {
 	}, map[string]string{"Authorization": "Bearer " + wildcardToken})
 	if res.Code != http.StatusOK {
 		t.Errorf("expected 200 with wildcard token, got %d: %s", res.Code, res.Body)
+	}
+}
+
+func TestBrokerPlanResumeTask(t *testing.T) {
+	s := newTestServer(t)
+
+	res := performJSON(t, s, http.MethodPost, "/v1/broker/plan", map[string]any{
+		"task_summary": "implementing capability token enforcement phase four",
+		"intent":       "resume_task",
+	})
+	if res.Code != http.StatusOK {
+		t.Fatalf("broker plan: %d %s", res.Code, res.Body)
+	}
+	var resp map[string]any
+	json.NewDecoder(res.Body).Decode(&resp)
+
+	plan, _ := resp["plan"].(map[string]any)
+	if plan == nil {
+		t.Fatalf("expected plan in response, got %v", resp)
+	}
+	selector, _ := plan["selector"].(map[string]any)
+	if selector == nil {
+		t.Fatalf("expected selector in plan")
+	}
+	namespaces, _ := selector["namespaces"].([]any)
+	if len(namespaces) == 0 {
+		t.Fatalf("expected namespaces in selector")
+	}
+	// Must include at least one namespace derived from the summary keyword "capability".
+	found := false
+	for _, ns := range namespaces {
+		if strings.Contains(ns.(string), "capability") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected namespace containing 'capability' for resume_task with summary about capability; got %v", namespaces)
+	}
+
+	rationale, _ := resp["rationale"].(string)
+	if !strings.Contains(rationale, "resume_task") {
+		t.Errorf("expected rationale to mention resume_task, got %q", rationale)
+	}
+}
+
+func TestBrokerPlanBootProject(t *testing.T) {
+	s := newTestServer(t)
+
+	res := performJSON(t, s, http.MethodPost, "/v1/broker/plan", map[string]any{
+		"intent": "boot_project",
+	})
+	if res.Code != http.StatusOK {
+		t.Fatalf("broker plan boot_project: %d %s", res.Code, res.Body)
+	}
+	var resp map[string]any
+	json.NewDecoder(res.Body).Decode(&resp)
+
+	plan, _ := resp["plan"].(map[string]any)
+	selector, _ := plan["selector"].(map[string]any)
+	namespaces, _ := selector["namespaces"].([]any)
+
+	hasMemory := false
+	hasPins := false
+	for _, ns := range namespaces {
+		s := ns.(string)
+		if strings.HasPrefix(s, "user/memory/") || s == "user/memory/*" {
+			hasMemory = true
+		}
+		if strings.HasPrefix(s, "user/pins/") || s == "user/pins/*" {
+			hasPins = true
+		}
+	}
+	if !hasMemory || !hasPins {
+		t.Errorf("boot_project plan should include user/memory/* and user/pins/*, got %v", namespaces)
+	}
+}
+
+func TestBrokerPlanForbiddenNamespaceStripped(t *testing.T) {
+	s := newTestServer(t)
+	s.Broker = BrokerConfig{
+		ForbiddenNamespacePatterns: []string{"system/*"},
+	}
+
+	res := performJSON(t, s, http.MethodPost, "/v1/broker/plan", map[string]any{
+		"intent": "custom",
+		"constraints": map[string]any{
+			"namespaces": []string{"user/memory/*", "system/internal/secrets"},
+		},
+	})
+	if res.Code != http.StatusOK {
+		t.Fatalf("broker plan forbidden namespace: %d %s", res.Code, res.Body)
+	}
+	var resp map[string]any
+	json.NewDecoder(res.Body).Decode(&resp)
+
+	// Warnings should mention the forbidden namespace.
+	warnings, _ := resp["warnings"].([]any)
+	foundWarning := false
+	for _, w := range warnings {
+		if strings.Contains(w.(string), "forbidden") {
+			foundWarning = true
+		}
+	}
+	if !foundWarning {
+		t.Errorf("expected warning about forbidden namespace, got %v", warnings)
+	}
+
+	// system/internal/secrets should be stripped.
+	plan, _ := resp["plan"].(map[string]any)
+	selector, _ := plan["selector"].(map[string]any)
+	for _, ns := range selector["namespaces"].([]any) {
+		if strings.Contains(ns.(string), "system") {
+			t.Errorf("forbidden namespace should have been stripped, still in plan: %v", ns)
+		}
+	}
+}
+
+func TestBrokerPlanNoPermittedNamespacesReturns403(t *testing.T) {
+	s := newTestServer(t)
+	s.Broker = BrokerConfig{
+		ForbiddenNamespacePatterns: []string{"user/*"},
+	}
+
+	res := performJSON(t, s, http.MethodPost, "/v1/broker/plan", map[string]any{
+		"intent": "boot_project",
+	})
+	if res.Code != http.StatusForbidden {
+		t.Errorf("expected 403 plan_forbidden when all namespaces stripped, got %d: %s", res.Code, res.Body)
+	}
+}
+
+func TestBrokerPlanBudgetClamped(t *testing.T) {
+	s := newTestServer(t)
+	s.Broker = BrokerConfig{
+		MaxItemsCap:  10,
+		MaxTokensCap: 500,
+	}
+
+	res := performJSON(t, s, http.MethodPost, "/v1/broker/plan", map[string]any{
+		"intent": "custom",
+		"constraints": map[string]any{
+			"max_items":           300,
+			"max_tokens_estimate": 50000,
+		},
+	})
+	if res.Code != http.StatusOK {
+		t.Fatalf("broker plan budget clamp: %d %s", res.Code, res.Body)
+	}
+	var resp map[string]any
+	json.NewDecoder(res.Body).Decode(&resp)
+
+	// Warnings should mention clamping.
+	warnings, _ := resp["warnings"].([]any)
+	foundItemsClamp, foundTokensClamp := false, false
+	for _, w := range warnings {
+		ws := w.(string)
+		if strings.Contains(ws, "max_items") {
+			foundItemsClamp = true
+		}
+		if strings.Contains(ws, "max_tokens_estimate") {
+			foundTokensClamp = true
+		}
+	}
+	if !foundItemsClamp || !foundTokensClamp {
+		t.Errorf("expected clamping warnings, got %v", warnings)
 	}
 }
