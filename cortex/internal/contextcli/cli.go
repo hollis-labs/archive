@@ -810,9 +810,11 @@ func (c *CLI) runAudit(ctx context.Context, args []string) int {
 
 func (c *CLI) runToken(ctx context.Context, args []string) int {
 	if len(args) == 0 {
-		return c.fail("usage: context token <issue|rotate|revoke|list> ...")
+		return c.fail("usage: context token <create|list|show|revoke|issue|rotate> ...")
 	}
 	switch args[0] {
+	case "create":
+		return c.runTokenCreate(ctx, args[1:])
 	case "issue":
 		return c.runTokenIssue(ctx, args[1:])
 	case "rotate":
@@ -821,8 +823,144 @@ func (c *CLI) runToken(ctx context.Context, args []string) int {
 		return c.runTokenRevoke(ctx, args[1:])
 	case "list":
 		return c.runTokenList(ctx, args[1:])
+	case "show":
+		return c.runTokenShow(ctx, args[1:])
 	default:
 		return c.fail("unknown token command: " + args[0])
+	}
+}
+
+func (c *CLI) runTokenCreate(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("token create", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	name := fs.String("name", "", "token name/label (required)")
+	clientID := fs.String("client-id", "", "client identity (e.g. app:claude, user)")
+	scopesStr := fs.String("scopes", "", "comma-separated scopes (write,packet,promote.request,...)")
+	namespacesStr := fs.String("namespaces", "", "comma-separated namespace globs (e.g. app/claude/*)")
+	expires := fs.String("expires", "", "expiry as RFC3339 or YYYY-MM-DD")
+	ttl := fs.String("ttl", "", "expiry as Go duration (e.g. 8760h)")
+	output := fs.String("output", "table", "json|table")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	if strings.TrimSpace(*name) == "" {
+		return c.fail("--name is required")
+	}
+
+	var scopes []string
+	if strings.TrimSpace(*scopesStr) != "" {
+		for _, s := range strings.Split(*scopesStr, ",") {
+			if t := strings.TrimSpace(s); t != "" {
+				scopes = append(scopes, t)
+			}
+		}
+	}
+	var globs []string
+	if strings.TrimSpace(*namespacesStr) != "" {
+		for _, s := range strings.Split(*namespacesStr, ",") {
+			if t := strings.TrimSpace(s); t != "" {
+				globs = append(globs, t)
+			}
+		}
+	}
+
+	var dur time.Duration
+	if strings.TrimSpace(*expires) != "" {
+		t, err := time.Parse(time.RFC3339, *expires)
+		if err != nil {
+			t, err = time.Parse("2006-01-02", *expires)
+			if err != nil {
+				return c.fail("--expires must be RFC3339 or YYYY-MM-DD")
+			}
+			t = t.UTC()
+		}
+		dur = time.Until(t)
+		if dur <= 0 {
+			return c.fail("--expires must be in the future")
+		}
+	} else if strings.TrimSpace(*ttl) != "" {
+		parsed, err := time.ParseDuration(*ttl)
+		if err != nil {
+			return c.fail("--ttl must be a valid Go duration")
+		}
+		dur = parsed
+	}
+
+	token, meta, err := c.Store.CreateAuthToken(ctx, contextstore.TokenCreateInput{
+		Label:          *name,
+		ClientID:       *clientID,
+		Scopes:         scopes,
+		NamespaceGlobs: globs,
+		TTL:            dur,
+	})
+	if err != nil {
+		return c.fail(err.Error())
+	}
+
+	switch strings.TrimSpace(*output) {
+	case "json":
+		return c.writeJSON(map[string]any{
+			"token": token, "id": meta.TokenID, "name": meta.Label,
+			"client_id": meta.ClientID, "scopes": meta.Scopes,
+			"namespace_globs": meta.NamespaceGlobs,
+			"created_at": meta.CreatedAt, "expires_at": meta.ExpiresAt,
+		})
+	default:
+		_, _ = fmt.Fprintln(c.Stdout, "Token created. Copy this value now — it will not be shown again.")
+		_, _ = fmt.Fprintln(c.Stdout)
+		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
+		_, _ = fmt.Fprintf(w, "  Token:\t%s\n", token)
+		_, _ = fmt.Fprintf(w, "  ID:\t%s\n", meta.TokenID)
+		_, _ = fmt.Fprintf(w, "  Name:\t%s\n", meta.Label)
+		_, _ = fmt.Fprintf(w, "  Client:\t%s\n", meta.ClientID)
+		_, _ = fmt.Fprintf(w, "  Scopes:\t%s\n", strings.Join(meta.Scopes, ", "))
+		_, _ = fmt.Fprintf(w, "  Namespaces:\t%s\n", strings.Join(meta.NamespaceGlobs, ", "))
+		_, _ = fmt.Fprintf(w, "  Expires:\t%s\n", meta.ExpiresAt)
+		_ = w.Flush()
+		return 0
+	}
+}
+
+func (c *CLI) runTokenShow(ctx context.Context, args []string) int {
+	fs := flag.NewFlagSet("token show", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	output := fs.String("output", "table", "json|table")
+	if err := fs.Parse(args); err != nil {
+		return c.fail(err.Error())
+	}
+	if len(fs.Args()) == 0 {
+		return c.fail("usage: context token show <token-id>")
+	}
+	tokenID := fs.Args()[0]
+	meta, err := c.Store.GetAuthToken(ctx, tokenID)
+	if err != nil {
+		return c.fail(err.Error())
+	}
+	switch strings.TrimSpace(*output) {
+	case "json":
+		return c.writeJSON(map[string]any{
+			"id": meta.TokenID, "name": meta.Label,
+			"client_id": meta.ClientID, "scopes": meta.Scopes,
+			"namespace_globs": meta.NamespaceGlobs,
+			"created_at": meta.CreatedAt, "expires_at": meta.ExpiresAt,
+			"revoked": meta.RevokedAt != "",
+		})
+	default:
+		status := "active"
+		if meta.RevokedAt != "" {
+			status = "revoked"
+		}
+		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
+		_, _ = fmt.Fprintf(w, "  ID:\t%s\n", meta.TokenID)
+		_, _ = fmt.Fprintf(w, "  Name:\t%s\n", meta.Label)
+		_, _ = fmt.Fprintf(w, "  Client:\t%s\n", meta.ClientID)
+		_, _ = fmt.Fprintf(w, "  Scopes:\t%s\n", strings.Join(meta.Scopes, ", "))
+		_, _ = fmt.Fprintf(w, "  Namespaces:\t%s\n", strings.Join(meta.NamespaceGlobs, ", "))
+		_, _ = fmt.Fprintf(w, "  Created:\t%s\n", meta.CreatedAt)
+		_, _ = fmt.Fprintf(w, "  Expires:\t%s\n", meta.ExpiresAt)
+		_, _ = fmt.Fprintf(w, "  Status:\t%s\n", status)
+		_ = w.Flush()
+		return 0
 	}
 }
 
@@ -900,9 +1038,26 @@ func (c *CLI) runTokenRotate(ctx context.Context, args []string) int {
 func (c *CLI) runTokenRevoke(ctx context.Context, args []string) int {
 	fs := flag.NewFlagSet("token revoke", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
-	token := fs.String("token", "", "token")
+	token := fs.String("token", "", "raw token value (legacy)")
+	id := fs.String("id", "", "token-id to revoke by ID")
 	if err := fs.Parse(args); err != nil {
 		return c.fail(err.Error())
+	}
+
+	// Allow positional arg as token-id
+	if *id == "" && len(fs.Args()) > 0 {
+		*id = fs.Args()[0]
+	}
+
+	if *id != "" {
+		if err := c.Store.RevokeAuthTokenByID(ctx, *id); err != nil {
+			return c.fail(err.Error())
+		}
+		_, _ = fmt.Fprintf(c.Stdout, "Token %s revoked. Requests using this token will be rejected immediately.\n", *id)
+		return 0
+	}
+	if *token == "" {
+		return c.fail("usage: context token revoke <token-id>  or  --token <raw-value>")
 	}
 	if err := c.Store.RevokeAuthToken(ctx, *token); err != nil {
 		return c.fail(err.Error())
@@ -914,7 +1069,8 @@ func (c *CLI) runTokenList(ctx context.Context, args []string) int {
 	fs := flag.NewFlagSet("token list", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	limit := fs.Int("limit", 50, "limit")
-	output := fs.String("output", "json", "json|table")
+	showRevoked := fs.Bool("show-revoked", false, "include revoked tokens")
+	output := fs.String("output", "table", "json|table")
 	if err := fs.Parse(args); err != nil {
 		return c.fail(err.Error())
 	}
@@ -922,19 +1078,40 @@ func (c *CLI) runTokenList(ctx context.Context, args []string) int {
 	if err != nil {
 		return c.fail(err.Error())
 	}
+	if !*showRevoked {
+		active := tokens[:0]
+		for _, t := range tokens {
+			if t.RevokedAt == "" {
+				active = append(active, t)
+			}
+		}
+		tokens = active
+	}
 	switch strings.TrimSpace(*output) {
-	case "json", "":
+	case "json":
 		return c.writeJSON(map[string]any{"count": len(tokens), "items": tokens})
-	case "table":
+	default:
 		w := tabwriter.NewWriter(c.Stdout, 2, 4, 2, ' ', 0)
-		_, _ = fmt.Fprintln(w, "TOKEN_ID\tLABEL\tCREATED_AT\tEXPIRES_AT\tREVOKED_AT")
-		for _, token := range tokens {
-			_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", token.TokenID, token.Label, token.CreatedAt, token.ExpiresAt, token.RevokedAt)
+		_, _ = fmt.Fprintln(w, "ID\tNAME\tCLIENT\tSCOPES\tNAMESPACES\tEXPIRES\tSTATUS")
+		for _, t := range tokens {
+			scopes := strings.Join(t.Scopes, ",")
+			if len(t.Scopes) == 7 {
+				scopes = "(all)"
+			}
+			namespaces := strings.Join(t.NamespaceGlobs, ",")
+			expires := t.ExpiresAt
+			if expires == "" {
+				expires = "never"
+			}
+			status := "active"
+			if t.RevokedAt != "" {
+				status = "revoked"
+			}
+			_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+				t.TokenID, t.Label, t.ClientID, scopes, namespaces, expires, status)
 		}
 		_ = w.Flush()
 		return 0
-	default:
-		return c.fail("output must be json|table")
 	}
 }
 

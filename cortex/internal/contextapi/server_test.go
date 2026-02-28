@@ -968,3 +968,234 @@ func TestOldPromoteEndpointReturnsGone(t *testing.T) {
 		t.Errorf("want 410 Gone, got %d: %s", res.Code, res.Body)
 	}
 }
+
+func TestTokenCreateListRevoke(t *testing.T) {
+	s := newTestServer(t)
+
+	// Create a scoped token.
+	createRes := performJSON(t, s, "POST", "/v1/auth/tokens/create", map[string]any{
+		"name":            "test-agent",
+		"client_id":       "app:test",
+		"scopes":          []string{"write", "packet"},
+		"namespace_globs": []string{"app/test/*"},
+		"ttl":             "8760h",
+	})
+	if createRes.Code != http.StatusOK {
+		t.Fatalf("token create: %d %s", createRes.Code, createRes.Body)
+	}
+	var createResp map[string]any
+	json.NewDecoder(createRes.Body).Decode(&createResp)
+	if createResp["token"] == "" || createResp["token"] == nil {
+		t.Errorf("expected raw token in create response, got %v", createResp)
+	}
+	if createResp["id"] == "" || createResp["id"] == nil {
+		t.Errorf("expected id in create response")
+	}
+	tokenID := createResp["id"].(string)
+	if createResp["name"] != "test-agent" {
+		t.Errorf("expected name=test-agent, got %v", createResp["name"])
+	}
+	scopes, _ := createResp["scopes"].([]any)
+	if len(scopes) != 2 {
+		t.Errorf("expected 2 scopes, got %v", scopes)
+	}
+
+	// List tokens — raw value must NOT be returned.
+	listRes := performJSON(t, s, "GET", "/v1/auth/tokens/list", nil)
+	if listRes.Code != http.StatusOK {
+		t.Fatalf("token list: %d %s", listRes.Code, listRes.Body)
+	}
+	var listResp map[string]any
+	json.NewDecoder(listRes.Body).Decode(&listResp)
+	tokens, _ := listResp["tokens"].([]any)
+	if len(tokens) == 0 {
+		t.Fatalf("expected at least one token in list")
+	}
+	found := false
+	for _, raw := range tokens {
+		entry := raw.(map[string]any)
+		if entry["id"] == tokenID {
+			found = true
+			if entry["name"] != "test-agent" {
+				t.Errorf("name mismatch: %v", entry["name"])
+			}
+			if entry["client_id"] != "app:test" {
+				t.Errorf("client_id mismatch: %v", entry["client_id"])
+			}
+			if _, hasToken := entry["token"]; hasToken {
+				t.Errorf("list must never return raw token value")
+			}
+		}
+	}
+	if !found {
+		t.Errorf("created token %s not found in list", tokenID)
+	}
+
+	// Revoke by ID.
+	revokeRes := performJSON(t, s, "POST", "/v1/auth/tokens/revoke", map[string]any{
+		"id": tokenID,
+	})
+	if revokeRes.Code != http.StatusOK {
+		t.Fatalf("token revoke: %d %s", revokeRes.Code, revokeRes.Body)
+	}
+	var revokeResp map[string]any
+	json.NewDecoder(revokeRes.Body).Decode(&revokeResp)
+	if revokeResp["revoked"] != true {
+		t.Errorf("expected revoked=true, got %v", revokeResp)
+	}
+}
+
+func TestTokenCreateValidation(t *testing.T) {
+	s := newTestServer(t)
+
+	// Missing name.
+	res := performJSON(t, s, "POST", "/v1/auth/tokens/create", map[string]any{
+		"client_id": "app:test",
+	})
+	if res.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for missing name, got %d: %s", res.Code, res.Body)
+	}
+
+	// Invalid expires_at.
+	res2 := performJSON(t, s, "POST", "/v1/auth/tokens/create", map[string]any{
+		"name":       "bad-expiry",
+		"expires_at": "not-a-date",
+	})
+	if res2.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for invalid expires_at, got %d: %s", res2.Code, res2.Body)
+	}
+}
+
+func TestTokenRevokeInvalidID(t *testing.T) {
+	s := newTestServer(t)
+	res := performJSON(t, s, "POST", "/v1/auth/tokens/revoke", map[string]any{
+		"id": "tok-nonexistent",
+	})
+	// Should return 500 (internal error) since the ID doesn't exist.
+	if res.Code == http.StatusOK {
+		t.Errorf("expected non-200 for nonexistent token ID, got 200")
+	}
+}
+
+// issueTokenWithScopes creates a managed-auth token with given scopes and namespace globs.
+func issueTokenWithScopes(t *testing.T, srv *Server, label string, scopes, namespaceGlobs []string) string {
+	t.Helper()
+	rawToken, _, err := srv.Store.CreateAuthToken(context.Background(), contextstore.TokenCreateInput{
+		Label:          label,
+		Scopes:         scopes,
+		NamespaceGlobs: namespaceGlobs,
+		TTL:            time.Hour,
+	})
+	if err != nil {
+		t.Fatalf("create token: %v", err)
+	}
+	return rawToken
+}
+
+func TestScopeEnforcementBlocksWriteWithoutWriteScope(t *testing.T) {
+	srv := newTestServer(t)
+	srv.ManagedAuth = true
+
+	// Token with only "packet" scope — cannot write.
+	packetToken := issueTokenWithScopes(t, srv, "packet-only", []string{"packet"}, []string{"*"})
+
+	res := performJSONWithHeaders(t, srv, http.MethodPost, "/v1/context/write", map[string]any{
+		"client_id": "editor",
+		"actor":     "app:editor",
+		"namespace": "app/editor/session",
+		"key":       "summary",
+		"payload":   map[string]any{"v": 1},
+	}, map[string]string{"Authorization": "Bearer " + packetToken})
+	if res.Code != http.StatusForbidden {
+		t.Errorf("expected 403 insufficient_scope, got %d: %s", res.Code, res.Body)
+	}
+	var body map[string]any
+	json.NewDecoder(res.Body).Decode(&body)
+	if body["code"] != "insufficient_scope" {
+		t.Errorf("expected code=insufficient_scope, got %v", body["code"])
+	}
+}
+
+func TestScopeEnforcementAllowsWriteWithWriteScope(t *testing.T) {
+	srv := newTestServer(t)
+	srv.ManagedAuth = true
+
+	// Full-access token (migration default) can write.
+	fullToken := issueTokenWithScopes(t, srv, "full-access", nil, nil) // nil → defaults
+
+	res := performJSONWithHeaders(t, srv, http.MethodPost, "/v1/context/write", map[string]any{
+		"client_id": "editor",
+		"actor":     "app:editor",
+		"namespace": "app/editor/session",
+		"key":       "summary",
+		"payload":   map[string]any{"v": 1},
+	}, map[string]string{"Authorization": "Bearer " + fullToken})
+	if res.Code != http.StatusOK {
+		t.Errorf("expected 200 with full-access token, got %d: %s", res.Code, res.Body)
+	}
+}
+
+func TestNamespaceGlobEnforcementBlocksForeignNamespace(t *testing.T) {
+	srv := newTestServer(t)
+	srv.ManagedAuth = true
+
+	// Token scoped to app/myapp/* only — cannot write to app/editor/*.
+	scopedToken := issueTokenWithScopes(t, srv, "myapp-only",
+		[]string{"write"}, []string{"app/myapp/*"})
+
+	res := performJSONWithHeaders(t, srv, http.MethodPost, "/v1/context/write", map[string]any{
+		"client_id": "editor",
+		"actor":     "app:editor",
+		"namespace": "app/editor/session",
+		"key":       "summary",
+		"payload":   map[string]any{"v": 1},
+	}, map[string]string{"Authorization": "Bearer " + scopedToken})
+	if res.Code != http.StatusForbidden {
+		t.Errorf("expected 403 namespace_not_permitted, got %d: %s", res.Code, res.Body)
+	}
+	var body map[string]any
+	json.NewDecoder(res.Body).Decode(&body)
+	if body["code"] != "namespace_not_permitted" {
+		t.Errorf("expected code=namespace_not_permitted, got %v", body["code"])
+	}
+}
+
+func TestNamespaceGlobEnforcementAllowsMatchingNamespace(t *testing.T) {
+	srv := newTestServer(t)
+	srv.ManagedAuth = true
+
+	// Token scoped to app/editor/* — can write to app/editor/session.
+	scopedToken := issueTokenWithScopes(t, srv, "editor-scoped",
+		[]string{"write"}, []string{"app/editor/*"})
+
+	res := performJSONWithHeaders(t, srv, http.MethodPost, "/v1/context/write", map[string]any{
+		"client_id": "editor",
+		"actor":     "app:editor",
+		"namespace": "app/editor/session",
+		"key":       "summary",
+		"payload":   map[string]any{"v": 1},
+	}, map[string]string{"Authorization": "Bearer " + scopedToken})
+	if res.Code != http.StatusOK {
+		t.Errorf("expected 200 with matching namespace glob, got %d: %s", res.Code, res.Body)
+	}
+}
+
+func TestWildcardNamespaceGlobAllowsAnyNamespace(t *testing.T) {
+	srv := newTestServer(t)
+	srv.ManagedAuth = true
+
+	// Token with namespace_globs: ["*"] — can write anywhere.
+	wildcardToken := issueTokenWithScopes(t, srv, "wildcard",
+		[]string{"write"}, []string{"*"})
+
+	res := performJSONWithHeaders(t, srv, http.MethodPost, "/v1/context/write", map[string]any{
+		"client_id": "editor",
+		"actor":     "app:editor",
+		"namespace": "app/editor/session",
+		"key":       "summary",
+		"payload":   map[string]any{"v": 1},
+	}, map[string]string{"Authorization": "Bearer " + wildcardToken})
+	if res.Code != http.StatusOK {
+		t.Errorf("expected 200 with wildcard token, got %d: %s", res.Code, res.Body)
+	}
+}

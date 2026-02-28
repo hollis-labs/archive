@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -17,6 +18,59 @@ import (
 	"github.com/hollis-labs/volon-dev/internal/contextpolicy"
 	"github.com/hollis-labs/volon-dev/internal/contextstore"
 )
+
+type contextKey int
+
+const tokenClaimsKey contextKey = iota
+
+// getTokenClaims extracts token claims from the request context (set by authorizeMutatingRequest).
+// Returns zero-value AuthToken when no managed-auth session (full access assumed).
+func getTokenClaims(r *http.Request) (contextstore.AuthToken, bool) {
+	v, ok := r.Context().Value(tokenClaimsKey).(contextstore.AuthToken)
+	return v, ok
+}
+
+// requireScope checks that the request's token claims include the given scope.
+// Returns false and writes a 403 response if the check fails.
+func requireScope(w http.ResponseWriter, r *http.Request, scope string) bool {
+	claims, ok := getTokenClaims(r)
+	if !ok {
+		return true // no managed-auth; pass through
+	}
+	for _, s := range claims.Scopes {
+		if s == scope {
+			return true
+		}
+	}
+	writeError(w, http.StatusForbidden, "insufficient_scope", "token does not have required scope", map[string]any{
+		"required":     scope,
+		"token_client": claims.ClientID,
+	})
+	return false
+}
+
+// requireNamespaceAccess checks that the request's token namespace_globs permit the given namespace.
+// Returns false and writes a 403 response if denied.
+func requireNamespaceAccess(w http.ResponseWriter, r *http.Request, namespace string) bool {
+	claims, ok := getTokenClaims(r)
+	if !ok {
+		return true // no managed-auth; pass through
+	}
+	for _, glob := range claims.NamespaceGlobs {
+		if glob == "*" || glob == namespace {
+			return true
+		}
+		if matched, _ := path.Match(glob, namespace); matched {
+			return true
+		}
+	}
+	writeError(w, http.StatusForbidden, "namespace_not_permitted",
+		"token is not permitted to access this namespace", map[string]any{
+			"namespace":   namespace,
+			"token_globs": claims.NamespaceGlobs,
+		})
+	return false
+}
 
 // Server exposes HTTP handlers for the context API.
 type Server struct {
@@ -89,31 +143,31 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		s.handleMetrics(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/namespaces/register":
-		if !s.authorizeMutatingRequest(w, r) {
+		if r = s.authorizeMutatingRequest(w, r); r == nil {
 			return
 		}
 		s.handleNamespaceRegister(w, r)
 	case r.Method == http.MethodGet && r.URL.Path == "/v1/namespaces/get":
 		s.handleNamespaceGet(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/write":
-		if !s.authorizeMutatingRequest(w, r) {
+		if r = s.authorizeMutatingRequest(w, r); r == nil {
 			return
 		}
 		s.handleWrite(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/promote":
 		s.handlePromoteDeprecated(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/promote/request":
-		if !s.authorizeMutatingRequest(w, r) {
+		if r = s.authorizeMutatingRequest(w, r); r == nil {
 			return
 		}
 		s.handlePromoteRequest(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/promote/approve":
-		if !s.authorizeMutatingRequest(w, r) {
+		if r = s.authorizeMutatingRequest(w, r); r == nil {
 			return
 		}
 		s.handlePromoteApprove(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/promote/apply":
-		if !s.authorizeMutatingRequest(w, r) {
+		if r = s.authorizeMutatingRequest(w, r); r == nil {
 			return
 		}
 		s.handlePromoteApply(w, r)
@@ -130,20 +184,32 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case r.Method == http.MethodGet && r.URL.Path == "/v1/context/consistency/scan":
 		s.handleConsistencyScan(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/consistency/repair":
-		if !s.authorizeMutatingRequest(w, r) {
+		if r = s.authorizeMutatingRequest(w, r); r == nil {
 			return
 		}
 		s.handleConsistencyRepair(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/maintenance/trim":
-		if !s.authorizeMutatingRequest(w, r) {
+		if r = s.authorizeMutatingRequest(w, r); r == nil {
 			return
 		}
 		s.handleMaintenanceTrim(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/maintenance/compact":
-		if !s.authorizeMutatingRequest(w, r) {
+		if r = s.authorizeMutatingRequest(w, r); r == nil {
 			return
 		}
 		s.handleMaintenanceCompact(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/auth/tokens/create":
+		if r = s.authorizeMutatingRequest(w, r); r == nil {
+			return
+		}
+		s.handleTokenCreate(w, r)
+	case r.Method == http.MethodGet && r.URL.Path == "/v1/auth/tokens/list":
+		s.handleTokenList(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/auth/tokens/revoke":
+		if r = s.authorizeMutatingRequest(w, r); r == nil {
+			return
+		}
+		s.handleTokenRevoke(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/packet":
 		s.handlePacket(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/estimate":
@@ -194,21 +260,25 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, s.metrics.Snapshot())
 }
 
-func (s *Server) authorizeMutatingRequest(w http.ResponseWriter, r *http.Request) bool {
+// authorizeMutatingRequest validates auth and returns the (possibly claims-enriched) request.
+// Returns nil if auth failed (response already written).
+func (s *Server) authorizeMutatingRequest(w http.ResponseWriter, r *http.Request) *http.Request {
 	if s.ManagedAuth {
 		authHeader := strings.TrimSpace(r.Header.Get("Authorization"))
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			writeError(w, http.StatusUnauthorized, "auth_required", "missing or invalid bearer token", nil)
-			return false
+			return nil
 		}
 		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
 		if token == "" {
 			writeError(w, http.StatusUnauthorized, "auth_required", "missing or invalid bearer token", nil)
-			return false
+			return nil
 		}
-		err := s.Store.ValidateAuthToken(r.Context(), token)
+		claims, err := s.Store.ValidateAuthTokenWithClaims(r.Context(), token)
 		if err == nil {
-			return true
+			// Attach claims to context for scope/namespace checking downstream.
+			ctx := context.WithValue(r.Context(), tokenClaimsKey, claims)
+			return r.WithContext(ctx)
 		}
 		switch {
 		case errors.Is(err, contextstore.ErrAuthTokenInvalid),
@@ -217,27 +287,27 @@ func (s *Server) authorizeMutatingRequest(w http.ResponseWriter, r *http.Request
 			writeError(w, http.StatusUnauthorized, "auth_required", "missing or invalid bearer token", map[string]any{
 				"reason": err.Error(),
 			})
-			return false
+			return nil
 		default:
 			writeError(w, http.StatusInternalServerError, "auth_failed", err.Error(), nil)
-			return false
+			return nil
 		}
 	}
 
 	if strings.TrimSpace(s.AuthToken) == "" {
-		return true
+		return r
 	}
 	authHeader := strings.TrimSpace(r.Header.Get("Authorization"))
 	if !strings.HasPrefix(authHeader, "Bearer ") {
 		writeError(w, http.StatusUnauthorized, "auth_required", "missing or invalid bearer token", nil)
-		return false
+		return nil
 	}
 	token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
 	if token == "" || token != s.AuthToken {
 		writeError(w, http.StatusUnauthorized, "auth_required", "missing or invalid bearer token", nil)
-		return false
+		return nil
 	}
-	return true
+	return r
 }
 
 type issueTokenRequest struct {
@@ -271,6 +341,120 @@ func (s *Server) handleIssueToken(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// --- Token management endpoints ---
+
+type tokenCreateRequest struct {
+	Name           string   `json:"name"`
+	ClientID       string   `json:"client_id"`
+	Scopes         []string `json:"scopes"`
+	NamespaceGlobs []string `json:"namespace_globs"`
+	TTL            string   `json:"ttl"`
+	ExpiresAt      string   `json:"expires_at"`
+}
+
+func (s *Server) handleTokenCreate(w http.ResponseWriter, r *http.Request) {
+	var req tokenCreateRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
+		return
+	}
+	if strings.TrimSpace(req.Name) == "" {
+		writeError(w, http.StatusBadRequest, "validation_error", "name required", nil)
+		return
+	}
+
+	var ttl time.Duration
+	if strings.TrimSpace(req.ExpiresAt) != "" {
+		t, err := time.Parse(time.RFC3339, req.ExpiresAt)
+		if err != nil {
+			// try date-only
+			t, err = time.Parse("2006-01-02", req.ExpiresAt)
+			if err != nil {
+				writeError(w, http.StatusBadRequest, "validation_error", "expires_at must be RFC3339 or YYYY-MM-DD", nil)
+				return
+			}
+			t = t.UTC()
+		}
+		ttl = time.Until(t)
+		if ttl <= 0 {
+			writeError(w, http.StatusBadRequest, "validation_error", "expires_at must be in the future", nil)
+			return
+		}
+	} else if strings.TrimSpace(req.TTL) != "" {
+		parsed, err := time.ParseDuration(req.TTL)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "validation_error", "ttl must be a valid duration", nil)
+			return
+		}
+		ttl = parsed
+	}
+
+	token, meta, err := s.Store.CreateAuthToken(r.Context(), contextstore.TokenCreateInput{
+		Label:          req.Name,
+		ClientID:       req.ClientID,
+		Scopes:         req.Scopes,
+		NamespaceGlobs: req.NamespaceGlobs,
+		TTL:            ttl,
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "auth_failed", err.Error(), nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"token":           token,
+		"id":              meta.TokenID,
+		"name":            meta.Label,
+		"client_id":       meta.ClientID,
+		"scopes":          meta.Scopes,
+		"namespace_globs": meta.NamespaceGlobs,
+		"created_at":      meta.CreatedAt,
+		"expires_at":      meta.ExpiresAt,
+	})
+}
+
+func (s *Server) handleTokenList(w http.ResponseWriter, r *http.Request) {
+	tokens, err := s.Store.ListAuthTokens(r.Context(), 100)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "list_failed", err.Error(), nil)
+		return
+	}
+	out := make([]map[string]any, 0, len(tokens))
+	for _, t := range tokens {
+		out = append(out, map[string]any{
+			"id":              t.TokenID,
+			"name":            t.Label,
+			"client_id":       t.ClientID,
+			"scopes":          t.Scopes,
+			"namespace_globs": t.NamespaceGlobs,
+			"created_at":      t.CreatedAt,
+			"expires_at":      t.ExpiresAt,
+			"revoked":         t.RevokedAt != "",
+		})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"tokens": out})
+}
+
+type tokenRevokeRequest struct {
+	ID string `json:"id"`
+}
+
+func (s *Server) handleTokenRevoke(w http.ResponseWriter, r *http.Request) {
+	var req tokenRevokeRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
+		return
+	}
+	if strings.TrimSpace(req.ID) == "" {
+		writeError(w, http.StatusBadRequest, "validation_error", "id required", nil)
+		return
+	}
+	if err := s.Store.RevokeAuthTokenByID(r.Context(), req.ID); err != nil {
+		writeError(w, http.StatusInternalServerError, "revoke_failed", err.Error(), nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"id": req.ID, "revoked": true})
+}
+
 type namespaceRegisterRequest struct {
 	Namespace string         `json:"namespace"`
 	OwnerType string         `json:"owner_type"`
@@ -279,6 +463,9 @@ type namespaceRegisterRequest struct {
 }
 
 func (s *Server) handleNamespaceRegister(w http.ResponseWriter, r *http.Request) {
+	if !requireScope(w, r, "namespace.register") {
+		return
+	}
 	var req namespaceRegisterRequest
 	if err := decodeJSON(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
@@ -341,9 +528,15 @@ type writeRequest struct {
 }
 
 func (s *Server) handleWrite(w http.ResponseWriter, r *http.Request) {
+	if !requireScope(w, r, "write") {
+		return
+	}
 	var req writeRequest
 	if err := decodeJSON(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
+		return
+	}
+	if !requireNamespaceAccess(w, r, req.Namespace) {
 		return
 	}
 	if err := s.Policy.CanWrite(req.ClientID, req.Actor, req.Namespace); err != nil {
@@ -608,6 +801,9 @@ func (s *Server) handleConsistencyScan(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleConsistencyRepair(w http.ResponseWriter, r *http.Request) {
+	if !requireScope(w, r, "repair") {
+		return
+	}
 	rebuilt, err := s.Store.RebuildHeads(r.Context())
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "repair_failed", err.Error(), nil)
@@ -794,6 +990,9 @@ type maintenanceTrimRequest struct {
 }
 
 func (s *Server) handleMaintenanceTrim(w http.ResponseWriter, r *http.Request) {
+	if !requireScope(w, r, "repair") {
+		return
+	}
 	var req maintenanceTrimRequest
 	if err := decodeJSON(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
@@ -839,6 +1038,9 @@ type maintenanceCompactRequest struct {
 }
 
 func (s *Server) handleMaintenanceCompact(w http.ResponseWriter, r *http.Request) {
+	if !requireScope(w, r, "repair") {
+		return
+	}
 	var req maintenanceCompactRequest
 	if err := decodeJSON(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)

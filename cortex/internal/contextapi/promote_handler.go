@@ -31,9 +31,15 @@ type promoteRequestReq struct {
 }
 
 func (s *Server) handlePromoteRequest(w http.ResponseWriter, r *http.Request) {
+	if !requireScope(w, r, "promote.request") {
+		return
+	}
 	var req promoteRequestReq
 	if err := decodeJSON(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
+		return
+	}
+	if !requireNamespaceAccess(w, r, req.SourceNamespace) {
 		return
 	}
 	if req.SourceNamespace == "" || req.SourceKey == "" {
@@ -130,6 +136,9 @@ type promoteApproveReq struct {
 }
 
 func (s *Server) handlePromoteApprove(w http.ResponseWriter, r *http.Request) {
+	if !requireScope(w, r, "promote.approve") {
+		return
+	}
 	var req promoteApproveReq
 	if err := decodeJSON(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
@@ -222,6 +231,9 @@ type promoteApplyReq struct {
 }
 
 func (s *Server) handlePromoteApply(w http.ResponseWriter, r *http.Request) {
+	if !requireScope(w, r, "promote.apply") {
+		return
+	}
 	var req promoteApplyReq
 	if err := decodeJSON(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)

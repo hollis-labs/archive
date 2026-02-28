@@ -20,7 +20,12 @@ import (
 )
 
 const (
-	schemaVersion = 5
+	schemaVersion = 6
+
+	// defaultTokenScopes is the full-access scopes JSON assigned to legacy tokens and new tokens without explicit scopes.
+	defaultTokenScopes = `["write","promote.request","promote.approve","promote.apply","packet","repair","namespace.register"]`
+	// defaultTokenNamespaceGlobs grants access to all namespaces.
+	defaultTokenNamespaceGlobs = `["*"]`
 	// DefaultSelectLimit bounds selector response size when no explicit limit is provided.
 	DefaultSelectLimit = 200
 	// MaxSelectLimit is the upper bound accepted for selector limits.
@@ -110,11 +115,23 @@ type AuditQuery struct {
 
 // AuthToken stores local token lifecycle metadata.
 type AuthToken struct {
-	TokenID   string `json:"token_id"`
-	Label     string `json:"label"`
-	CreatedAt string `json:"created_at"`
-	ExpiresAt string `json:"expires_at,omitempty"`
-	RevokedAt string `json:"revoked_at,omitempty"`
+	TokenID        string   `json:"token_id"`
+	Label          string   `json:"label"`
+	ClientID       string   `json:"client_id,omitempty"`
+	Scopes         []string `json:"scopes,omitempty"`
+	NamespaceGlobs []string `json:"namespace_globs,omitempty"`
+	CreatedAt      string   `json:"created_at"`
+	ExpiresAt      string   `json:"expires_at,omitempty"`
+	RevokedAt      string   `json:"revoked_at,omitempty"`
+}
+
+// TokenCreateInput holds parameters for creating a scoped auth token.
+type TokenCreateInput struct {
+	Label          string
+	ClientID       string
+	Scopes         []string // nil → full access defaults
+	NamespaceGlobs []string // nil → ["*"]
+	TTL            time.Duration
 }
 
 type backupRecord struct {
@@ -129,12 +146,15 @@ type backupRecord struct {
 }
 
 type backupAuthToken struct {
-	TokenID   string `json:"token_id"`
-	TokenHash string `json:"token_hash"`
-	Label     string `json:"label"`
-	CreatedAt string `json:"created_at"`
-	ExpiresAt string `json:"expires_at,omitempty"`
-	RevokedAt string `json:"revoked_at,omitempty"`
+	TokenID        string `json:"token_id"`
+	TokenHash      string `json:"token_hash"`
+	Label          string `json:"label"`
+	ClientID       string `json:"client_id,omitempty"`
+	Scopes         string `json:"scopes,omitempty"`
+	NamespaceGlobs string `json:"namespace_globs,omitempty"`
+	CreatedAt      string `json:"created_at"`
+	ExpiresAt      string `json:"expires_at,omitempty"`
+	RevokedAt      string `json:"revoked_at,omitempty"`
 }
 
 type backupSnapshot struct {
@@ -335,6 +355,23 @@ CREATE TABLE IF NOT EXISTS record_tags (
 				return err
 			}
 			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_record_tags_record_id ON record_tags(record_id)`); err != nil {
+				return err
+			}
+		case 6:
+			if _, err = tx.ExecContext(ctx, `ALTER TABLE auth_tokens ADD COLUMN client_id TEXT NOT NULL DEFAULT ''`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `ALTER TABLE auth_tokens ADD COLUMN scopes TEXT NOT NULL DEFAULT '`+defaultTokenScopes+`'`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `ALTER TABLE auth_tokens ADD COLUMN namespace_globs TEXT NOT NULL DEFAULT '`+defaultTokenNamespaceGlobs+`'`); err != nil {
+				return err
+			}
+			// Backfill any rows with empty/null scopes or namespace_globs.
+			if _, err = tx.ExecContext(ctx, `UPDATE auth_tokens SET scopes = '`+defaultTokenScopes+`' WHERE scopes = '' OR scopes = '[]'`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `UPDATE auth_tokens SET namespace_globs = '`+defaultTokenNamespaceGlobs+`' WHERE namespace_globs = '' OR namespace_globs = '[]'`); err != nil {
 				return err
 			}
 		}
@@ -975,17 +1012,29 @@ WHERE 1=1`
 	return out, nextCursor, nil
 }
 
-// IssueAuthToken creates a new token and returns the plaintext token plus stored metadata.
-func (s *Store) IssueAuthToken(ctx context.Context, label string, ttl time.Duration) (string, AuthToken, error) {
-	label = strings.TrimSpace(label)
+// CreateAuthToken creates a new scoped token and returns the plaintext token plus stored metadata.
+// Scopes and NamespaceGlobs default to full access when nil or empty.
+func (s *Store) CreateAuthToken(ctx context.Context, in TokenCreateInput) (string, AuthToken, error) {
+	label := strings.TrimSpace(in.Label)
 	if label == "" {
 		label = "default"
 	}
 	now := time.Now().UTC()
 	expiresAt := ""
-	if ttl > 0 {
-		expiresAt = now.Add(ttl).Format(time.RFC3339)
+	if in.TTL > 0 {
+		expiresAt = now.Add(in.TTL).Format(time.RFC3339)
 	}
+
+	scopes := in.Scopes
+	if len(scopes) == 0 {
+		scopes = mustParseStringSlice(defaultTokenScopes)
+	}
+	namespacGlobs := in.NamespaceGlobs
+	if len(namespacGlobs) == 0 {
+		namespacGlobs = mustParseStringSlice(defaultTokenNamespaceGlobs)
+	}
+	scopesJSON, _ := json.Marshal(scopes)
+	globsJSON, _ := json.Marshal(namespacGlobs)
 
 	token, err := generateToken()
 	if err != nil {
@@ -997,17 +1046,23 @@ func (s *Store) IssueAuthToken(ctx context.Context, label string, ttl time.Durat
 	}
 
 	meta := AuthToken{
-		TokenID:   tokenID,
-		Label:     label,
-		CreatedAt: now.Format(time.RFC3339),
-		ExpiresAt: expiresAt,
+		TokenID:        tokenID,
+		Label:          label,
+		ClientID:       in.ClientID,
+		Scopes:         scopes,
+		NamespaceGlobs: namespacGlobs,
+		CreatedAt:      now.Format(time.RFC3339),
+		ExpiresAt:      expiresAt,
 	}
 	_, err = s.db.ExecContext(ctx, `
-INSERT INTO auth_tokens (token_id, token_hash, label, created_at, expires_at, revoked_at)
-VALUES (?, ?, ?, ?, ?, NULL)`,
+INSERT INTO auth_tokens (token_id, token_hash, label, client_id, scopes, namespace_globs, created_at, expires_at, revoked_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
 		meta.TokenID,
 		hashToken(token),
 		meta.Label,
+		meta.ClientID,
+		string(scopesJSON),
+		string(globsJSON),
 		meta.CreatedAt,
 		meta.ExpiresAt,
 	)
@@ -1015,6 +1070,45 @@ VALUES (?, ?, ?, ?, ?, NULL)`,
 		return "", AuthToken{}, err
 	}
 	return token, meta, nil
+}
+
+// IssueAuthToken creates a new token with full-access defaults. Preserved for backward compatibility.
+func (s *Store) IssueAuthToken(ctx context.Context, label string, ttl time.Duration) (string, AuthToken, error) {
+	return s.CreateAuthToken(ctx, TokenCreateInput{Label: label, TTL: ttl})
+}
+
+// mustParseStringSlice parses a JSON array string into []string, panicking on invalid JSON.
+// Used only for built-in constant arrays that are always valid.
+func mustParseStringSlice(s string) []string {
+	var out []string
+	if err := json.Unmarshal([]byte(s), &out); err != nil {
+		panic("invalid default token JSON: " + err.Error())
+	}
+	return out
+}
+
+// RevokeAuthTokenByID marks a token revoked by its token_id.
+func (s *Store) RevokeAuthTokenByID(ctx context.Context, tokenID string) error {
+	tokenID = strings.TrimSpace(tokenID)
+	if tokenID == "" {
+		return ErrAuthTokenInvalid
+	}
+	now := time.Now().UTC().Format(time.RFC3339)
+	res, err := s.db.ExecContext(ctx, `
+UPDATE auth_tokens
+SET revoked_at = ?
+WHERE token_id = ? AND revoked_at IS NULL`, now, tokenID)
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return nil
+	}
+	if n == 0 {
+		return ErrAuthTokenInvalid
+	}
+	return nil
 }
 
 // RotateAuthToken revokes the old token and issues a replacement token.
@@ -1054,35 +1148,47 @@ WHERE token_hash = ? AND revoked_at IS NULL`, now, hash)
 
 // ValidateAuthToken verifies token presence and lifecycle state.
 func (s *Store) ValidateAuthToken(ctx context.Context, token string) error {
+	_, err := s.ValidateAuthTokenWithClaims(ctx, token)
+	return err
+}
+
+// ValidateAuthTokenWithClaims validates a raw token value and returns its full metadata on success.
+func (s *Store) ValidateAuthTokenWithClaims(ctx context.Context, token string) (AuthToken, error) {
 	hash := hashToken(strings.TrimSpace(token))
 	if hash == "" {
-		return ErrAuthTokenInvalid
+		return AuthToken{}, ErrAuthTokenInvalid
 	}
-	var expiresAt, revokedAt string
+	var meta AuthToken
+	var scopesJSON, globsJSON string
 	err := s.db.QueryRowContext(ctx, `
-SELECT COALESCE(expires_at, ''), COALESCE(revoked_at, '')
+SELECT token_id, label, COALESCE(client_id,''), COALESCE(scopes,''), COALESCE(namespace_globs,''),
+       created_at, COALESCE(expires_at, ''), COALESCE(revoked_at, '')
 FROM auth_tokens
 WHERE token_hash = ?
-LIMIT 1`, hash).Scan(&expiresAt, &revokedAt)
+LIMIT 1`, hash).Scan(
+		&meta.TokenID, &meta.Label, &meta.ClientID, &scopesJSON, &globsJSON,
+		&meta.CreatedAt, &meta.ExpiresAt, &meta.RevokedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return ErrAuthTokenInvalid
+			return AuthToken{}, ErrAuthTokenInvalid
 		}
-		return err
+		return AuthToken{}, err
 	}
-	if strings.TrimSpace(revokedAt) != "" {
-		return ErrAuthTokenRevoked
+	if strings.TrimSpace(meta.RevokedAt) != "" {
+		return AuthToken{}, ErrAuthTokenRevoked
 	}
-	if strings.TrimSpace(expiresAt) != "" {
-		t, err := time.Parse(time.RFC3339, expiresAt)
+	if strings.TrimSpace(meta.ExpiresAt) != "" {
+		t, err := time.Parse(time.RFC3339, meta.ExpiresAt)
 		if err != nil {
-			return err
+			return AuthToken{}, err
 		}
 		if time.Now().UTC().After(t) {
-			return ErrAuthTokenExpired
+			return AuthToken{}, ErrAuthTokenExpired
 		}
 	}
-	return nil
+	meta.Scopes = mustParseStringSlice(scopesJSON)
+	meta.NamespaceGlobs = mustParseStringSlice(globsJSON)
+	return meta, nil
 }
 
 // ListAuthTokens returns token metadata newest-first.
@@ -1094,7 +1200,8 @@ func (s *Store) ListAuthTokens(ctx context.Context, limit int) ([]AuthToken, err
 		limit = 500
 	}
 	rows, err := s.db.QueryContext(ctx, `
-SELECT token_id, label, created_at, COALESCE(expires_at, ''), COALESCE(revoked_at, '')
+SELECT token_id, label, COALESCE(client_id,''), COALESCE(scopes,''), COALESCE(namespace_globs,''),
+       created_at, COALESCE(expires_at, ''), COALESCE(revoked_at, '')
 FROM auth_tokens
 ORDER BY created_at DESC, token_id DESC
 LIMIT ?`, limit)
@@ -1105,15 +1212,38 @@ LIMIT ?`, limit)
 	var out []AuthToken
 	for rows.Next() {
 		var token AuthToken
-		if err := rows.Scan(&token.TokenID, &token.Label, &token.CreatedAt, &token.ExpiresAt, &token.RevokedAt); err != nil {
+		var scopesJSON, globsJSON string
+		if err := rows.Scan(&token.TokenID, &token.Label, &token.ClientID, &scopesJSON, &globsJSON,
+			&token.CreatedAt, &token.ExpiresAt, &token.RevokedAt); err != nil {
 			return nil, err
 		}
+		token.Scopes = mustParseStringSlice(scopesJSON)
+		token.NamespaceGlobs = mustParseStringSlice(globsJSON)
 		out = append(out, token)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	return out, nil
+}
+
+// GetAuthToken looks up a single auth token by token_id and returns its metadata.
+func (s *Store) GetAuthToken(ctx context.Context, tokenID string) (AuthToken, error) {
+	var token AuthToken
+	var scopesJSON, globsJSON string
+	err := s.db.QueryRowContext(ctx, `
+SELECT token_id, label, COALESCE(client_id,''), COALESCE(scopes,''), COALESCE(namespace_globs,''),
+       created_at, COALESCE(expires_at, ''), COALESCE(revoked_at, '')
+FROM auth_tokens
+WHERE token_id = ?`, tokenID).Scan(
+		&token.TokenID, &token.Label, &token.ClientID, &scopesJSON, &globsJSON,
+		&token.CreatedAt, &token.ExpiresAt, &token.RevokedAt)
+	if err != nil {
+		return AuthToken{}, err
+	}
+	token.Scopes = mustParseStringSlice(scopesJSON)
+	token.NamespaceGlobs = mustParseStringSlice(globsJSON)
+	return token, nil
 }
 
 // HasActiveAuthTokens reports whether at least one non-revoked, non-expired token exists.
@@ -1188,7 +1318,8 @@ ORDER BY id ASC`)
 	}
 
 	tokenRows, err := s.db.QueryContext(ctx, `
-SELECT token_id, token_hash, label, created_at, COALESCE(expires_at, ''), COALESCE(revoked_at, '')
+SELECT token_id, token_hash, label, COALESCE(client_id,''), COALESCE(scopes,''), COALESCE(namespace_globs,''),
+       created_at, COALESCE(expires_at, ''), COALESCE(revoked_at, '')
 FROM auth_tokens
 ORDER BY created_at ASC, token_id ASC`)
 	if err != nil {
@@ -1197,7 +1328,8 @@ ORDER BY created_at ASC, token_id ASC`)
 	defer tokenRows.Close()
 	for tokenRows.Next() {
 		var tk backupAuthToken
-		if err := tokenRows.Scan(&tk.TokenID, &tk.TokenHash, &tk.Label, &tk.CreatedAt, &tk.ExpiresAt, &tk.RevokedAt); err != nil {
+		if err := tokenRows.Scan(&tk.TokenID, &tk.TokenHash, &tk.Label, &tk.ClientID, &tk.Scopes, &tk.NamespaceGlobs,
+			&tk.CreatedAt, &tk.ExpiresAt, &tk.RevokedAt); err != nil {
 			return err
 		}
 		snap.AuthTokens = append(snap.AuthTokens, tk)
@@ -1303,10 +1435,19 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 	}
 
 	for _, tk := range snap.AuthTokens {
+		scopes := tk.Scopes
+		if scopes == "" {
+			scopes = defaultTokenScopes
+		}
+		globs := tk.NamespaceGlobs
+		if globs == "" {
+			globs = defaultTokenNamespaceGlobs
+		}
 		if _, err = tx.ExecContext(ctx, `
-INSERT INTO auth_tokens (token_id, token_hash, label, created_at, expires_at, revoked_at)
-VALUES (?, ?, ?, ?, ?, ?)`,
-			tk.TokenID, tk.TokenHash, tk.Label, tk.CreatedAt, tk.ExpiresAt, tk.RevokedAt); err != nil {
+INSERT INTO auth_tokens (token_id, token_hash, label, client_id, scopes, namespace_globs, created_at, expires_at, revoked_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			tk.TokenID, tk.TokenHash, tk.Label, tk.ClientID, scopes, globs,
+			tk.CreatedAt, tk.ExpiresAt, tk.RevokedAt); err != nil {
 			return err
 		}
 	}

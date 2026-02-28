@@ -306,7 +306,7 @@ func TestTokenLifecycleCommands(t *testing.T) {
 	if code := cli.Run(context.Background(), []string{"context", "token", "list", "--output", "table"}); code != 0 {
 		t.Fatalf("token list failed: %s", errOut.String())
 	}
-	if !strings.Contains(out.String(), "TOKEN_ID") {
+	if !strings.Contains(out.String(), "ID") || !strings.Contains(out.String(), "STATUS") {
 		t.Fatalf("unexpected token list output: %s", out.String())
 	}
 
