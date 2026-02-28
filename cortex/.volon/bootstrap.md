@@ -1,8 +1,8 @@
 ---
 version: 1
 type: bootstrap
-iteration: 188
-updated_at: 2026-02-27T18:00:00Z
+iteration: 189
+updated_at: 2026-02-27T19:00:00Z
 config:
   path: volon.yaml
   storage_backend: files
@@ -18,8 +18,9 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- Start `TASK-20260228-006` (sprint-2026-04-eval-phase0): implement records.checksum on write (fix in store.go:389, plus scan validation).
-- TASK-20260228-005 is done (Option A applied — tags_any removed from spec, deferred-pointer note added).
+- MVP CLI is complete. All 15 sprint tasks (TASK-20260228-005 through TASK-20260228-019) are done.
+- Next: MCP adapter phase-1 (TASK-20260227-019) when ready to start post-MVP work.
+- GUI sprint (TASK-20260225-239..242, TASK-20260228-001..004) remains deferred.
 
 ## MVP Sprint Plan (re-focused 2026-02-27, audited 2026-02-27)
 Evaluation spec at `SPEC-TASKS/Context Memory Service Evaluation/` is authoritative.
@@ -28,10 +29,10 @@ Plan: `artifacts/plan/mvp-replan-2026-02-27.md`
 
 ## Current state summary
 - PCC: present
-- Tasks: 14 todo, 0 blocked, 236 done (3 cancelled, 10 deferred: 8 GUI + 2 MCP)
+- Tasks: 0 todo, 0 blocked, 251 done (3 cancelled, 10 deferred: 8 GUI + 2 MCP)
 - Active todo series: TASK-20260228-005 through TASK-20260228-019 (no duplicates, all in-sprint)
 - Deferred: TASK-20260225-239..242 + TASK-20260228-001..004 (GUI); TASK-20260227-019..020 (MCP)
-- Last run log: `.volon/logs/run-iteration-188-2026-02-27.md`
+- Last run log: `.volon/logs/run-iteration-189-2026-02-27.md`
 - Replan log: `artifacts/plan/mvp-replan-2026-02-27.md`
 
 ## Active work (MVP sprints in priority order)
@@ -80,6 +81,6 @@ Plan: `artifacts/plan/mvp-replan-2026-02-27.md`
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `fb69f9a`
+- Last implementation commit: `f54c613` (sprint-09; sprint-10 MVP verify commit pending)
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`

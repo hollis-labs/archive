@@ -51,6 +51,7 @@ func requireScope(w http.ResponseWriter, r *http.Request, scope string) bool {
 
 // requireNamespaceAccess checks that the request's token namespace_globs permit the given namespace.
 // Returns false and writes a 403 response if denied.
+// Globs ending with /* match all sub-paths (e.g. app/test/* matches app/test/session/task-001).
 func requireNamespaceAccess(w http.ResponseWriter, r *http.Request, namespace string) bool {
 	claims, ok := getTokenClaims(r)
 	if !ok {
@@ -62,6 +63,13 @@ func requireNamespaceAccess(w http.ResponseWriter, r *http.Request, namespace st
 		}
 		if matched, _ := path.Match(glob, namespace); matched {
 			return true
+		}
+		// Hierarchical match: "app/test/*" should match "app/test/session/task-001".
+		if strings.HasSuffix(glob, "/*") {
+			prefix := strings.TrimSuffix(glob, "*") // "app/test/"
+			if strings.HasPrefix(namespace, prefix) {
+				return true
+			}
 		}
 	}
 	writeError(w, http.StatusForbidden, "namespace_not_permitted",
