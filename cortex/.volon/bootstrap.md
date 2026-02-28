@@ -18,9 +18,12 @@ execution:
 # Volon Bootstrap
 
 ## What to do next
-- All active work complete. MCP sprint done (020, 021, 022). Docs done (BACKLOG-20260228-001).
+- MCP extension done (6ffdd96): 8 new tools (promote, broker, namespace, audit). Docs updated.
+- Human docs updated (55aeb6f): QUICKSTART §10 expanded, CONTEXT-FOR-PROJECTS.md created.
+- Release sprint created (sprint-release-v1): 15 tasks, TASK-20260301-001..015.
+- **HOLD** — user testing weekend in progress. Do not start release tasks until testing complete
+  and rename decision made (TASK-20260301-001 is the gate for the whole sprint).
 - GUI sprint (TASK-20260225-239..242, TASK-20260228-001..004) remains deferred.
-- No backlog items remain. Next work is user-driven.
 
 ## MVP Sprint Plan (re-focused 2026-02-27, audited 2026-02-27)
 Evaluation spec at `SPEC-TASKS/Context Memory Service Evaluation/` is authoritative.
@@ -29,12 +32,12 @@ Plan: `artifacts/plan/mvp-replan-2026-02-27.md`
 
 ## Current state summary
 - PCC: present
-- Tasks: 0 todo, 0 blocked, 254 done (5 cancelled, 8 deferred: GUI only)
+- Tasks: 15 todo (release sprint), 0 blocked-active, 254+ done (5 cancelled, 8 deferred: GUI)
 - Cancelled: TASK-20260227-019..020 (superseded by 020..022)
 - Deferred: TASK-20260225-239..242 + TASK-20260228-001..004 (GUI only)
 - Backlog: BACKLOG-20260228-001 done (user/agent docs — completed iteration 192)
 - Last run log: `.volon/logs/run-iteration-192-2026-02-27.md`
-- Replan log: `artifacts/plan/mvp-replan-2026-02-27.md`
+- Release plan: `artifacts/plan/release-sprint-plan.md`
 
 ## Active work (MVP sprints in priority order)
 ### sprint-2026-04-eval-phase0 — Spec alignment (START HERE)
@@ -74,6 +77,24 @@ Plan: `artifacts/plan/mcp-sprint-plan-2026-02-27.md`
 - TASK-20260227-019 — cancelled (superseded by 020)
 - TASK-20260227-020 — cancelled (superseded by 022)
 
+### sprint-release-v1 — HOLD (start after user testing + rename decision)
+Plan: `artifacts/plan/release-sprint-plan.md`
+- TASK-20260301-001 — Name + branding decision (A) ← GATE — start here
+- TASK-20260301-002 — Define public export scope (A)
+- TASK-20260301-003 — License decision + LICENSE file (A)
+- TASK-20260301-004 — Go module rename (A, needs 001)
+- TASK-20260301-005 — Create new public repo + initial export (A, needs 001-004)
+- TASK-20260301-006 — Write root README for public repo (A, needs 005)
+- TASK-20260301-007 — Add CONTRIBUTING.md + CODE_OF_CONDUCT.md (B, needs 005)
+- TASK-20260301-008 — Docs audit + update all refs for new name (A, needs 001+005)
+- TASK-20260301-009 — Write HTTP API reference doc (B, needs 005)
+- TASK-20260301-010 — Write CHANGELOG + v0.1.0 release notes (B, needs 005)
+- TASK-20260301-011 — GitHub repo configuration (A, needs 001+005)
+- TASK-20260301-012 — GitHub Actions CI pipeline (A, needs 005)
+- TASK-20260301-013 — GitHub issue + PR templates (C, needs 005)
+- TASK-20260301-014 — Review + adapt mini-site for public release (A, needs 001)
+- TASK-20260301-015 — Domain registration + site deploy (A, needs 001+014)
+
 ### sprint-post-mvp-gui — Deferred (do not start until MVP complete)
 - TASK-20260225-239 through 242, TASK-20260228-001 through 004 (8 tasks, all deferred)
 
@@ -86,7 +107,10 @@ Plan: `artifacts/plan/mcp-sprint-plan-2026-02-27.md`
 - Update tasks + write a run log per loop invocation.
 
 ## Evidence pointers
-- Last implementation commit: `426691d` (sprint-post-mvp-mcp — MCP adapter complete)
-- Last docs commit: iteration 192 (QUICKSTART.md, AGENT-SETUP.md, MCP.md updated)
+- Last implementation commit: `6ffdd96` (8 new MCP tools: promote/broker/namespace/audit)
+- Last docs commit: `55aeb6f` (QUICKSTART §10, CONTEXT-FOR-PROJECTS.md)
+- Release plan: `artifacts/plan/release-sprint-plan.md`
 - API baseline: `internal/contextapi/`
 - CLI baseline: `internal/contextcli/`
+- MCP baseline: `internal/mcpadapter/` (14 tools)
+- Mini-site baseline: `user-docs-mini-site/` (5 pages, needs review for release)
