@@ -1,4 +1,4 @@
-.PHONY: test contracts contract-api contract-errors contract-metrics smoke smoke-invalid-token validate e2e-local e2e-managed runlog-init contract-lint agents-boot-check contract-commands contract-cli-list contract-cli-run bootstrap-sync bootstrap-report bootstrap-sync-apply bootstrap-sync-report
+.PHONY: test contracts contract-api contract-errors contract-metrics smoke smoke-invalid-token validate e2e-local e2e-managed runlog-init contract-lint agents-boot-check contract-commands contract-cli-list contract-cli-run bootstrap-sync bootstrap-report bootstrap-sync-apply bootstrap-sync-report frontend build
 
 BASE_URL ?= http://127.0.0.1:8080
 TOKEN ?=
@@ -32,6 +32,14 @@ SMOKE_INVALID_TOKEN_ARG := --assert-invalid-token --invalid-token $(INVALID_TOKE
 else
 SMOKE_INVALID_TOKEN_ARG :=
 endif
+
+frontend:
+	cd frontend && npm install && npm run build
+	rm -rf internal/webui/dist
+	cp -r frontend/dist internal/webui/dist
+
+build: frontend
+	go build -o contextd ./cmd/contextd/
 
 test:
 	$(TEST)
