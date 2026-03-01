@@ -18,6 +18,7 @@ import (
 	"github.com/hollis-labs/volon-dev/internal/contextpolicy"
 	"github.com/hollis-labs/volon-dev/internal/contextstore"
 	"github.com/hollis-labs/volon-dev/internal/mcpadapter"
+	"github.com/hollis-labs/volon-dev/internal/webui"
 )
 
 type serveConfig struct {
@@ -122,7 +123,7 @@ func parseMCPArgs(args []string) (string, error) {
 }
 
 func runMCP(ctx context.Context, store *contextstore.Store, stderr *os.File, token string) int {
-	_, _ = stderr.WriteString("contextd MCP adapter starting (stdio)\n")
+	_, _ = stderr.WriteString("Cortex MCP adapter starting (stdio)\n")
 	adapter := mcpadapter.New(store, token)
 	if err := adapter.Run(ctx); err != nil {
 		_, _ = stderr.WriteString("error: " + err.Error() + "\n")
@@ -152,8 +153,15 @@ func runServe(ctx context.Context, store *contextstore.Store, stderr *os.File, c
 		}
 	}
 
-	httpServer := &http.Server{Addr: cfg.Addr, Handler: srv}
-	_, _ = stderr.WriteString("contextd serving on " + cfg.Addr + "\n")
+	// Multiplex: /v1/* → API server, everything else → embedded UI
+	mux := http.NewServeMux()
+	mux.Handle("/v1/", srv)
+	mux.Handle("/", webui.Handler())
+
+	httpServer := &http.Server{Addr: cfg.Addr, Handler: mux}
+	_, _ = stderr.WriteString("Cortex — Content Memory Service\n")
+	_, _ = stderr.WriteString("  API: http://"+cfg.Addr+"/v1/\n")
+	_, _ = stderr.WriteString("  UI:  http://"+cfg.Addr+"/\n")
 	errCh := make(chan error, 1)
 	go func() {
 		errCh <- httpServer.ListenAndServe()
@@ -161,7 +169,7 @@ func runServe(ctx context.Context, store *contextstore.Store, stderr *os.File, c
 
 	select {
 	case <-ctx.Done():
-		_, _ = stderr.WriteString("contextd shutdown requested\n")
+		_, _ = stderr.WriteString("cortex shutdown requested\n")
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 		defer cancel()
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {
@@ -172,7 +180,7 @@ func runServe(ctx context.Context, store *contextstore.Store, stderr *os.File, c
 			_, _ = stderr.WriteString("error: " + err.Error() + "\n")
 			return 1
 		}
-		_, _ = stderr.WriteString("contextd shutdown complete\n")
+		_, _ = stderr.WriteString("cortex shutdown complete\n")
 	case err := <-errCh:
 		if err != nil && err != http.ErrServerClosed {
 			_, _ = stderr.WriteString("error: " + err.Error() + "\n")

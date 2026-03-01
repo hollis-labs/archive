@@ -24,9 +24,14 @@ credentials.*
 .volon/.gocache/
 .cache/
 
-# Compiled binaries
-volon
-forge
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Compiled binaries (root-level only)
+/volon
+/forge
+/contextd
 
 # Editor
 .claude/
