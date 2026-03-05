@@ -17,6 +17,7 @@ import (
 
 	"github.com/hollis-labs/volon-dev/internal/contextpolicy"
 	"github.com/hollis-labs/volon-dev/internal/contextstore"
+	"github.com/hollis-labs/volon-dev/internal/contexttypes"
 )
 
 type contextKey int
@@ -96,6 +97,8 @@ type Server struct {
 	EnableRequestLogging bool
 	// RequestLogMode controls query logging detail: redacted|full.
 	RequestLogMode string
+	// TypeRegistry manages context types and views. May be nil (defaults will be used).
+	TypeRegistry *contexttypes.Registry
 	// LogWriter is the destination for structured request logs when enabled.
 	LogWriter  io.Writer
 	startupErr error
@@ -226,6 +229,34 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.handlePacket(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/estimate":
 		s.handleEstimate(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/typed-write":
+		if r = s.authorizeMutatingRequest(w, r); r == nil {
+			return
+		}
+		s.handleTypedWrite(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/status/promote":
+		if r = s.authorizeMutatingRequest(w, r); r == nil {
+			return
+		}
+		s.handleStatusPromote(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/status/deprecate":
+		if r = s.authorizeMutatingRequest(w, r); r == nil {
+			return
+		}
+		s.handleStatusDeprecate(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/typed-view":
+		s.handleTypedView(w, r)
+	case r.Method == http.MethodGet && r.URL.Path == "/v1/context/types":
+		s.handleTypesList(w, r)
+	case r.Method == http.MethodGet && r.URL.Path == "/v1/context/views":
+		s.handleViewsList(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/maintenance/ttl-cleanup":
+		if r = s.authorizeMutatingRequest(w, r); r == nil {
+			return
+		}
+		s.handleTTLCleanup(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/pack":
+		s.handleContextPack(w, r)
 	default:
 		writeError(w, http.StatusNotFound, "not_found", "endpoint not found", nil)
 	}

@@ -804,3 +804,366 @@ func TestAppendRecordWithMetadata(t *testing.T) {
 		t.Errorf("want 1 record, got %d", len(recs))
 	}
 }
+
+func TestAppendRecordWithTypeAndStatus(t *testing.T) {
+	dir := t.TempDir()
+	s, err := Open(context.Background(), Config{RootDir: dir})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	rec, err := s.AppendRecord(context.Background(), AppendInput{
+		Namespace:      "user/memory/arch",
+		Key:            "system-map",
+		Actor:          "user",
+		Payload:        json.RawMessage(`{"title":"System Map"}`),
+		RecordType:     "system/map",
+		Status:         "draft",
+		ContentVersion: 1,
+		Pointers:       []string{"docs/architecture.md", "https://example.com/api"},
+	})
+	if err != nil {
+		t.Fatalf("append: %v", err)
+	}
+	if rec.RecordType != "system/map" {
+		t.Errorf("expected record_type system/map, got %s", rec.RecordType)
+	}
+	if rec.Status != "draft" {
+		t.Errorf("expected status draft, got %s", rec.Status)
+	}
+	if rec.ContentVersion != 1 {
+		t.Errorf("expected content_version 1, got %d", rec.ContentVersion)
+	}
+	if len(rec.Pointers) != 2 {
+		t.Errorf("expected 2 pointers, got %d", len(rec.Pointers))
+	}
+
+	// Verify Head returns the typed fields.
+	head, err := s.Head(context.Background(), "user/memory/arch", "system-map")
+	if err != nil {
+		t.Fatalf("head: %v", err)
+	}
+	if head.RecordType != "system/map" {
+		t.Errorf("head record_type: want system/map, got %s", head.RecordType)
+	}
+	if head.Status != "draft" {
+		t.Errorf("head status: want draft, got %s", head.Status)
+	}
+	if head.ContentVersion != 1 {
+		t.Errorf("head content_version: want 1, got %d", head.ContentVersion)
+	}
+	if len(head.Pointers) != 2 {
+		t.Errorf("head pointers: want 2, got %d", len(head.Pointers))
+	}
+}
+
+func TestSelectByType(t *testing.T) {
+	dir := t.TempDir()
+	s, err := Open(context.Background(), Config{RootDir: dir})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	// Write records with different types.
+	for _, tc := range []struct {
+		key  string
+		typ  string
+	}{
+		{"task1", "task/spec"},
+		{"adr1", "decision/adr"},
+		{"map1", "system/map"},
+		{"note1", "note/volatile"},
+	} {
+		if _, err := s.AppendRecord(context.Background(), AppendInput{
+			Namespace:  "user/memory/project",
+			Key:        tc.key,
+			Actor:      "user",
+			Payload:    json.RawMessage(`{"key":"` + tc.key + `"}`),
+			RecordType: tc.typ,
+			Status:     "draft",
+		}); err != nil {
+			t.Fatalf("append %s: %v", tc.key, err)
+		}
+	}
+
+	// Select by single type.
+	recs, err := s.Select(context.Background(), Selector{
+		Namespaces:    []string{"user/memory/project"},
+		RevisionScope: "head",
+		Types:         []string{"task/spec"},
+	})
+	if err != nil {
+		t.Fatalf("select by type: %v", err)
+	}
+	if len(recs) != 1 {
+		t.Fatalf("want 1 task/spec record, got %d", len(recs))
+	}
+	if recs[0].Key != "task1" {
+		t.Errorf("want key task1, got %s", recs[0].Key)
+	}
+
+	// Select by multiple types (view-like).
+	recs, err = s.Select(context.Background(), Selector{
+		Namespaces:    []string{"user/memory/project"},
+		RevisionScope: "head",
+		Types:         []string{"task/spec", "decision/adr", "system/map"},
+	})
+	if err != nil {
+		t.Fatalf("select by multi-type: %v", err)
+	}
+	if len(recs) != 3 {
+		t.Fatalf("want 3 records, got %d", len(recs))
+	}
+}
+
+func TestSelectByStatus(t *testing.T) {
+	dir := t.TempDir()
+	s, err := Open(context.Background(), Config{RootDir: dir})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	for _, st := range []string{"draft", "reviewed", "canonical"} {
+		if _, err := s.AppendRecord(context.Background(), AppendInput{
+			Namespace:  "user/memory/docs",
+			Key:        "doc-" + st,
+			Actor:      "user",
+			Payload:    json.RawMessage(`{"status":"` + st + `"}`),
+			RecordType: "decision/adr",
+			Status:     st,
+		}); err != nil {
+			t.Fatalf("append %s: %v", st, err)
+		}
+	}
+
+	recs, err := s.Select(context.Background(), Selector{
+		Namespaces:    []string{"user/memory/docs"},
+		RevisionScope: "head",
+		Statuses:      []string{"canonical"},
+	})
+	if err != nil {
+		t.Fatalf("select by status: %v", err)
+	}
+	if len(recs) != 1 {
+		t.Fatalf("want 1 canonical record, got %d", len(recs))
+	}
+	if recs[0].Status != "canonical" {
+		t.Errorf("want canonical, got %s", recs[0].Status)
+	}
+}
+
+func TestTTLCleanup(t *testing.T) {
+	dir := t.TempDir()
+	s, err := Open(context.Background(), Config{RootDir: dir})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	// Write a record with an expired TTL.
+	expired := time.Now().UTC().Add(-1 * time.Hour).Format(time.RFC3339)
+	if _, err := s.AppendRecord(context.Background(), AppendInput{
+		Namespace:  "user/cache/temp",
+		Key:        "expired-note",
+		Actor:      "user",
+		Payload:    json.RawMessage(`{"note":"will expire"}`),
+		RecordType: "note/volatile",
+		Status:     "draft",
+		TTL:        expired,
+	}); err != nil {
+		t.Fatalf("append expired: %v", err)
+	}
+
+	// Write a record with a future TTL.
+	future := time.Now().UTC().Add(24 * time.Hour).Format(time.RFC3339)
+	if _, err := s.AppendRecord(context.Background(), AppendInput{
+		Namespace:  "user/cache/temp",
+		Key:        "fresh-note",
+		Actor:      "user",
+		Payload:    json.RawMessage(`{"note":"still fresh"}`),
+		RecordType: "note/volatile",
+		Status:     "draft",
+		TTL:        future,
+	}); err != nil {
+		t.Fatalf("append fresh: %v", err)
+	}
+
+	// Write a record with no TTL.
+	if _, err := s.AppendRecord(context.Background(), AppendInput{
+		Namespace:  "user/cache/temp",
+		Key:        "no-ttl-note",
+		Actor:      "user",
+		Payload:    json.RawMessage(`{"note":"no expiry"}`),
+		RecordType: "decision/adr",
+		Status:     "canonical",
+	}); err != nil {
+		t.Fatalf("append no-ttl: %v", err)
+	}
+
+	cleaned, err := s.CleanupExpiredTTL(context.Background())
+	if err != nil {
+		t.Fatalf("cleanup: %v", err)
+	}
+	if cleaned != 1 {
+		t.Fatalf("want 1 cleaned, got %d", cleaned)
+	}
+
+	// Verify the expired record is gone.
+	_, err = s.Head(context.Background(), "user/cache/temp", "expired-note")
+	if err == nil {
+		t.Error("expected expired record to be gone")
+	}
+
+	// Verify the fresh record still exists.
+	head, err := s.Head(context.Background(), "user/cache/temp", "fresh-note")
+	if err != nil {
+		t.Fatalf("fresh note should still exist: %v", err)
+	}
+	if head.TTL != future {
+		t.Errorf("fresh note TTL mismatch: want %s, got %s", future, head.TTL)
+	}
+
+	// Verify no-ttl record still exists.
+	_, err = s.Head(context.Background(), "user/cache/temp", "no-ttl-note")
+	if err != nil {
+		t.Fatalf("no-ttl note should still exist: %v", err)
+	}
+}
+
+func TestUpdateRecordStatus(t *testing.T) {
+	dir := t.TempDir()
+	s, err := Open(context.Background(), Config{RootDir: dir})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	// Write initial record.
+	if _, err := s.AppendRecord(context.Background(), AppendInput{
+		Namespace:      "user/memory/decisions",
+		Key:            "adr-001",
+		Actor:          "user",
+		Payload:        json.RawMessage(`{"title":"Use gRPC"}`),
+		RecordType:     "decision/adr",
+		Status:         "draft",
+		ContentVersion: 1,
+	}); err != nil {
+		t.Fatalf("append: %v", err)
+	}
+
+	// Promote to reviewed.
+	rec, err := s.UpdateRecordStatus(context.Background(), "user/memory/decisions", "adr-001", "user", "reviewed")
+	if err != nil {
+		t.Fatalf("update status: %v", err)
+	}
+	if rec.Status != "reviewed" {
+		t.Errorf("want status reviewed, got %s", rec.Status)
+	}
+	if rec.ContentVersion != 2 {
+		t.Errorf("want content_version 2, got %d", rec.ContentVersion)
+	}
+	if rec.Revision != 2 {
+		t.Errorf("want revision 2, got %d", rec.Revision)
+	}
+
+	// Verify head reflects the new status.
+	head, err := s.Head(context.Background(), "user/memory/decisions", "adr-001")
+	if err != nil {
+		t.Fatalf("head: %v", err)
+	}
+	if head.Status != "reviewed" {
+		t.Errorf("head status: want reviewed, got %s", head.Status)
+	}
+}
+
+func TestHistoryPreservesTypeFields(t *testing.T) {
+	dir := t.TempDir()
+	s, err := Open(context.Background(), Config{RootDir: dir})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	// Write two revisions with different statuses.
+	if _, err := s.AppendRecord(context.Background(), AppendInput{
+		Namespace:  "user/memory/docs",
+		Key:        "typed-doc",
+		Actor:      "user",
+		Payload:    json.RawMessage(`{"v":1}`),
+		RecordType: "strategy/goal",
+		Status:     "draft",
+	}); err != nil {
+		t.Fatalf("append r1: %v", err)
+	}
+	if _, err := s.AppendRecord(context.Background(), AppendInput{
+		Namespace:  "user/memory/docs",
+		Key:        "typed-doc",
+		Actor:      "user",
+		Payload:    json.RawMessage(`{"v":2}`),
+		RecordType: "strategy/goal",
+		Status:     "reviewed",
+	}); err != nil {
+		t.Fatalf("append r2: %v", err)
+	}
+
+	history, err := s.History(context.Background(), "user/memory/docs", "typed-doc", 0)
+	if err != nil {
+		t.Fatalf("history: %v", err)
+	}
+	if len(history) != 2 {
+		t.Fatalf("want 2 revisions, got %d", len(history))
+	}
+	if history[0].Status != "draft" {
+		t.Errorf("rev 1 status: want draft, got %s", history[0].Status)
+	}
+	if history[1].Status != "reviewed" {
+		t.Errorf("rev 2 status: want reviewed, got %s", history[1].Status)
+	}
+	if history[0].RecordType != "strategy/goal" {
+		t.Errorf("rev 1 type: want strategy/goal, got %s", history[0].RecordType)
+	}
+}
+
+func TestProvenanceOnWrite(t *testing.T) {
+	dir := t.TempDir()
+	s, err := Open(context.Background(), Config{RootDir: dir})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	prov := json.RawMessage(`{"source":"carrier","generated_by":"agent-v1"}`)
+	rec, err := s.AppendRecord(context.Background(), AppendInput{
+		Namespace:  "app/carrier/session",
+		Key:        "summary",
+		Actor:      "app:carrier",
+		Payload:    json.RawMessage(`{"title":"Session Summary"}`),
+		RecordType: "brief/summary",
+		Status:     "draft",
+		Provenance: prov,
+	})
+	if err != nil {
+		t.Fatalf("append: %v", err)
+	}
+	if len(rec.Provenance) == 0 {
+		t.Fatal("provenance should be set on the returned record")
+	}
+
+	head, err := s.Head(context.Background(), "app/carrier/session", "summary")
+	if err != nil {
+		t.Fatalf("head: %v", err)
+	}
+	if len(head.Provenance) == 0 {
+		t.Fatal("provenance should be set on head record")
+	}
+	var p map[string]string
+	if err := json.Unmarshal(head.Provenance, &p); err != nil {
+		t.Fatalf("provenance unmarshal: %v", err)
+	}
+	if p["source"] != "carrier" {
+		t.Errorf("provenance source: want carrier, got %s", p["source"])
+	}
+}

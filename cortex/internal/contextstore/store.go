@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	schemaVersion = 6
+	schemaVersion = 7
 
 	// defaultTokenScopes is the full-access scopes JSON assigned to legacy tokens and new tokens without explicit scopes.
 	defaultTokenScopes = `["write","promote.request","promote.approve","promote.apply","packet","repair","namespace.register"]`
@@ -61,14 +61,20 @@ type Store struct {
 
 // Record contains a stored revision.
 type Record struct {
-	RecordID  string
-	Namespace string
-	Key       string
-	Revision  int64
-	Actor     string
-	CreatedAt string
-	Checksum  string
-	Payload   json.RawMessage
+	RecordID       string
+	Namespace      string
+	Key            string
+	Revision       int64
+	Actor          string
+	CreatedAt      string
+	Checksum       string
+	Payload        json.RawMessage
+	RecordType     string          `json:"record_type,omitempty"`
+	Status         string          `json:"status,omitempty"`
+	TTL            string          `json:"ttl,omitempty"`
+	ContentVersion int64           `json:"content_version,omitempty"`
+	Pointers       []string        `json:"pointers,omitempty"`
+	Provenance     json.RawMessage `json:"provenance,omitempty"`
 }
 
 // Selector defines deterministic record selection criteria.
@@ -78,7 +84,9 @@ type Selector struct {
 	RevisionScope string   `json:"revision_scope,omitempty"` // head|all
 	Order         []string `json:"order,omitempty"`          // namespace|key|revision|created_asc|created_desc
 	Limit         int      `json:"limit,omitempty"`
-	TagsAny       []string `json:"tags_any,omitempty"` // records with at least one of these tags
+	TagsAny       []string `json:"tags_any,omitempty"`    // records with at least one of these tags
+	Types         []string `json:"types,omitempty"`        // filter by record_type
+	Statuses      []string `json:"statuses,omitempty"`     // filter by status
 }
 
 // ConsistencyIssue reports a deterministic storage/index inconsistency finding.
@@ -374,6 +382,45 @@ CREATE TABLE IF NOT EXISTS record_tags (
 			if _, err = tx.ExecContext(ctx, `UPDATE auth_tokens SET namespace_globs = '`+defaultTokenNamespaceGlobs+`' WHERE namespace_globs = '' OR namespace_globs = '[]'`); err != nil {
 				return err
 			}
+		case 7:
+			// Context types: add record_type, status, ttl, version, pointers to records.
+			if _, err = tx.ExecContext(ctx, `ALTER TABLE records ADD COLUMN record_type TEXT NOT NULL DEFAULT ''`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `ALTER TABLE records ADD COLUMN status TEXT NOT NULL DEFAULT ''`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `ALTER TABLE records ADD COLUMN ttl TEXT NOT NULL DEFAULT ''`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `ALTER TABLE records ADD COLUMN content_version INTEGER NOT NULL DEFAULT 0`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `ALTER TABLE records ADD COLUMN pointers_json TEXT NOT NULL DEFAULT '[]'`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `ALTER TABLE records ADD COLUMN provenance_json TEXT NOT NULL DEFAULT ''`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_records_type ON records(record_type)`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_records_status ON records(status)`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_records_type_status ON records(record_type, status)`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_records_ttl ON records(ttl)`); err != nil {
+				return err
+			}
+			// Add the same columns to heads for fast type/status queries.
+			if _, err = tx.ExecContext(ctx, `ALTER TABLE heads ADD COLUMN record_type TEXT NOT NULL DEFAULT ''`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `ALTER TABLE heads ADD COLUMN status TEXT NOT NULL DEFAULT ''`); err != nil {
+				return err
+			}
 		}
 
 		version++
@@ -394,6 +441,18 @@ type AppendInput struct {
 	// Metadata is optional structured metadata stored alongside the record.
 	// Tags are extracted from metadata.tags ([]string) for filtering.
 	Metadata json.RawMessage
+	// RecordType is the context type (e.g. "task/spec", "decision/adr").
+	RecordType string
+	// Status is the lifecycle state (draft|reviewed|canonical|deprecated).
+	Status string
+	// TTL is an optional RFC3339 expiration timestamp.
+	TTL string
+	// ContentVersion is a monotonic version number.
+	ContentVersion int64
+	// Pointers is a list of references (repo paths, commit SHAs, URLs).
+	Pointers []string
+	// Provenance is structured provenance metadata.
+	Provenance json.RawMessage
 }
 
 // AppendRecord appends a new immutable revision and advances heads atomically in SQLite.
@@ -456,10 +515,27 @@ func (s *Store) AppendRecord(ctx context.Context, in AppendInput) (_ Record, err
 	if len(in.Metadata) > 0 && json.Valid(in.Metadata) {
 		metaStr = string(in.Metadata)
 	}
+
+	recordType := strings.TrimSpace(in.RecordType)
+	status := strings.TrimSpace(in.Status)
+	ttl := strings.TrimSpace(in.TTL)
+	contentVersion := in.ContentVersion
+	pointersJSON := "[]"
+	if len(in.Pointers) > 0 {
+		pj, _ := json.Marshal(in.Pointers)
+		pointersJSON = string(pj)
+	}
+	provenanceStr := ""
+	if len(in.Provenance) > 0 && json.Valid(in.Provenance) {
+		provenanceStr = string(in.Provenance)
+	}
+
 	_, err = tx.ExecContext(ctx, `
-INSERT INTO records (record_id, namespace, key_name, revision, actor, created_at, checksum, file_path, metadata_json)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-`, recordID, ns, key, rev, in.Actor, now, checksum, relPath, metaStr)
+INSERT INTO records (record_id, namespace, key_name, revision, actor, created_at, checksum, file_path, metadata_json,
+	record_type, status, ttl, content_version, pointers_json, provenance_json)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`, recordID, ns, key, rev, in.Actor, now, checksum, relPath, metaStr,
+		recordType, status, ttl, contentVersion, pointersJSON, provenanceStr)
 	if err != nil {
 		_ = os.Remove(absPath)
 		return Record{}, err
@@ -473,13 +549,15 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	}
 
 	_, err = tx.ExecContext(ctx, `
-INSERT INTO heads (namespace, key_name, head_revision, head_record_id, updated_at)
-VALUES (?, ?, ?, ?, ?)
+INSERT INTO heads (namespace, key_name, head_revision, head_record_id, updated_at, record_type, status)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(namespace, key_name) DO UPDATE SET
 	head_revision=excluded.head_revision,
 	head_record_id=excluded.head_record_id,
-	updated_at=excluded.updated_at
-`, ns, key, rev, recordID, now)
+	updated_at=excluded.updated_at,
+	record_type=excluded.record_type,
+	status=excluded.status
+`, ns, key, rev, recordID, now, recordType, status)
 	if err != nil {
 		_ = os.Remove(absPath)
 		return Record{}, err
@@ -490,15 +568,26 @@ ON CONFLICT(namespace, key_name) DO UPDATE SET
 		return Record{}, err
 	}
 
+	var pointers []string
+	if len(in.Pointers) > 0 {
+		pointers = in.Pointers
+	}
+
 	return Record{
-		RecordID:  recordID,
-		Namespace: ns,
-		Key:       key,
-		Revision:  rev,
-		Actor:     in.Actor,
-		CreatedAt: now,
-		Checksum:  checksum,
-		Payload:   append(json.RawMessage(nil), compactPayload...),
+		RecordID:       recordID,
+		Namespace:      ns,
+		Key:            key,
+		Revision:       rev,
+		Actor:          in.Actor,
+		CreatedAt:      now,
+		Checksum:       checksum,
+		Payload:        append(json.RawMessage(nil), compactPayload...),
+		RecordType:     recordType,
+		Status:         status,
+		TTL:            ttl,
+		ContentVersion: contentVersion,
+		Pointers:       pointers,
+		Provenance:     in.Provenance,
 	}, nil
 }
 
@@ -515,14 +604,26 @@ func (s *Store) Head(ctx context.Context, namespace, key string) (Record, error)
 
 	var rec Record
 	var relPath string
+	var pointersJSON, provenanceStr string
 	err = s.db.QueryRowContext(ctx, `
-SELECT r.record_id, r.namespace, r.key_name, r.revision, r.actor, r.created_at, r.checksum, r.file_path
+SELECT r.record_id, r.namespace, r.key_name, r.revision, r.actor, r.created_at, r.checksum, r.file_path,
+       COALESCE(r.record_type, ''), COALESCE(r.status, ''), COALESCE(r.ttl, ''),
+       COALESCE(r.content_version, 0), COALESCE(r.pointers_json, '[]'), COALESCE(r.provenance_json, '')
 FROM heads h
 JOIN records r ON r.record_id = h.head_record_id
 WHERE h.namespace = ? AND h.key_name = ?
-`, ns, k).Scan(&rec.RecordID, &rec.Namespace, &rec.Key, &rec.Revision, &rec.Actor, &rec.CreatedAt, &rec.Checksum, &relPath)
+`, ns, k).Scan(&rec.RecordID, &rec.Namespace, &rec.Key, &rec.Revision, &rec.Actor, &rec.CreatedAt, &rec.Checksum, &relPath,
+		&rec.RecordType, &rec.Status, &rec.TTL,
+		&rec.ContentVersion, &pointersJSON, &provenanceStr)
 	if err != nil {
 		return Record{}, err
+	}
+
+	if pointersJSON != "" && pointersJSON != "[]" {
+		_ = json.Unmarshal([]byte(pointersJSON), &rec.Pointers)
+	}
+	if provenanceStr != "" {
+		rec.Provenance = json.RawMessage(provenanceStr)
 	}
 
 	payload, err := os.ReadFile(filepath.Join(s.recordsDir, relPath))
@@ -548,7 +649,9 @@ func (s *Store) History(ctx context.Context, namespace, key string, limit int) (
 	}
 
 	query := `
-SELECT record_id, namespace, key_name, revision, actor, created_at, checksum, file_path
+SELECT record_id, namespace, key_name, revision, actor, created_at, checksum, file_path,
+       COALESCE(record_type, ''), COALESCE(status, ''), COALESCE(ttl, ''),
+       COALESCE(content_version, 0), COALESCE(pointers_json, '[]'), COALESCE(provenance_json, '')
 FROM records
 WHERE namespace = ? AND key_name = ?
 ORDER BY revision ASC`
@@ -567,9 +670,17 @@ ORDER BY revision ASC`
 	var out []Record
 	for rows.Next() {
 		var rec Record
-		var relPath string
-		if err := rows.Scan(&rec.RecordID, &rec.Namespace, &rec.Key, &rec.Revision, &rec.Actor, &rec.CreatedAt, &rec.Checksum, &relPath); err != nil {
+		var relPath, pointersJSON, provenanceStr string
+		if err := rows.Scan(&rec.RecordID, &rec.Namespace, &rec.Key, &rec.Revision, &rec.Actor, &rec.CreatedAt, &rec.Checksum, &relPath,
+			&rec.RecordType, &rec.Status, &rec.TTL,
+			&rec.ContentVersion, &pointersJSON, &provenanceStr); err != nil {
 			return nil, err
+		}
+		if pointersJSON != "" && pointersJSON != "[]" {
+			_ = json.Unmarshal([]byte(pointersJSON), &rec.Pointers)
+		}
+		if provenanceStr != "" {
+			rec.Provenance = json.RawMessage(provenanceStr)
 		}
 		payload, err := os.ReadFile(filepath.Join(s.recordsDir, relPath))
 		if err != nil {
@@ -596,7 +707,9 @@ func (s *Store) Select(ctx context.Context, sel Selector) ([]Record, error) {
 	scope := normalizedScope(sel.RevisionScope)
 
 	query := `
-SELECT DISTINCT r.record_id, r.namespace, r.key_name, r.revision, r.actor, r.created_at, r.checksum, r.file_path
+SELECT DISTINCT r.record_id, r.namespace, r.key_name, r.revision, r.actor, r.created_at, r.checksum, r.file_path,
+       COALESCE(r.record_type, ''), COALESCE(r.status, ''), COALESCE(r.ttl, ''),
+       COALESCE(r.content_version, 0), COALESCE(r.pointers_json, '[]'), COALESCE(r.provenance_json, '')
 FROM records r`
 	if scope == "head" {
 		query += `
@@ -620,6 +733,18 @@ JOIN record_tags rt ON rt.record_id = r.record_id AND rt.tag IN (` + placeholder
 			args = append(args, strings.TrimSpace(key))
 		}
 	}
+	if len(sel.Types) > 0 {
+		query += " AND r.record_type IN (" + placeholders(len(sel.Types)) + ")"
+		for _, t := range sel.Types {
+			args = append(args, strings.TrimSpace(t))
+		}
+	}
+	if len(sel.Statuses) > 0 {
+		query += " AND r.status IN (" + placeholders(len(sel.Statuses)) + ")"
+		for _, st := range sel.Statuses {
+			args = append(args, strings.TrimSpace(st))
+		}
+	}
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -630,12 +755,20 @@ JOIN record_tags rt ON rt.record_id = r.record_id AND rt.tag IN (` + placeholder
 	var out []Record
 	for rows.Next() {
 		var rec Record
-		var relPath string
-		if err := rows.Scan(&rec.RecordID, &rec.Namespace, &rec.Key, &rec.Revision, &rec.Actor, &rec.CreatedAt, &rec.Checksum, &relPath); err != nil {
+		var relPath, pointersJSON, provenanceStr string
+		if err := rows.Scan(&rec.RecordID, &rec.Namespace, &rec.Key, &rec.Revision, &rec.Actor, &rec.CreatedAt, &rec.Checksum, &relPath,
+			&rec.RecordType, &rec.Status, &rec.TTL,
+			&rec.ContentVersion, &pointersJSON, &provenanceStr); err != nil {
 			return nil, err
 		}
 		if !matchNamespace(sel.Namespaces, rec.Namespace) {
 			continue
+		}
+		if pointersJSON != "" && pointersJSON != "[]" {
+			_ = json.Unmarshal([]byte(pointersJSON), &rec.Pointers)
+		}
+		if provenanceStr != "" {
+			rec.Provenance = json.RawMessage(provenanceStr)
 		}
 		payload, err := os.ReadFile(filepath.Join(s.recordsDir, relPath))
 		if err != nil {
@@ -2054,16 +2187,26 @@ type PromoteApproval struct {
 // GetByRecordID fetches a single record by its record_id.
 func (s *Store) GetByRecordID(ctx context.Context, recordID string) (Record, error) {
 	var rec Record
-	var relPath string
+	var relPath, pointersJSON, provenanceStr string
 	err := s.db.QueryRowContext(ctx, `
-SELECT record_id, namespace, key_name, revision, actor, created_at, checksum, file_path
+SELECT record_id, namespace, key_name, revision, actor, created_at, checksum, file_path,
+       COALESCE(record_type, ''), COALESCE(status, ''), COALESCE(ttl, ''),
+       COALESCE(content_version, 0), COALESCE(pointers_json, '[]'), COALESCE(provenance_json, '')
 FROM records WHERE record_id = ?`, recordID).Scan(
-		&rec.RecordID, &rec.Namespace, &rec.Key, &rec.Revision, &rec.Actor, &rec.CreatedAt, &rec.Checksum, &relPath)
+		&rec.RecordID, &rec.Namespace, &rec.Key, &rec.Revision, &rec.Actor, &rec.CreatedAt, &rec.Checksum, &relPath,
+		&rec.RecordType, &rec.Status, &rec.TTL,
+		&rec.ContentVersion, &pointersJSON, &provenanceStr)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return Record{}, fmt.Errorf("record %s not found", recordID)
 		}
 		return Record{}, err
+	}
+	if pointersJSON != "" && pointersJSON != "[]" {
+		_ = json.Unmarshal([]byte(pointersJSON), &rec.Pointers)
+	}
+	if provenanceStr != "" {
+		rec.Provenance = json.RawMessage(provenanceStr)
 	}
 	payload, err := os.ReadFile(filepath.Join(s.recordsDir, relPath))
 	if err != nil {
@@ -2116,4 +2259,90 @@ func (s *Store) GetPromoteApproval(ctx context.Context, requestID string) (Promo
 		}
 	}
 	return PromoteApproval{}, fmt.Errorf("approval for request %s not found", requestID)
+}
+
+// CleanupExpiredTTL removes records whose TTL has expired.
+// Returns the count of cleaned-up records.
+func (s *Store) CleanupExpiredTTL(ctx context.Context) (int64, error) {
+	now := time.Now().UTC().Format(time.RFC3339)
+	rows, err := s.db.QueryContext(ctx, `
+SELECT record_id, file_path FROM records
+WHERE ttl != '' AND ttl < ?
+ORDER BY created_at ASC`, now)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	type toDelete struct {
+		id   string
+		path string
+	}
+	var targets []toDelete
+	for rows.Next() {
+		var td toDelete
+		if err := rows.Scan(&td.id, &td.path); err != nil {
+			return 0, err
+		}
+		targets = append(targets, td)
+	}
+	if err := rows.Err(); err != nil {
+		return 0, err
+	}
+	if len(targets) == 0 {
+		return 0, nil
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	var deleted int64
+	for _, td := range targets {
+		if _, err = tx.ExecContext(ctx, `DELETE FROM heads WHERE head_record_id = ?`, td.id); err != nil {
+			return 0, err
+		}
+		if _, err = tx.ExecContext(ctx, `DELETE FROM record_tags WHERE record_id = ?`, td.id); err != nil {
+			return 0, err
+		}
+		if _, err = tx.ExecContext(ctx, `DELETE FROM records WHERE record_id = ?`, td.id); err != nil {
+			return 0, err
+		}
+		_ = os.Remove(filepath.Join(s.recordsDir, td.path))
+		deleted++
+	}
+	if err = tx.Commit(); err != nil {
+		return 0, err
+	}
+	if _, err = s.RebuildHeads(ctx); err != nil {
+		return deleted, err
+	}
+	return deleted, nil
+}
+
+// UpdateRecordStatus updates the status of the head record for a namespace/key.
+// This appends a new revision with the updated status.
+func (s *Store) UpdateRecordStatus(ctx context.Context, namespace, key, actor, newStatus string) (Record, error) {
+	head, err := s.Head(ctx, namespace, key)
+	if err != nil {
+		return Record{}, err
+	}
+	return s.AppendRecord(ctx, AppendInput{
+		Namespace:      namespace,
+		Key:            key,
+		Actor:          actor,
+		Payload:        head.Payload,
+		RecordType:     head.RecordType,
+		Status:         newStatus,
+		TTL:            head.TTL,
+		ContentVersion: head.ContentVersion + 1,
+		Pointers:       head.Pointers,
+		Provenance:     head.Provenance,
+	})
 }

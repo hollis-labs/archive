@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/hollis-labs/volon-dev/internal/contextstore"
+	"github.com/hollis-labs/volon-dev/internal/contexttypes"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -16,8 +17,9 @@ import (
 // configured at startup via the Token field.
 // context_packet is read-only but respects namespace_globs from the token when present.
 type Adapter struct {
-	Store *contextstore.Store
-	Token string // capability token for mutating ops; may be empty
+	Store        *contextstore.Store
+	Token        string // capability token for mutating ops; may be empty
+	TypeRegistry *contexttypes.Registry
 }
 
 // New creates an Adapter for the given store and optional capability token.
@@ -34,6 +36,7 @@ func (a *Adapter) Run(ctx context.Context) error {
 		server.WithToolCapabilities(true),
 	)
 	a.registerTools(s)
+	a.registerTypedTools(s)
 	ctxFunc := func(_ context.Context) context.Context { return ctx }
 	return server.ServeStdio(s, server.WithStdioContextFunc(ctxFunc))
 }

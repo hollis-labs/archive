@@ -45,7 +45,7 @@ func (c *CLI) Run(ctx context.Context, args []string) int {
 		return c.fail(err.Error())
 	}
 	if len(args) == 0 || args[0] != "context" {
-		return c.fail("usage: context <namespace|put|get|history|view|promote|maintenance|packet|broker> ...")
+		return c.fail("usage: context <namespace|put|get|history|view|promote|maintenance|packet|broker|typed-put|status-promote|status-deprecate|typed-view|types|views|ttl-cleanup|context-pack> ...")
 	}
 	if len(args) < 2 {
 		return c.fail("missing context subcommand")
@@ -88,6 +88,22 @@ func (c *CLI) Run(ctx context.Context, args []string) int {
 		return c.runPacket(ctx, args[2:])
 	case "broker":
 		return c.runBroker(ctx, args[2:])
+	case "typed-put":
+		return c.runTypedPut(ctx, args[2:])
+	case "status-promote":
+		return c.runStatusPromote(ctx, args[2:])
+	case "status-deprecate":
+		return c.runStatusDeprecate(ctx, args[2:])
+	case "typed-view":
+		return c.runTypedView(ctx, args[2:])
+	case "types":
+		return c.runTypesList(ctx, args[2:])
+	case "views":
+		return c.runViewsList(ctx, args[2:])
+	case "ttl-cleanup":
+		return c.runTTLCleanup(ctx, args[2:])
+	case "context-pack":
+		return c.runContextPack(ctx, args[2:])
 	default:
 		return c.fail("unknown subcommand: " + args[1])
 	}
