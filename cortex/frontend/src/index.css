@@ -540,7 +540,7 @@ body {
 
 /* ── JSON Viewer ───────────────────────────────────────────────────── */
 .json-viewer {
-  background: rgb(var(--bg));
+  background: rgb(var(--panel));
   border: 1px solid rgb(var(--border));
   border-radius: var(--radius-sm);
   padding: 0.75rem;
@@ -550,6 +550,7 @@ body {
   white-space: pre-wrap;
   word-break: break-all;
   line-height: 1.5;
+  color: rgb(var(--text));
 }
 
 .json-key    { color: rgb(var(--primary)); }
@@ -557,6 +558,190 @@ body {
 .json-number { color: rgb(var(--warn)); }
 .json-bool   { color: rgb(var(--danger)); }
 .json-null   { color: rgb(var(--muted)); }
+
+/* ── Record Tabs ──────────────────────────────────────────────────── */
+.record-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid rgb(var(--border));
+}
+
+.record-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: rgb(var(--muted));
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.record-tab:hover {
+  color: rgb(var(--text));
+}
+
+.record-tab.active {
+  color: rgb(var(--primary));
+  border-bottom-color: rgb(var(--primary));
+}
+
+/* ── Document Meta Bar ────────────────────────────────────────────── */
+.doc-meta-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(var(--border) / 0.5);
+}
+
+.doc-meta-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: rgba(var(--panel2) / 0.8);
+  color: rgb(var(--muted));
+  border: 1px solid rgba(var(--border) / 0.6);
+}
+
+/* ── Payload Document (non-PCC) ───────────────────────────────────── */
+.payload-doc {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.payload-doc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.payload-doc-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgb(var(--primary));
+  font-family: var(--font-mono);
+}
+
+.payload-doc-value {
+  font-size: 0.85rem;
+  color: rgb(var(--text));
+  font-family: var(--font-mono);
+}
+
+/* ── Markdown Viewer (TipTap read-only) ───────────────────────────── */
+.markdown-viewer {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.7;
+  color: rgb(var(--text));
+}
+
+.markdown-viewer .tiptap-readonly {
+  outline: none;
+}
+
+.markdown-viewer .tiptap-readonly > *:first-child {
+  margin-top: 0;
+}
+
+.markdown-viewer h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: rgb(var(--primary));
+  margin: 1.5rem 0 0.5rem;
+  letter-spacing: 0.02em;
+}
+
+.markdown-viewer h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: rgb(var(--accent));
+  margin: 1.25rem 0 0.4rem;
+  letter-spacing: 0.02em;
+}
+
+.markdown-viewer h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgb(var(--text));
+  margin: 1rem 0 0.3rem;
+}
+
+.markdown-viewer p {
+  margin: 0.5rem 0;
+}
+
+.markdown-viewer strong {
+  color: rgb(var(--accent));
+  font-weight: 600;
+}
+
+.markdown-viewer ul,
+.markdown-viewer ol {
+  margin: 0.4rem 0;
+  padding-left: 1.5rem;
+}
+
+.markdown-viewer li {
+  margin: 0.2rem 0;
+}
+
+.markdown-viewer li::marker {
+  color: rgb(var(--muted));
+}
+
+.markdown-viewer code {
+  background: rgba(var(--panel2) / 0.8);
+  border: 1px solid rgba(var(--border) / 0.5);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: rgb(var(--primary));
+}
+
+.markdown-viewer pre {
+  background: rgb(var(--bg));
+  border: 1px solid rgb(var(--border));
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  overflow-x: auto;
+}
+
+.markdown-viewer pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: rgb(var(--text));
+  font-size: 0.8rem;
+}
+
+.markdown-viewer blockquote {
+  border-left: 3px solid rgb(var(--primary));
+  padding-left: 0.75rem;
+  margin: 0.5rem 0;
+  color: rgb(var(--muted));
+  font-style: italic;
+}
+
+.markdown-viewer hr {
+  border: none;
+  border-top: 1px solid rgba(var(--border) / 0.5);
+  margin: 1rem 0;
+}
 
 /* ── Event Log ─────────────────────────────────────────────────────── */
 .event-log {
@@ -650,7 +835,7 @@ body {
 /* ── Responsive breakpoints ──────────────────────────────────────── */
 
 /* Tablet: sidebar collapses, content fills */
-@media (max-width: 768px) {
+@media (max-width: 580px) {
   .app-sidebar {
     width: 52px;
     min-width: 52px;

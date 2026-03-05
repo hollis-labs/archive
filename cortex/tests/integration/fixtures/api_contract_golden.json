@@ -1,6 +1,6 @@
 {
   "write": {"keys": ["record_id", "revision", "head_revision", "timestamp"]},
-  "head": {"keys": ["record"], "record_keys": ["RecordID", "Namespace", "Key", "Revision", "Actor", "CreatedAt", "Payload"]},
+  "head": {"keys": ["record"], "record_keys": ["record_id", "namespace", "key", "revision", "actor", "created_at", "payload"]},
   "history": {"keys": ["items", "next_cursor"]},
   "view": {"keys": ["items", "evaluation_meta"], "evaluation_meta_keys": ["sort_keys", "matched_count", "truncated", "normalized_scope"]},
   "audit": {"keys": ["items", "count", "next_cursor"]},

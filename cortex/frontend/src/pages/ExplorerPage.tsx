@@ -121,8 +121,11 @@ export function ExplorerPage({ onOpenNamespace, onOpenRecord }: Props) {
           return (
             <div key={group.namespace} style={{ borderBottom: '1px solid rgba(var(--border) / 0.5)' }}>
               {/* Namespace row */}
-              <button
+              <div
+                role="button"
+                tabIndex={0}
                 onClick={() => toggleExpand(group.namespace)}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(group.namespace); } }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -154,7 +157,7 @@ export function ExplorerPage({ onOpenNamespace, onOpenRecord }: Props) {
                 >
                   Open
                 </button>
-              </button>
+              </div>
 
               {/* Expanded keys */}
               {isExpanded && (

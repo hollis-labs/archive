@@ -61,14 +61,14 @@ type Store struct {
 
 // Record contains a stored revision.
 type Record struct {
-	RecordID       string
-	Namespace      string
-	Key            string
-	Revision       int64
-	Actor          string
-	CreatedAt      string
-	Checksum       string
-	Payload        json.RawMessage
+	RecordID       string          `json:"record_id"`
+	Namespace      string          `json:"namespace"`
+	Key            string          `json:"key"`
+	Revision       int64           `json:"revision"`
+	Actor          string          `json:"actor"`
+	CreatedAt      string          `json:"created_at"`
+	Checksum       string          `json:"checksum"`
+	Payload        json.RawMessage `json:"payload"`
 	RecordType     string          `json:"record_type,omitempty"`
 	Status         string          `json:"status,omitempty"`
 	TTL            string          `json:"ttl,omitempty"`
