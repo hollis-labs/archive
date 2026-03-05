@@ -113,6 +113,11 @@ func (a *Adapter) registerTools(s *server.MCPServer) {
 		mcp.WithString("namespace", mcp.Required(), mcp.Description("Namespace path to inspect")),
 	), a.handleNamespaceShow)
 
+	s.AddTool(mcp.NewTool("context_namespaces_list",
+		mcp.WithDescription("List all registered namespaces with ownership policies."),
+		mcp.WithString("prefix", mcp.Description("Filter namespaces by prefix pattern (e.g. \"user/*\", \"app/*\")")),
+	), a.handleNamespacesList)
+
 	s.AddTool(mcp.NewTool("context_audit",
 		mcp.WithDescription("Query the audit event log. No auth required."),
 		mcp.WithString("namespace", mcp.Description("Filter by exact namespace")),
@@ -911,6 +916,46 @@ func (a *Adapter) handleNamespaceShow(_ context.Context, req mcp.CallToolRequest
 		"owner_id":   entry.OwnerID,
 		"policy":     entry.Policy,
 	}), nil
+}
+
+func (a *Adapter) handleNamespacesList(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	ctx := context.Background()
+	prefix := req.GetString("prefix", "")
+
+	entries, err := a.Store.ListNamespacePolicies(ctx)
+	if err != nil {
+		return toolError("internal_error", err.Error()), nil
+	}
+
+	// Filter by prefix pattern if provided.
+	if prefix != "" {
+		var filtered []map[string]any
+		for _, entry := range entries {
+			if globsPermit([]string{prefix}, entry.Namespace) {
+				filtered = append(filtered, map[string]any{
+					"namespace":  entry.Namespace,
+					"owner_type": entry.OwnerType,
+					"owner_id":   entry.OwnerID,
+					"policy":     entry.Policy,
+				})
+			}
+		}
+		if filtered == nil {
+			filtered = []map[string]any{}
+		}
+		return toolJSON(map[string]any{"items": filtered, "count": len(filtered)}), nil
+	}
+
+	items := make([]map[string]any, len(entries))
+	for i, entry := range entries {
+		items[i] = map[string]any{
+			"namespace":  entry.Namespace,
+			"owner_type": entry.OwnerType,
+			"owner_id":   entry.OwnerID,
+			"policy":     entry.Policy,
+		}
+	}
+	return toolJSON(map[string]any{"items": items, "count": len(items)}), nil
 }
 
 // --- Audit tool ---
