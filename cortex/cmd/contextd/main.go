@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,12 +14,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/hollis-labs/volon-dev/internal/contextapi"
-	"github.com/hollis-labs/volon-dev/internal/contextcli"
-	"github.com/hollis-labs/volon-dev/internal/contextpolicy"
-	"github.com/hollis-labs/volon-dev/internal/contextstore"
-	"github.com/hollis-labs/volon-dev/internal/mcpadapter"
-	"github.com/hollis-labs/volon-dev/internal/webui"
+	"github.com/hollis-labs/cortex/internal/contextapi"
+	"github.com/hollis-labs/cortex/internal/contextcli"
+	"github.com/hollis-labs/cortex/internal/contextpolicy"
+	"github.com/hollis-labs/cortex/internal/contextstore"
+	"github.com/hollis-labs/cortex/internal/mcpadapter"
+	"github.com/hollis-labs/cortex/internal/webui"
+	tiamatotel "github.com/hollis-labs/tiamat-otel"
+	"github.com/hollis-labs/tiamat-otel/propagation"
 )
 
 type serveConfig struct {
@@ -38,6 +41,13 @@ func main() {
 }
 
 func run(ctx context.Context, args []string, stdout, stderr *os.File) int {
+	shutdown, err := tiamatotel.Init(ctx, tiamatotel.WithServiceName("cortex"))
+	if err != nil {
+		log.Printf("warning: OTel init failed: %v", err)
+	} else {
+		defer shutdown(ctx)
+	}
+
 	root := os.Getenv("CONTEXTD_ROOT")
 	if root == "" {
 		root = "."
@@ -158,7 +168,7 @@ func runServe(ctx context.Context, store *contextstore.Store, stderr *os.File, c
 	mux.Handle("/v1/", srv)
 	mux.Handle("/", webui.Handler())
 
-	httpServer := &http.Server{Addr: cfg.Addr, Handler: mux}
+	httpServer := &http.Server{Addr: cfg.Addr, Handler: propagation.HTTPMiddleware(mux)}
 	_, _ = stderr.WriteString("Cortex — Content Memory Service\n")
 	_, _ = stderr.WriteString("  API: http://"+cfg.Addr+"/v1/\n")
 	_, _ = stderr.WriteString("  UI:  http://"+cfg.Addr+"/\n")

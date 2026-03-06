@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/hollis-labs/volon-dev/internal/contextstore"
-	"github.com/hollis-labs/volon-dev/internal/contexttypes"
+	"github.com/hollis-labs/cortex/internal/contextstore"
+	"github.com/hollis-labs/cortex/internal/contexttypes"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )

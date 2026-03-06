@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hollis-labs/volon-dev/internal/contextcli"
-	"github.com/hollis-labs/volon-dev/internal/contextpolicy"
-	"github.com/hollis-labs/volon-dev/internal/contextstore"
+	"github.com/hollis-labs/cortex/internal/contextcli"
+	"github.com/hollis-labs/cortex/internal/contextpolicy"
+	"github.com/hollis-labs/cortex/internal/contextstore"
 )
 
 type contractRunAllExecuteJSONGolden struct {

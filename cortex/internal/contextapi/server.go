@@ -15,9 +15,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/hollis-labs/volon-dev/internal/contextpolicy"
-	"github.com/hollis-labs/volon-dev/internal/contextstore"
-	"github.com/hollis-labs/volon-dev/internal/contexttypes"
+	"github.com/hollis-labs/cortex/internal/contextpolicy"
+	"github.com/hollis-labs/cortex/internal/contextstore"
+	"github.com/hollis-labs/cortex/internal/contexttypes"
+	tiamatotel "github.com/hollis-labs/tiamat-otel"
 )
 
 type contextKey int
@@ -582,6 +583,10 @@ func (s *Server) handleWrite(w http.ResponseWriter, r *http.Request) {
 	if !requireNamespaceAccess(w, r, req.Namespace) {
 		return
 	}
+
+	ctx, span := tiamatotel.MemoryWriteSpan(r.Context(), req.Namespace, req.Key)
+	defer span.End()
+
 	if err := s.Policy.CanWrite(req.ClientID, req.Actor, req.Namespace); err != nil {
 		writeError(w, http.StatusForbidden, "policy_denied", err.Error(), nil)
 		return
@@ -594,7 +599,7 @@ func (s *Server) handleWrite(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "validation_error", err.Error(), nil)
 		return
 	}
-	rec, err := s.Store.AppendRecord(r.Context(), contextstore.AppendInput{
+	rec, err := s.Store.AppendRecord(ctx, contextstore.AppendInput{
 		Namespace: req.Namespace,
 		Key:       req.Key,
 		Actor:     req.Actor,
@@ -605,7 +610,7 @@ func (s *Server) handleWrite(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "write_failed", err.Error(), nil)
 		return
 	}
-	_ = s.Store.RecordAuditEvent(r.Context(), contextstore.AuditEvent{
+	_ = s.Store.RecordAuditEvent(ctx, contextstore.AuditEvent{
 		EventType: "write",
 		Actor:     req.Actor,
 		Namespace: req.Namespace,
@@ -702,7 +707,10 @@ func (s *Server) handleHead(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rec, err := s.Store.Head(r.Context(), namespace, key)
+	ctx, span := tiamatotel.MemoryReadSpan(r.Context(), namespace, key)
+	defer span.End()
+
+	rec, err := s.Store.Head(ctx, namespace, key)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			writeError(w, http.StatusNotFound, "not_found", "head not found", nil)
@@ -731,7 +739,10 @@ func (s *Server) handleHistory(w http.ResponseWriter, r *http.Request) {
 		limit = n
 	}
 
-	items, err := s.Store.History(r.Context(), namespace, key, limit)
+	ctx, span := tiamatotel.MemoryReadSpan(r.Context(), namespace, key)
+	defer span.End()
+
+	items, err := s.Store.History(ctx, namespace, key, limit)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "read_failed", err.Error(), nil)
 		return

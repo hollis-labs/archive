@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hollis-labs/volon-dev/internal/taskscli/config"
-	"github.com/hollis-labs/volon-dev/internal/taskscli/index"
+	"github.com/hollis-labs/cortex/internal/taskscli/config"
+	"github.com/hollis-labs/cortex/internal/taskscli/index"
 )
 
 const testConfig = `version: 1

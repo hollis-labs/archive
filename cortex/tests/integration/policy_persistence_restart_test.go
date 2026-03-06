@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/hollis-labs/volon-dev/internal/contextapi"
-	"github.com/hollis-labs/volon-dev/internal/contextpolicy"
-	"github.com/hollis-labs/volon-dev/internal/contextstore"
+	"github.com/hollis-labs/cortex/internal/contextapi"
+	"github.com/hollis-labs/cortex/internal/contextpolicy"
+	"github.com/hollis-labs/cortex/internal/contextstore"
 )
 
 func TestNamespacePolicyPersistsAcrossServerRestart(t *testing.T) {

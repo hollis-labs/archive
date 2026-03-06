@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hollis-labs/volon-dev/internal/contextstore"
+	"github.com/hollis-labs/cortex/internal/contextstore"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
