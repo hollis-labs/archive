@@ -2119,6 +2119,12 @@ func matchNamespace(patterns []string, namespace string) bool {
 		if p == "" {
 			continue
 		}
+		// A bare "*" means match all namespaces, including hierarchical ones
+		// with slashes (e.g. "app/mentat"). filepath.Match treats "/" as a
+		// path separator that "*" cannot cross, so we handle this explicitly.
+		if p == "*" {
+			return true
+		}
 		ok, err := filepath.Match(p, namespace)
 		if err == nil && ok {
 			return true
