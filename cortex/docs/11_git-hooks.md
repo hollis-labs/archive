@@ -7,7 +7,7 @@ audience: humans
 
 ## Commit strategy
 
-Volon supports two commit modes. Set via `git.commit_mode` in `volon.yaml`.
+Volon supports two commit modes. Set via `git.commit_mode` in `agentrc.yaml`.
 
 ### Iteration mode (default)
 One commit per iteration — all task changes batched together at finalize.
@@ -67,7 +67,7 @@ allow external scripts or commands to run at defined points without modifying co
 | `on_pause` | After /pause-task completes |
 | `on_resume` | Before /resume-task begins execution |
 
-### Proposed config (volon.yaml, not yet active)
+### Proposed config (agentrc.yaml, not yet active)
 
 ```yaml
 hooks:
@@ -133,7 +133,7 @@ Hooks are **advisory** — they are integration points, not required for workflo
 - Hooks must be **async-safe** — they should not block iteration progress.
 - Hooks must produce output that can be appended to the relevant stage artifact.
 - Hooks are called by the **Orchestrator** only; sub-agents do not fire hooks.
-- When implemented, configuration follows the same volon.yaml pattern as git hooks above.
+- When implemented, configuration follows the same agentrc.yaml pattern as git hooks above.
 
 ---
 

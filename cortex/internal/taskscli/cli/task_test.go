@@ -36,7 +36,7 @@ func TestCreateStartDoneFlow(t *testing.T) {
 		t.Fatalf("create: %v", err)
 	}
 
-	taskPath := filepath.Join(repo, ".volon", "tasks", "TASK-20260224-001.md")
+	taskPath := filepath.Join(repo, ".agentrc", "tasks", "TASK-20260224-001.md")
 	data, err := os.ReadFile(taskPath)
 	if err != nil {
 		t.Fatalf("read task: %v", err)
@@ -164,7 +164,7 @@ updated_at: 2026-02-24`)
 		t.Fatalf("backlog promote: %v", err)
 	}
 
-	taskPath := filepath.Join(repo, ".volon", "tasks", "TASK-20260224-001.md")
+	taskPath := filepath.Join(repo, ".agentrc", "tasks", "TASK-20260224-001.md")
 	data, err := os.ReadFile(taskPath)
 	if err != nil {
 		t.Fatalf("read task: %v", err)
@@ -173,7 +173,7 @@ updated_at: 2026-02-24`)
 		t.Fatalf("task missing promoted_from:\n%s", data)
 	}
 
-	backlogPath := filepath.Join(repo, ".volon", "backlog", backlogID+".md")
+	backlogPath := filepath.Join(repo, ".agentrc", "backlog", backlogID+".md")
 	updated, err := os.ReadFile(backlogPath)
 	if err != nil {
 		t.Fatalf("read backlog: %v", err)
@@ -199,7 +199,7 @@ func TestTaskCreateSupportsSprintAndListFilter(t *testing.T) {
 		t.Fatalf("create with sprint: %v", err)
 	}
 
-	taskPath := filepath.Join(repo, ".volon", "tasks", "TASK-20260224-001.md")
+	taskPath := filepath.Join(repo, ".agentrc", "tasks", "TASK-20260224-001.md")
 	data, err := os.ReadFile(taskPath)
 	if err != nil {
 		t.Fatalf("read task: %v", err)
@@ -233,13 +233,13 @@ func (ioDiscard) Write(p []byte) (int, error) { return len(p), nil }
 func setupRepo(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "volon.yaml"), []byte(testConfig), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "agentrc.yaml"), []byte(testConfig), 0o644); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
-	if err := os.MkdirAll(filepath.Join(dir, ".volon", "tasks"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, ".agentrc", "tasks"), 0o755); err != nil {
 		t.Fatalf("mkdir tasks: %v", err)
 	}
-	if err := os.MkdirAll(filepath.Join(dir, ".volon", "backlog"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, ".agentrc", "backlog"), 0o755); err != nil {
 		t.Fatalf("mkdir backlog: %v", err)
 	}
 	return dir
@@ -247,7 +247,7 @@ func setupRepo(t *testing.T) string {
 
 func writeBacklogItem(t *testing.T, repo, id, frontmatter string) {
 	t.Helper()
-	path := filepath.Join(repo, ".volon", "backlog", id+".md")
+	path := filepath.Join(repo, ".agentrc", "backlog", id+".md")
 	body := "\n## Summary\n\nStub\n"
 	data := fmt.Sprintf("---\nid: %s\n%s\n---%s", id, frontmatter, body)
 	if err := os.WriteFile(path, []byte(data), 0o644); err != nil {

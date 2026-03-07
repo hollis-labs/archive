@@ -35,7 +35,7 @@ global default (models.default)
 
 Each level inherits from the level above unless explicitly set.
 
-## volon.yaml schema
+## agentrc.yaml schema
 
 ```yaml
 models:

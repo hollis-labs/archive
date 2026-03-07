@@ -20,7 +20,7 @@ This is a **process role**, not a new architecture.
 ### Orchestrator (default)
 Responsibilities:
 - Interpret ground truth from repo artifacts:
-  - `volon.yaml`, `.agentrc/bootstrap.md`, `.agentrc/pcc/`, `.agentrc/tasks/`, `.agentrc/logs/`
+  - `agentrc.yaml`, `.agentrc/bootstrap.md`, `.agentrc/pcc/`, `.agentrc/tasks/`, `.agentrc/logs/`
 - Decide what to do next (workflow step/task selection)
 - Enforce policies (single-writer, limits, verification, commits)
 - Delegate bounded work to sub-agents (optional)

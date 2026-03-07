@@ -25,7 +25,7 @@ type: bootstrap
 iteration: <N>
 updated_at: <ISO-8601>
 config:
-  path: volon.yaml
+  path: agentrc.yaml
   storage_backend: files
   pcc_path: .agentrc/pcc
   tasks_path: .agentrc/tasks
@@ -42,7 +42,7 @@ execution:
 - <one-line next action>
 
 ## Current state summary
-- volon.yaml: present
+- agentrc.yaml: present
 - PCC: present
 - Tasks: X todo, Y blocked, Z done
 - Last run log: <path>

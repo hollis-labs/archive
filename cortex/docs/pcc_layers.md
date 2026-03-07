@@ -42,11 +42,11 @@ Volon implements two PCC layers. Higher-numbered layers are narrower in scope an
 - `05_decisions.md` — lightweight ADR log (append-only)
 
 **Caps:**
-- Max 400 words per file (configurable via `pcc.limits.max_section_words` in `volon.yaml`)
+- Max 400 words per file (configurable via `pcc.limits.max_section_words` in `agentrc.yaml`)
 - Max 25 files total (configurable via `pcc.limits.max_files`)
 
 **Staleness strategy:**
-- Refreshed automatically on workflow start and on detected git changes (`volon.yaml` → `pcc.refresh`)
+- Refreshed automatically on workflow start and on detected git changes (`agentrc.yaml` → `pcc.refresh`)
 - The `pcc-refresh` skill performs targeted updates (minimal diff — only impacted sections change)
 - Each file carries a `## Evidence` section with `Last refreshed` date and trigger paths
 
@@ -102,4 +102,4 @@ Volon implements two PCC layers. Higher-numbered layers are narrower in scope an
 
 - Created: 2026-02-22 (iteration 32)
 - Trigger: Layered PCC implementation — new feature work
-- Source docs: `docs/02_pcc.md`, `volon.yaml` (`pcc.*` keys), `docs/10_pause_resume.md`
+- Source docs: `docs/02_pcc.md`, `agentrc.yaml` (`pcc.*` keys), `docs/10_pause_resume.md`

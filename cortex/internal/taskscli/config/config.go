@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	defaultTasksDir    = ".volon/tasks"
-	defaultStateDir    = ".volon/state"
-	defaultBacklogDir  = ".volon/backlog"
+	defaultTasksDir    = ".agentrc/tasks"
+	defaultStateDir    = ".agentrc/state"
+	defaultBacklogDir  = ".agentrc/backlog"
 	defaultDBFile      = "volon.db"
 	defaultProjectName = "volon"
 	defaultContext     = "dev"
@@ -47,17 +47,17 @@ type rootConfig struct {
 	} `yaml:"tasks"`
 }
 
-// Load reads volon.yaml at repoPath and returns resolved paths.
+// Load reads agentrc.yaml at repoPath and returns resolved paths.
 func Load(repoPath string) (*Config, error) {
-	configPath := filepath.Join(repoPath, "volon.yaml")
+	configPath := filepath.Join(repoPath, "agentrc.yaml")
 	data, err := os.ReadFile(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read volon.yaml: %w", err)
+		return nil, fmt.Errorf("failed to read agentrc.yaml: %w", err)
 	}
 
 	var rc rootConfig
 	if err := yaml.Unmarshal(data, &rc); err != nil {
-		return nil, fmt.Errorf("failed to parse volon.yaml: %w", err)
+		return nil, fmt.Errorf("failed to parse agentrc.yaml: %w", err)
 	}
 
 	tasksDirRel := rc.Tasks.TasksDir

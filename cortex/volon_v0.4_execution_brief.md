@@ -10,7 +10,7 @@
 You are operating inside a Volon-managed repository.
 
 Ground truth sources:
-- `volon.yaml`
+- `agentrc.yaml`
 - `.agentrc/pcc/`
 - `.agentrc/tasks/`
 - `.agentrc/bootstrap.md`

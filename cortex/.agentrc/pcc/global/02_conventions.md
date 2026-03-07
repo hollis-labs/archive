@@ -51,4 +51,4 @@ make agents-boot-check               # AGENTS boot drift check
 
 ## Evidence
 - Last refreshed: 2026-03-04 (mentat PCC bootstrap)
-- Sources: docs/DEV.md, volon.yaml, Makefile, docs/CONTRACT_FIXTURES.md
+- Sources: docs/DEV.md, agentrc.yaml, Makefile, docs/CONTRACT_FIXTURES.md

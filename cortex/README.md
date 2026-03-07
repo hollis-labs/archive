@@ -121,5 +121,5 @@ If you cloned an older revision that still had `forge.yaml` and `.forge/`, run:
 scripts/migrate-to-volon.sh
 ```
 
-This renames the config/state to `volon.yaml` + `.agentrc/`. Then rerun
+This renames the config/state to `agentrc.yaml` + `.agentrc/`. Then rerun
 `scripts/volon-cli.sh /bootstrap-update` to regenerate bootstrap state.

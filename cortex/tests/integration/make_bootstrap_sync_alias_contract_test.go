@@ -19,10 +19,10 @@ func TestMakeBootstrapSyncAliasContractAgainstGolden(t *testing.T) {
 	golden := loadMakeBootstrapSyncAliasGolden(t)
 	root := t.TempDir()
 
-	mustWrite(t, filepath.Join(root, ".volon", "tasks", "TASK-A.md"), "status: done\n")
-	mustWrite(t, filepath.Join(root, ".volon", "tasks", "TASK-B.md"), "status: todo\n")
-	mustWrite(t, filepath.Join(root, ".volon", "logs", "run-iteration-001-2026-02-25.md"), "# log\n")
-	mustWrite(t, filepath.Join(root, ".volon", "bootstrap.md"), "updated_at: 2026-02-25T00:00:00Z\n- Tasks: 0 todo, 0 blocked, 0 done\n- Last run log: `<none>`\n")
+	mustWrite(t, filepath.Join(root, ".agentrc", "tasks", "TASK-A.md"), "status: done\n")
+	mustWrite(t, filepath.Join(root, ".agentrc", "tasks", "TASK-B.md"), "status: todo\n")
+	mustWrite(t, filepath.Join(root, ".agentrc", "logs", "run-iteration-001-2026-02-25.md"), "# log\n")
+	mustWrite(t, filepath.Join(root, ".agentrc", "bootstrap.md"), "updated_at: 2026-02-25T00:00:00Z\n- Tasks: 0 todo, 0 blocked, 0 done\n- Last run log: `<none>`\n")
 
 	scriptSrc := filepath.Join("..", "..", "scripts", "bootstrap-sync.sh")
 	scriptBytes, err := os.ReadFile(scriptSrc)
@@ -56,7 +56,7 @@ func TestMakeBootstrapSyncAliasContractAgainstGolden(t *testing.T) {
 		pos += next + len(marker)
 	}
 
-	bootstrapBytes, err := os.ReadFile(filepath.Join(root, ".volon", "bootstrap.md"))
+	bootstrapBytes, err := os.ReadFile(filepath.Join(root, ".agentrc", "bootstrap.md"))
 	if err != nil {
 		t.Fatalf("read bootstrap after make bootstrap-sync: %v", err)
 	}

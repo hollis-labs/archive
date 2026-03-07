@@ -27,7 +27,7 @@ Cortex complements Volon's PCC layer: PCC is canonical for agent/session orchest
 
 ## Active configuration
 
-- `volon.yaml`: file-based storage backend, PCC enabled, worktrees enabled
+- `agentrc.yaml`: file-based storage backend, PCC enabled, worktrees enabled
 - Module: `github.com/hollis-labs/volon-dev` (Go 1.25)
 - Binary: `contextd` (CLI + server)
 - Default server address: `:8080`
@@ -35,4 +35,4 @@ Cortex complements Volon's PCC layer: PCC is canonical for agent/session orchest
 
 ## Evidence
 - Last refreshed: 2026-03-04 (mentat PCC bootstrap)
-- Sources: README.md, docs/SCOPE.md, docs/ARCHITECTURE.md, docs/DEV.md, volon.yaml, go.mod
+- Sources: README.md, docs/SCOPE.md, docs/ARCHITECTURE.md, docs/DEV.md, agentrc.yaml, go.mod

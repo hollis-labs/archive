@@ -9,7 +9,7 @@ for downstream consumption without inheriting internal history or runtime state.
 | Path | Keep? | Notes |
 | --- | --- | --- |
 | `CLAUDE.md` | ✅ | Boot instructions required in every Volon repo. |
-| `volon.yaml` | ✅ | Core configuration (to be customized downstream). |
+| `agentrc.yaml` | ✅ | Core configuration (to be customized downstream). |
 | `.agentrc/agent-boot.md` | ✅ | Canonical boot reference. |
 | `.agentrc/boot/**` | ✅ | Role addenda for orchestrator/worker/reviewer/etc. |
 | `.agentrc/templates/**` | ✅ | Prompt/workflow templates referenced by skills. |
@@ -45,7 +45,7 @@ explicitly requires them.
 
 After export, `.agentrc/` should contain only immutable boot/config artifacts:
 
-| `.volon` Path | Keep? | Notes |
+| `.agentrc` Path | Keep? | Notes |
 | --- | --- | --- |
 | `agent-boot.md` | ✅ | Required boot reference. |
 | `boot/` | ✅ | Role addenda shipped as-is. |
@@ -67,7 +67,7 @@ After export, `.agentrc/` should contain only immutable boot/config artifacts:
     worker.md
     reviewer.md
     architect.md
-    ... (any other role profiles referenced by volon.yaml)
+    ... (any other role profiles referenced by agentrc.yaml)
   templates/
     ... (prompt + workflow templates referenced by skills)
 ```

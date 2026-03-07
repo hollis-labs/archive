@@ -30,7 +30,7 @@ user-docs-mini-site/
 ├── examples.html        # Annotated workflow invocation traces
 ├── docs/
 │   ├── index.html       # Docs landing — organized nav
-│   ├── config.html      # volon.yaml configuration reference
+│   ├── config.html      # agentrc.yaml configuration reference
 │   ├── workflows.html   # Workflow contracts
 │   ├── task-model.html  # Task model fields and lifecycle
 │   ├── commands.html    # All slash commands reference

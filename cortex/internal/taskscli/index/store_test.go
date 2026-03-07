@@ -41,7 +41,7 @@ func TestUpsertAndList(t *testing.T) {
 		Context:   "dev",
 		CreatedAt: "2026-02-24",
 		UpdatedAt: "2026-02-24",
-		FilePath:  ".volon/tasks/TASK-1.md",
+		FilePath:  ".agentrc/tasks/TASK-1.md",
 	}
 	if err := store.UpsertTask(context.Background(), row); err != nil {
 		t.Fatalf("upsert: %v", err)
@@ -71,7 +71,7 @@ func TestReplaceAll(t *testing.T) {
 			Status:    "todo",
 			CreatedAt: "2026-02-24",
 			UpdatedAt: "2026-02-24",
-			FilePath:  ".volon/tasks/TASK-1.md",
+			FilePath:  ".agentrc/tasks/TASK-1.md",
 		},
 		{
 			ID:        "TASK-2",
@@ -79,7 +79,7 @@ func TestReplaceAll(t *testing.T) {
 			Status:    "doing",
 			CreatedAt: "2026-02-24",
 			UpdatedAt: "2026-02-24",
-			FilePath:  ".volon/tasks/TASK-2.md",
+			FilePath:  ".agentrc/tasks/TASK-2.md",
 		},
 	}
 

@@ -19,12 +19,12 @@ func TestBootstrapSyncNoLogContractAgainstGolden(t *testing.T) {
 	golden := loadBootstrapSyncNoLogGolden(t)
 	root := t.TempDir()
 
-	mustWrite(t, filepath.Join(root, ".volon", "tasks", "TASK-A.md"), "status: done\n")
-	mustWrite(t, filepath.Join(root, ".volon", "tasks", "TASK-B.md"), "status: todo\n")
-	if err := os.MkdirAll(filepath.Join(root, ".volon", "logs"), 0o755); err != nil {
+	mustWrite(t, filepath.Join(root, ".agentrc", "tasks", "TASK-A.md"), "status: done\n")
+	mustWrite(t, filepath.Join(root, ".agentrc", "tasks", "TASK-B.md"), "status: todo\n")
+	if err := os.MkdirAll(filepath.Join(root, ".agentrc", "logs"), 0o755); err != nil {
 		t.Fatalf("mkdir empty logs dir: %v", err)
 	}
-	mustWrite(t, filepath.Join(root, ".volon", "bootstrap.md"), "updated_at: 2026-02-25T00:00:00Z\n- Tasks: 0 todo, 0 blocked, 0 done\n- Last run log: `placeholder`\n")
+	mustWrite(t, filepath.Join(root, ".agentrc", "bootstrap.md"), "updated_at: 2026-02-25T00:00:00Z\n- Tasks: 0 todo, 0 blocked, 0 done\n- Last run log: `placeholder`\n")
 
 	scriptRel := filepath.Join("..", "..", "scripts", "bootstrap-sync.sh")
 	script, err := filepath.Abs(scriptRel)
@@ -53,7 +53,7 @@ func TestBootstrapSyncNoLogContractAgainstGolden(t *testing.T) {
 	}
 	_ = applyOut
 
-	bootstrapBytes, err := os.ReadFile(filepath.Join(root, ".volon", "bootstrap.md"))
+	bootstrapBytes, err := os.ReadFile(filepath.Join(root, ".agentrc", "bootstrap.md"))
 	if err != nil {
 		t.Fatalf("read bootstrap after apply: %v", err)
 	}

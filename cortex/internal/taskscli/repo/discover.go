@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 )
 
-const markerFile = "volon.yaml"
+const markerFile = "agentrc.yaml"
 
-// FindRepoRoot walks up from start until it finds a directory containing volon.yaml.
+// FindRepoRoot walks up from start until it finds a directory containing agentrc.yaml.
 func FindRepoRoot(start string) (string, error) {
 	path := start
 	for {
@@ -18,7 +18,7 @@ func FindRepoRoot(start string) (string, error) {
 
 		parent := filepath.Dir(path)
 		if parent == path {
-			return "", errors.New("volon.yaml not found in this directory or any parent")
+			return "", errors.New("agentrc.yaml not found in this directory or any parent")
 		}
 		path = parent
 	}

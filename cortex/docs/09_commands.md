@@ -52,7 +52,7 @@ Resume work from `.agentrc/bootstrap.md` and the task state on disk.
 
 ### Behavior
 - Re-ground from:
-  - `volon.yaml`, `.agentrc/bootstrap.md`, `.agentrc/pcc/`, `.agentrc/tasks/`, `.agentrc/logs/`
+  - `agentrc.yaml`, `.agentrc/bootstrap.md`, `.agentrc/pcc/`, `.agentrc/tasks/`, `.agentrc/logs/`
 - Identify the paused item:
   - prefer `paused_task_id` in bootstrap frontmatter if present
   - otherwise select highest priority `doing/paused/blocked` task with most recent update
@@ -66,7 +66,7 @@ Resume work from `.agentrc/bootstrap.md` and the task state on disk.
 ## /commit-task [task-id] [mode=iteration|isolated]
 
 ### Purpose
-Commit changes for a completed task. Respects `git.commit_mode` from `volon.yaml`.
+Commit changes for a completed task. Respects `git.commit_mode` from `agentrc.yaml`.
 
 ### Modes
 - `iteration` (default): batch commit message referencing the iteration and task(s)
@@ -231,7 +231,7 @@ all placeholders, and enforces guardrails automatically. Backed by
 
 ### Notes
 - Backed by `plugins/prompt-volon/skills/volon-prompt/SKILL.md`
-- Configure defaults in `volon.yaml` under `prompt_generator:` (see `docs/14_volon-prompt.md`)
+- Configure defaults in `agentrc.yaml` under `prompt_generator:` (see `docs/14_volon-prompt.md`)
 - Full documentation: `docs/14_volon-prompt.md`
 
 ---
@@ -251,7 +251,7 @@ volon task list [--status ...] [--type ...] [--tag ...] [--priority ...] [--limi
 volon task reindex
 ```
 
-Run `go run ./cmd/volon task --help` (or build/install `cmd/volon`) for the latest flags. All commands operate within the repo containing `volon.yaml` (use `--repo` to target another path).
+Run `go run ./cmd/volon task --help` (or build/install `cmd/volon`) for the latest flags. All commands operate within the repo containing `agentrc.yaml` (use `--repo` to target another path).
 
 ### Required usage pattern
 1. **Queue review:** `volon task list --status todo --priority A` — start of every session/loop.

@@ -11,7 +11,7 @@ audience: humans
 intent description. It eliminates manual prompt construction by:
 
 1. Inferring the correct template from the intent
-2. Reading repo context from `volon.yaml`
+2. Reading repo context from `agentrc.yaml`
 3. Filling all placeholders with resolved values
 4. Enforcing non-negotiable guardrails (single writer, no destructive ops, DONE token)
 
@@ -54,7 +54,7 @@ Use it to bootstrap any Volon workflow without remembering the full prompt struc
 |---|---|---|
 | `<intent>` | **Yes** | Natural language description of what the prompt should accomplish |
 | `--mode` | No | Override template selection. Options: `inception` \| `task` \| `ideation` \| `planning` \| `patch` |
-| `--repo <path>` | No | Target repo path or name. Default: current directory / `volon.yaml project.name` |
+| `--repo <path>` | No | Target repo path or name. Default: current directory / `agentrc.yaml project.name` |
 | `--constraints "<text>"` | No | Additional scope or guardrail text to inject into the generated prompt |
 | `--deliverables "<text>"` | No | Explicit expected outputs to inject into the generated prompt |
 
@@ -188,9 +188,9 @@ Use `--constraints` and `--deliverables` to customize a single invocation:
   --deliverables "TASK-001 done, run log written, bootstrap updated"
 ```
 
-### Project-level config (`volon.yaml`)
+### Project-level config (`agentrc.yaml`)
 
-Add a `prompt_generator:` section to `volon.yaml` to set defaults for the project:
+Add a `prompt_generator:` section to `agentrc.yaml` to set defaults for the project:
 
 ```yaml
 prompt_generator:

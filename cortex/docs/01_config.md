@@ -3,7 +3,7 @@ intent: system_doc
 audience: humans
 ---
 
-# Configuration (volon.yaml) — v0.1 (updated with Orchestrator)
+# Configuration (agentrc.yaml) — v0.1 (updated with Orchestrator)
 
 ## Goals
 - Project-agnostic configuration
@@ -15,8 +15,8 @@ audience: humans
 - Orchestrator mode and bounded sub-agents
 
 ## File locations (resolution order)
-1. `volon.yaml`
-2. `.agentrc/volon.yaml`
+1. `agentrc.yaml`
+2. `.agentrc/agentrc.yaml`
 
 ## Schema (proposed)
 ```yaml

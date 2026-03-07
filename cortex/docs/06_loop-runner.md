@@ -32,7 +32,7 @@ Do not rely on prior chat context.
 
 Rules:
 - You are the **single writer**. Sub-agents (if enabled) are read-only.
-- Ground truth: volon.yaml, bootstrap, PCC, tasks, logs.
+- Ground truth: agentrc.yaml, bootstrap, PCC, tasks, logs.
 
 0) If the user requests a pause: run /pause-task (mode as requested) and stop.
 
