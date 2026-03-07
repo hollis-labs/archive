@@ -3,7 +3,7 @@
 **/.DS_Store
 
 # Volon run logs (verbose, regenerable)
-.volon/logs/
+.agentrc/logs/
 
 # Sensitive files
 *.env
@@ -20,8 +20,8 @@ credentials.*
 *.db-wal
 
 # Local Go build caches
-.volon/.gomodcache/
-.volon/.gocache/
+.agentrc/.gomodcache/
+.agentrc/.gocache/
 .cache/
 
 # Frontend

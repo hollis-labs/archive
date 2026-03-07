@@ -17,8 +17,8 @@ is a deliberate, separate step.
 
 ```
 Idea / observation
-  → Backlog item  (.volon/backlog/BACKLOG-YYYYMMDD-NNN.md)
-      → Active task  (.volon/tasks/TASK-YYYYMMDD-NNN.md)
+  → Backlog item  (.agentrc/backlog/BACKLOG-YYYYMMDD-NNN.md)
+      → Active task  (.agentrc/tasks/TASK-YYYYMMDD-NNN.md)
           → Sprint / iteration execution
 ```
 
@@ -130,7 +130,7 @@ volon backlog show <BACKLOG-ID>
 volon backlog promote <BACKLOG-ID> [--title ...] [--priority ...] [--tags ...] [--type ...] [--sprint <slug>]
 ```
 
-- `list` reads `.volon/backlog/BACKLOG-*.md`, filters by status/priority/tag substring, and prints a tabular queue sorted by ID.
+- `list` reads `.agentrc/backlog/BACKLOG-*.md`, filters by status/priority/tag substring, and prints a tabular queue sorted by ID.
 - `show` prints the exact markdown file so you can review/edit outside of a skill invocation.
 - `promote` creates a new `TASK-YYYYMMDD-###.md` (setting `promoted_from` + optional `sprint_id` via `--sprint sprint-YYYY-MM`), updates the backlog file to `status: promoted` / `promoted_to: TASK-…`, and refuses to run if the entry is already promoted or dropped.
 
@@ -142,4 +142,4 @@ Use either the slash command (`/backlog-task promote ...`) or the CLI — both m
 
 - Created: 2026-02-21 (EPIC-004, TASK-084, iteration 24)
 - Source: `volon_v0.4_execution_brief.md` — EPIC-004 scope
-- Reviewed against: `docs/04_task-model.md`, `.volon/pcc/02_conventions.md`
+- Reviewed against: `docs/04_task-model.md`, `.agentrc/pcc/02_conventions.md`

@@ -14,7 +14,7 @@ This is also the safest way to deal with context compaction.
 - The Orchestrator is the **single writer**.
 - Pausing always updates:
   - task status + Updates
-  - `.volon/pcc/tasks/<task_id>.md` — Task PCC resume capsule (L2 PCC)
+  - `.agentrc/pcc/tasks/<task_id>.md` — Task PCC resume capsule (L2 PCC)
   - bootstrap frontmatter (`paused_task_id`, `paused_at`, `resume_hint`)
   - optional run log entry
 
@@ -23,7 +23,7 @@ This is also the safest way to deal with context compaction.
 On every pause, `/pause-task` writes (or overwrites) a **Task PCC capsule** at:
 
 ```
-.volon/pcc/tasks/<task_id>.md
+.agentrc/pcc/tasks/<task_id>.md
 ```
 
 This capsule is the deterministic resume context. It captures:
@@ -36,7 +36,7 @@ This capsule is the deterministic resume context. It captures:
 - open questions / blockers
 - confidence: high|medium|low
 
-Schema: `.volon/templates/task-pcc-capsule.md`
+Schema: `.agentrc/templates/task-pcc-capsule.md`
 
 On resume, `/resume-task` reads the capsule, runs a preflight checklist, then uses the capsule's "next actions" to re-enter execution.
 
@@ -52,7 +52,7 @@ If you prefer not to add a new status, you may use `blocked` with a `blocker_typ
 However, `paused` is clearer.
 
 ## Bootstrap additions
-Add these optional frontmatter keys to `.volon/bootstrap.md`:
+Add these optional frontmatter keys to `.agentrc/bootstrap.md`:
 
 ```yaml
 paused_task_id: "TASK-YYYYMMDD-###"

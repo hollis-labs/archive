@@ -23,7 +23,7 @@ updated_at: "2026-03-04"
 - **Policy engine:** namespace ownership enforced; `user/*` requires explicit promotion/approval from app contexts
 - **Contract-driven development:** golden JSON fixtures as API contract source of truth; intentional fixture updates only
 - **Auth model:** bearer-token auth with managed lifecycle (issue/rotate/revoke) or static token for dev
-- **Cortex complements PCC:** does not replace `.volon/pcc/*` as orchestrator ground truth
+- **Cortex complements PCC:** does not replace `.agentrc/pcc/*` as orchestrator ground truth
 
 ## Evidence
 - Last refreshed: 2026-03-04 (mentat PCC bootstrap)

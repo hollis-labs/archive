@@ -19,7 +19,7 @@ By default, the active session should behave as an **Orchestrator** (see `docs/0
 See: `docs/10_pause_resume.md`
 
 ## Manual run (fresh session)
-1. Read `.volon/bootstrap.md`
+1. Read `.agentrc/bootstrap.md`
 2. Run tasks-driven loop (execute up to K tasks)
 3. Write run log
 4. Finalize iteration (`/bootstrap-update`)
@@ -36,18 +36,18 @@ Rules:
 
 0) If the user requests a pause: run /pause-task (mode as requested) and stop.
 
-1) Read `.volon/bootstrap.md` (if present).
-2) Execute a tasks-driven loop from `.volon/tasks/`:
+1) Read `.agentrc/bootstrap.md` (if present).
+2) Execute a tasks-driven loop from `.agentrc/tasks/`:
    - select next todo by priority (A>B>C), oldest first
    - set doing → execute → verify → done/blocked/paused
    - append Updates in task file
-   - write run log under `.volon/logs/`
+   - write run log under `.agentrc/logs/`
    - stop after <K> tasks or no todos
 
 3) Finalize iteration:
    - run /commit-task (if git.auto_commit: true and commit_mode: iteration)
    - run /bootstrap-update
-   - ensure `.volon/bootstrap.md` and history copy exist
+   - ensure `.agentrc/bootstrap.md` and history copy exist
 
 End with:
 DONE

@@ -6,7 +6,7 @@ audience: humans
 # Sprint Workflow — planning + execution contract
 
 ## Purpose
-Elevate sprints as the macro-planning layer above iteration loops. A sprint groups multiple iteration runs under a common goal, making it easier to reason about burn-down, backlog rotation, and retro notes without overloading `.volon/bootstrap.md`.
+Elevate sprints as the macro-planning layer above iteration loops. A sprint groups multiple iteration runs under a common goal, making it easier to reason about burn-down, backlog rotation, and retro notes without overloading `.agentrc/bootstrap.md`.
 
 ## Definitions
 - **Sprint** — multi-iteration planning block (usually 1–2 weeks). Owns backlog selection, success criteria, and retro inputs.
@@ -40,5 +40,5 @@ Elevate sprints as the macro-planning layer above iteration loops. A sprint grou
 - `docs/tasks.md`, `docs/09_backlog-model.md`, and `docs/09_commands.md` highlight the CLI flags so operators consistently tag sprint work.
 
 ## Evidence / next steps
-- Use sprint slugs consistently in PCC + artifacts (e.g., `.volon/pcc/global/04_backlog.md` current sprint pointer).
+- Use sprint slugs consistently in PCC + artifacts (e.g., `.agentrc/pcc/global/04_backlog.md` current sprint pointer).
 - Expand with automation later (e.g., `volon sprint create` skill) once the manual workflow proves stable.

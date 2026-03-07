@@ -23,4 +23,4 @@ echo "[migrate] Repo: ${REPO}"
 move_file "${REPO}/forge.yaml" "${REPO}/volon.yaml"
 move_file "${REPO}/.forge" "${REPO}/.volon"
 
-echo "[migrate] Done. Review volon.yaml + .volon/, then rerun scripts/volon-cli.sh /bootstrap-update."
+echo "[migrate] Done. Review volon.yaml + .agentrc/, then rerun scripts/volon-cli.sh /bootstrap-update."

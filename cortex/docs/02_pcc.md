@@ -17,12 +17,12 @@ Volon uses two PCC layers:
 
 | Layer | Name | Location | Purpose |
 |---|---|---|---|
-| L0 | Global | `.volon/pcc/global/` | Project-wide invariants — refreshed on workflow start or git change |
-| L2 | Task | `.volon/pcc/tasks/<task_id>.md` | Resume capsule — written on `/pause-task`, read on `/resume-task` |
+| L0 | Global | `.agentrc/pcc/global/` | Project-wide invariants — refreshed on workflow start or git change |
+| L2 | Task | `.agentrc/pcc/tasks/<task_id>.md` | Resume capsule — written on `/pause-task`, read on `/resume-task` |
 
 See `docs/pcc_layers.md` for full layer design, caps, and staleness strategy.
 
-## L0 — Required files (in `.volon/pcc/global/`)
+## L0 — Required files (in `.agentrc/pcc/global/`)
 - `00_project.md` — what this repo is, goals/non-goals, repo type signals
 - `01_architecture.md` — components, boundaries, data flow
 - `02_conventions.md` — coding standards, branching, naming, test commands
@@ -36,9 +36,9 @@ Optional:
 - `08_observability.md` — logging/metrics/tracing notes
 
 ## L2 — Task PCC capsule
-- Written by `/pause-task` to `.volon/pcc/tasks/<task_id>.md`
+- Written by `/pause-task` to `.agentrc/pcc/tasks/<task_id>.md`
 - Read by `/resume-task` before re-entering the task loop
-- Schema: `.volon/templates/task-pcc-capsule.md`
+- Schema: `.agentrc/templates/task-pcc-capsule.md`
 - Max 400 words per capsule
 
 ## Style rules

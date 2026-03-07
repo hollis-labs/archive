@@ -53,4 +53,4 @@ Provide deterministic context persistence/retrieval for multiple local clients w
 - Append-only records; no in-place payload mutation.
 - Single head per `(namespace,key)`.
 - Deterministic ordering for identical selectors and store state.
-- Service complements PCC; does not replace `.volon/pcc/*` as orchestrator ground truth.
+- Service complements PCC; does not replace `.agentrc/pcc/*` as orchestrator ground truth.

@@ -8,8 +8,8 @@ updated_at: "2026-03-04"
 
 ## Task inventory
 
-20 tasks under `.volon/tasks/` (TASK-20260225-001 through TASK-20260225-020).
-9 backlog items under `.volon/backlog/` (BACKLOG-20260226-001 through BACKLOG-20260228-001).
+20 tasks under `.agentrc/tasks/` (TASK-20260225-001 through TASK-20260225-020).
+9 backlog items under `.agentrc/backlog/` (BACKLOG-20260226-001 through BACKLOG-20260228-001).
 
 ## Current priorities (from codebase signals)
 
@@ -40,4 +40,4 @@ updated_at: "2026-03-04"
 
 ## Evidence
 - Last refreshed: 2026-03-04 (mentat PCC bootstrap)
-- Sources: .volon/tasks/, .volon/backlog/, docs/DECISIONS/ADR-INDEX.md, docs/ARCHITECTURE.md, internal/
+- Sources: .agentrc/tasks/, .agentrc/backlog/, docs/DECISIONS/ADR-INDEX.md, docs/ARCHITECTURE.md, internal/

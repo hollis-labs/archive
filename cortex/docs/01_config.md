@@ -16,7 +16,7 @@ audience: humans
 
 ## File locations (resolution order)
 1. `volon.yaml`
-2. `.volon/volon.yaml`
+2. `.agentrc/volon.yaml`
 
 ## Schema (proposed)
 ```yaml
@@ -43,14 +43,14 @@ project:
 storage:
   backend: files
   files:
-    root: ".volon/tasks"  # task file location
+    root: ".agentrc/tasks"  # task file location
 
 observability:
   verbosity: normal # quiet|normal|verbose|trace
   write_run_log: true
   write_decision_log: true
   redact_secrets: true
-  log_dir: ".volon/logs"
+  log_dir: ".agentrc/logs"
 
 git:
   use_worktrees: true
@@ -60,13 +60,13 @@ git:
   pr:
     base_branch: auto
     title_prefix: "volon:"
-    body_template: ".volon/templates/pr-body.md"
+    body_template: ".agentrc/templates/pr-body.md"
   commit_mode: iteration   # iteration|isolated — see docs/11_git-hooks.md
   auto_commit: false       # if true, /commit-task runs automatically at finalize
 
 pcc:
   enabled: true
-  location: ".volon/pcc"
+  location: ".agentrc/pcc"
   commit_to_git: true
   refresh:
     on_workflow_start: true
@@ -108,12 +108,12 @@ prompt_generator:
   verbosity: standard             # standard|verbose|minimal — affects prompt detail level
 
 tasks:
-  tasks_dir: ".volon/tasks"   # canonical markdown location
-  state_dir: ".volon/state"   # directory for volon.db (created automatically)
+  tasks_dir: ".agentrc/tasks"   # canonical markdown location
+  state_dir: ".agentrc/state"   # directory for volon.db (created automatically)
   db_file: "volon.db"         # SQLite cache file, rebuildable
 
 backlog:
-  dir: ".volon/backlog"       # location for BACKLOG-*.md (list/show/promote commands scan this)
+  dir: ".agentrc/backlog"       # location for BACKLOG-*.md (list/show/promote commands scan this)
 
 models:
   default: claude-sonnet-4-6
@@ -138,5 +138,5 @@ models:
 ## Notes
 - Unrecognized keys should be ignored (forward compatible).
 - Orchestrator mode is a **process role**; enforcement is via prompts + workflow contracts until implemented as tooling.
-- `tasks_dir` / `state_dir` / `db_file` are optional; omit `tasks:` entirely to keep legacy defaults. The SQLite cache is index-only: deleting it is safe because `volon task reindex` rebuilds it from `.volon/tasks/`.
-- `volon.db`, `volon.db-shm`, and `volon.db-wal` in `.volon/state/` are the Volon SQLite cache. They are safe to delete and rebuild via `volon task reindex`.
+- `tasks_dir` / `state_dir` / `db_file` are optional; omit `tasks:` entirely to keep legacy defaults. The SQLite cache is index-only: deleting it is safe because `volon task reindex` rebuilds it from `.agentrc/tasks/`.
+- `volon.db`, `volon.db-shm`, and `volon.db-wal` in `.agentrc/state/` are the Volon SQLite cache. They are safe to delete and rebuild via `volon task reindex`.

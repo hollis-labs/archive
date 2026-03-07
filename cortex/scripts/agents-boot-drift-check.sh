@@ -3,12 +3,12 @@ set -euo pipefail
 
 critical=(
   "AGENTS.md"
-  ".volon/agent-boot.md"
-  ".volon/bootstrap.md"
-  ".volon/boot/orchestrator.md"
-  ".volon/boot/architect.md"
-  ".volon/boot/worker.md"
-  ".volon/boot/reviewer.md"
+  ".agentrc/agent-boot.md"
+  ".agentrc/bootstrap.md"
+  ".agentrc/boot/orchestrator.md"
+  ".agentrc/boot/architect.md"
+  ".agentrc/boot/worker.md"
+  ".agentrc/boot/reviewer.md"
 )
 
 missing=0
@@ -23,12 +23,12 @@ if [[ "$missing" -ne 0 ]]; then
 fi
 
 warnings=0
-if ! rg -q "\.volon/boot/" AGENTS.md; then
-  echo "warning: AGENTS.md does not reference .volon/boot/ paths" >&2
+if ! rg -q "\.agentrc/boot/" AGENTS.md; then
+  echo "warning: AGENTS.md does not reference .agentrc/boot/ paths" >&2
   warnings=1
 fi
-if ! rg -q "\.volon/agent-boot\.md" AGENTS.md; then
-  echo "warning: AGENTS.md does not reference .volon/agent-boot.md" >&2
+if ! rg -q "\.agentrc/agent-boot\.md" AGENTS.md; then
+  echo "warning: AGENTS.md does not reference .agentrc/agent-boot.md" >&2
   warnings=1
 fi
 if ! rg -q "orchestrator|architect|worker|reviewer" AGENTS.md; then

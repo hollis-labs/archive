@@ -48,11 +48,11 @@ Then instruct the user how to restart cleanly (new session) if desired.
 ## /resume-task [note]
 
 ### Purpose
-Resume work from `.volon/bootstrap.md` and the task state on disk.
+Resume work from `.agentrc/bootstrap.md` and the task state on disk.
 
 ### Behavior
 - Re-ground from:
-  - `volon.yaml`, `.volon/bootstrap.md`, `.volon/pcc/`, `.volon/tasks/`, `.volon/logs/`
+  - `volon.yaml`, `.agentrc/bootstrap.md`, `.agentrc/pcc/`, `.agentrc/tasks/`, `.agentrc/logs/`
 - Identify the paused item:
   - prefer `paused_task_id` in bootstrap frontmatter if present
   - otherwise select highest priority `doing/paused/blocked` task with most recent update
@@ -96,10 +96,10 @@ Alias for `/resume-task [note]`.
 ### Purpose
 Select the agent profile to follow **for this session**. The command displays the profile’s
 metadata (prompt, PCC defaults, write scope, tool allowlist, workflow/envelope hints) and
-reminds you to read the corresponding `.volon/boot/<role>.md`.
+reminds you to read the corresponding `.agentrc/boot/<role>.md`.
 
 ### Behavior
-- Normalizes the slug, verifies `.volon/agents/<profile>.yaml` exists, and lists available profiles when a typo is detected.
+- Normalizes the slug, verifies `.agentrc/agents/<profile>.yaml` exists, and lists available profiles when a typo is detected.
 - Displays the YAML so you can reference it directly, then prompts you to echo a structured summary (boot prompt, PCC includes, write scope, tools, workflows, envelopes).
 - Reminds you how to relaunch with the same profile via CLI (`FORGE_AGENT_PROFILE=<profile> scripts/volon-cli.sh --repo ...` or `scripts/volon-cli.sh --agent <profile>`).
 
@@ -121,7 +121,7 @@ context requirements, interface spec, plan, and tasks.
 
 ### Outputs
 - `artifacts/agents/<slug>/` — purpose, scope, context, interface, plan artifacts
-- Tasks in `.volon/tasks/` for implementation
+- Tasks in `.agentrc/tasks/` for implementation
 
 ---
 
@@ -238,7 +238,7 @@ all placeholders, and enforces guardrails automatically. Backed by
 
 ## `volon task` (CLI)
 
-Although not a slash command, the Go-based `volon task` CLI is part of the standard toolkit. It automates task lifecycle operations against `.volon/tasks/TASK-*.md` while keeping markdown canonical.
+Although not a slash command, the Go-based `volon task` CLI is part of the standard toolkit. It automates task lifecycle operations against `.agentrc/tasks/TASK-*.md` while keeping markdown canonical.
 
 ### Usage
 
@@ -264,7 +264,7 @@ Log these invocations (especially reindex + transitions) in the active task’s 
 
 ### Notes
 - Markdown files remain the single source of truth. The CLI only edits frontmatter and appends to `## Updates`.
-- SQLite cache lives under `.volon/state/volon.db` (index-only; safe to delete/rebuild).
+- SQLite cache lives under `.agentrc/state/volon.db` (index-only; safe to delete/rebuild).
 - Pause/resume flows stay within `/pause-task` and `/resume-task`; the CLI deliberately omits those transitions.
 - Full reference: `docs/tasks.md`
 
@@ -273,7 +273,7 @@ Log these invocations (especially reindex + transitions) in the active task’s 
 ## /backlog-task ["Title" \| list \| promote]
 
 ### Purpose
-Capture product/engineering ideas into `.volon/backlog/`, review/filter them, and promote the right ones into active tasks. This keeps ideation visible outside the live chat window and preserves single-writer discipline.
+Capture product/engineering ideas into `.agentrc/backlog/`, review/filter them, and promote the right ones into active tasks. This keeps ideation visible outside the live chat window and preserves single-writer discipline.
 
 ### Modes
 - `capture` (default): `/backlog-task "Add sprint workflow" priority=B tags=workflow,v0.5`
@@ -282,7 +282,7 @@ Capture product/engineering ideas into `.volon/backlog/`, review/filter them, an
 
 ### Behavior
 1. Capture writes a new `BACKLOG-YYYYMMDD-###.md` with the supplied metadata.
-2. List enumerates `.volon/backlog/BACKLOG-*.md` using the requested filters.
+2. List enumerates `.agentrc/backlog/BACKLOG-*.md` using the requested filters.
 3. Promote validates the entry, creates a new task (via `/task-create`), and updates the backlog file (`status: promoted`, `promoted_to: TASK-...`).
 
 ### CLI counterpart

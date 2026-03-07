@@ -52,8 +52,8 @@ while queue not empty:
 
 ```
 load_context(task):
-    global_pcc = read_all(".volon/pcc/global/")   # L0: project-wide invariants
-    task_pcc   = read(".volon/pcc/tasks/<id>.md") # L2: resume capsule (if exists)
+    global_pcc = read_all(".agentrc/pcc/global/")   # L0: project-wide invariants
+    task_pcc   = read(".agentrc/pcc/tasks/<id>.md") # L2: resume capsule (if exists)
     return merge(global_pcc, task_pcc)
 ```
 
@@ -96,8 +96,8 @@ else:
 For each completed cycle, the runner writes:
 
 1. **Updated task file** — status, Updates entry, new acceptance criteria check state
-2. **Run log entry** — in `.volon/logs/run-<date>-<iter>.md`
-3. **Updated Task PCC capsule** — `.volon/pcc/tasks/<task_id>.md` (overwritten)
+2. **Run log entry** — in `.agentrc/logs/run-<date>-<iter>.md`
+3. **Updated Task PCC capsule** — `.agentrc/pcc/tasks/<task_id>.md` (overwritten)
 4. **Bootstrap update** — reflects new task state and `paused_task_id` if paused
 
 ---
@@ -106,10 +106,10 @@ For each completed cycle, the runner writes:
 
 | Component | Role in queue runner |
 |---|---|
-| `.volon/pcc/global/` (L0) | Project context loaded at start of every cycle |
-| `.volon/pcc/tasks/` (L2) | Per-task capsule: loaded at start, written at end |
-| `.volon/tasks/<id>.md` | Authoritative task state (source of truth) |
-| `.volon/bootstrap.md` | Queue head pointer; updated after each cycle |
+| `.agentrc/pcc/global/` (L0) | Project context loaded at start of every cycle |
+| `.agentrc/pcc/tasks/` (L2) | Per-task capsule: loaded at start, written at end |
+| `.agentrc/tasks/<id>.md` | Authoritative task state (source of truth) |
+| `.agentrc/bootstrap.md` | Queue head pointer; updated after each cycle |
 | `pcc-refresh` skill | Keeps L0 fresh; called at workflow start or on git change |
 | `pause-task` skill | Human-triggered equivalent of "route to paused" |
 | `resume-task` skill | Human-triggered equivalent of "pop from paused + preflight" |
@@ -140,4 +140,4 @@ For each completed cycle, the runner writes:
 - Created: 2026-02-22 (iteration 32)
 - Status: concept draft only — no implementation exists
 - Inspired by: Volon pause/resume pattern, Task PCC capsule spec, L0/L2 layered PCC design
-- Related: `docs/pcc_layers.md`, `.volon/templates/task-pcc-capsule.md`, `docs/10_pause_resume.md`
+- Related: `docs/pcc_layers.md`, `.agentrc/templates/task-pcc-capsule.md`, `docs/10_pause_resume.md`

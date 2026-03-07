@@ -4,11 +4,11 @@ type: bootstrap
 iteration: 192
 updated_at: 2026-02-27T22:00:00Z
 config:
-  path: volon.yaml
+  path: agentrc.yaml
   storage_backend: files
-  pcc_path: .volon/pcc
-  tasks_path: .volon/tasks
-  logs_path: .volon/logs
+  pcc_path: .agentrc/pcc
+  tasks_path: .agentrc/tasks
+  logs_path: .agentrc/logs
 execution:
   driver: tasks
   max_tasks_per_run: 6
@@ -36,7 +36,7 @@ Plan: `artifacts/plan/mvp-replan-2026-02-27.md`
 - Cancelled: TASK-20260227-019..020 (superseded by 020..022)
 - Deferred: TASK-20260225-239..242 + TASK-20260228-001..004 (GUI only)
 - Backlog: BACKLOG-20260228-001 done (user/agent docs — completed iteration 192)
-- Last run log: `.volon/logs/run-iteration-192-2026-02-27.md`
+- Last run log: `.agentrc/logs/run-iteration-192-2026-02-27.md`
 - Release plan: `artifacts/plan/release-sprint-plan.md`
 
 ## Active work (MVP sprints in priority order)

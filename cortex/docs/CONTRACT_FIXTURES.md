@@ -54,7 +54,7 @@ This index lists fixture files and their associated validation command.
 | `tests/integration/fixtures/make_bootstrap_sync_contract_golden.json` | `make bootstrap-sync-report` / `make bootstrap-sync-apply` | `go test ./tests/integration -run MakeBootstrapSyncContract` |
 | `tests/integration/fixtures/make_bootstrap_sync_alias_contract_golden.json` | `make bootstrap-sync` | `go test ./tests/integration -run MakeBootstrapSyncAliasContract` |
 | `tests/integration/fixtures/bootstrap_sync_contract_golden.json` | `scripts/bootstrap-sync.sh` | `go test ./tests/integration -run BootstrapSyncScript` |
-| `tests/integration/fixtures/bootstrap_sync_no_log_contract_golden.json` | `scripts/bootstrap-sync.sh` (empty `.volon/logs`) | `go test ./tests/integration -run BootstrapSyncNoLogContract` |
+| `tests/integration/fixtures/bootstrap_sync_no_log_contract_golden.json` | `scripts/bootstrap-sync.sh` (empty `.agentrc/logs`) | `go test ./tests/integration -run BootstrapSyncNoLogContract` |
 | `tests/integration/fixtures/bootstrap_sync_idempotent_contract_golden.json` | `scripts/bootstrap-sync.sh --apply` repeatability | `go test ./tests/integration -run BootstrapSyncIdempotentContract` |
 
 ## Suite Ordering Policy
@@ -219,7 +219,7 @@ See also: `docs/DEV.md#contract-quick-run-pack`.
 - Ownership:
   - API/runtime fixture changes: reviewers for `internal/contextapi/` and `internal/contextstore/`.
   - CLI fixture changes: reviewers for `internal/contextcli/`.
-  - Smoke/workflow fixture changes: reviewers for `scripts/` and `.volon/` workflow docs.
+  - Smoke/workflow fixture changes: reviewers for `scripts/` and `.agentrc/` workflow docs.
 - Update policy:
   - Any fixture change must be paired with the corresponding test change and rationale in the same commit.
   - If output/shape changes are intentional, update fixture first, then tests, then docs references.

@@ -63,7 +63,7 @@ allow external scripts or commands to run at defined points without modifying co
 | `on_iteration_start` | A loop runner session begins |
 | `on_iteration_end` | A loop runner session ends (before /bootstrap-update) |
 | `on_commit` | After any git commit by Volon |
-| `on_bootstrap_update` | After `.volon/bootstrap.md` is written |
+| `on_bootstrap_update` | After `.agentrc/bootstrap.md` is written |
 | `on_pause` | After /pause-task completes |
 | `on_resume` | Before /resume-task begins execution |
 

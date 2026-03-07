@@ -7,22 +7,22 @@ project:
 storage:
   backend: files
   files:
-    root: ".volon/tasks"
+    root: ".agentrc/tasks"
 
 tasks:
-  tasks_dir: ".volon/tasks"
-  state_dir: ".volon/state"
+  tasks_dir: ".agentrc/tasks"
+  state_dir: ".agentrc/state"
   db_file: "volon.db"
 
 backlog:
-  dir: ".volon/backlog"
+  dir: ".agentrc/backlog"
 
 observability:
   verbosity: verbose
   write_run_log: true
   write_decision_log: true
   redact_secrets: true
-  log_dir: ".volon/logs"
+  log_dir: ".agentrc/logs"
 
 git:
   use_worktrees: true
@@ -32,13 +32,13 @@ git:
   pr:
     base_branch: auto
     title_prefix: "volon:"
-    body_template: ".volon/templates/pr-body.md"
+    body_template: ".agentrc/templates/pr-body.md"
 
 pcc:
   enabled: true
-  location: ".volon/pcc"
-  global_dir: "global"        # L0: project-wide invariants → .volon/pcc/global/
-  tasks_dir: "tasks"          # L2: task resume capsules   → .volon/pcc/tasks/
+  location: ".agentrc/pcc"
+  global_dir: "global"        # L0: project-wide invariants → .agentrc/pcc/global/
+  tasks_dir: "tasks"          # L2: task resume capsules   → .agentrc/pcc/tasks/
   commit_to_git: true
   refresh:
     on_workflow_start: true
@@ -64,8 +64,8 @@ workflows:
 
 bootstrap:
   enabled: true
-  path: .volon/bootstrap.md
-  history_path: .volon/bootstrap/history
+  path: .agentrc/bootstrap.md
+  history_path: .agentrc/bootstrap/history
   max_tasks_per_run: 6
   completion_token: DONE
 

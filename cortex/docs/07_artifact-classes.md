@@ -20,8 +20,8 @@ Workflows should reference these classes by name rather than the generic term "d
 | **System Docs** | Explain Volon itself — what it is, how skills work, configuration schema | Humans | `docs/` |
 | **Project Docs** | Explain the user's specific project — features, architecture, decisions | Humans | `docs/` or project root |
 | **Knowledge Artifacts** | Investigation outputs, analysis summaries, entity maps, research notes | Humans + Agents | `artifacts/knowledge/` |
-| **PCC** | Compressed, truth-checked agent context — reduces repeated repo scanning | Agents only | `.volon/pcc/` |
-| **Bootstrap** | Execution handoff — iteration boundary, what to do next | Humans + Agents | `.volon/bootstrap.md` |
+| **PCC** | Compressed, truth-checked agent context — reduces repeated repo scanning | Agents only | `.agentrc/pcc/` |
+| **Bootstrap** | Execution handoff — iteration boundary, what to do next | Humans + Agents | `.agentrc/bootstrap.md` |
 
 ---
 

@@ -11,10 +11,10 @@ You are operating inside a Volon-managed repository.
 
 Ground truth sources:
 - `volon.yaml`
-- `.volon/pcc/`
-- `.volon/tasks/`
-- `.volon/bootstrap.md`
-- `.volon/logs/`
+- `.agentrc/pcc/`
+- `.agentrc/tasks/`
+- `.agentrc/bootstrap.md`
+- `.agentrc/logs/`
 
 Do **not** rely on prior chat context. Treat repository artifacts as authoritative.
 
@@ -136,7 +136,7 @@ Goal: Expand Volon beyond dev workflows.
 Goal: Make idea capture frictionless and structured.
 
 - Add `/backlog-task` skill
-- Introduce `.volon/backlog/` directory
+- Introduce `.agentrc/backlog/` directory
 - Document backlog → task promotion
 - Add `sprint_id` and `iteration_id` to task schema
 

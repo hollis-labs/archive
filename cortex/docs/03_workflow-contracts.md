@@ -52,8 +52,8 @@ Include sections:
 
 ## Bootstrap (iteration boundary)
 At the end of each iteration, workflows/loops should generate:
-- `.volon/bootstrap.md` (current)
-- `.volon/bootstrap/history/bootstrap-iteration-<N>.md` (optional)
+- `.agentrc/bootstrap.md` (current)
+- `.agentrc/bootstrap/history/bootstrap-iteration-<N>.md` (optional)
 
 See: `docs/05_bootstrap.md`
 
@@ -155,8 +155,8 @@ updated_at: YYYY-MM-DD
 
 ## Looping behavior (tasks-driven)
 A loop runner should:
-1. Read `.volon/bootstrap.md` if present (optional; provides next action).
-2. Drive execution from `.volon/tasks/`.
+1. Read `.agentrc/bootstrap.md` if present (optional; provides next action).
+2. Drive execution from `.agentrc/tasks/`.
 3. Update task states and write run logs.
 4. End the run with **Finalize iteration**:
    - `/bootstrap-update`

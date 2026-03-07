@@ -14,11 +14,11 @@ Optimized for:
 **Chat is not the state. Artifacts are the state.**
 
 Authoritative state lives in:
-- `volon.yaml` (or `.volon/volon.yaml`)
-- `.volon/bootstrap.md`
-- `.volon/pcc/`
-- `.volon/tasks/` and `.volon/backlog/`
-- `.volon/logs/`
+- `volon.yaml` (or `.agentrc/volon.yaml`)
+- `.agentrc/bootstrap.md`
+- `.agentrc/pcc/`
+- `.agentrc/tasks/` and `.agentrc/backlog/`
+- `.agentrc/logs/`
 
 Any session can restart and resume by reading these artifacts.
 
@@ -47,7 +47,7 @@ Read-only “pure compute.”
 ## Inputs
 - repository root
 - Volon artifacts (if present)
-- `volon.yaml` (or `.volon/volon.yaml`)
+- `volon.yaml` (or `.agentrc/volon.yaml`)
 
 Optional:
 - sub-agent enablement/limits (config)
@@ -56,8 +56,8 @@ Optional:
 ## Outputs per run
 At minimum:
 - task status updates + `Updates` appended
-- run log entry (`.volon/logs/…`)
-- bootstrap updated (`.volon/bootstrap.md`)
+- run log entry (`.agentrc/logs/…`)
+- bootstrap updated (`.agentrc/bootstrap.md`)
 - optional commit (policy-driven)
 
 Over time:
@@ -71,7 +71,7 @@ Over time:
 ### Phase 0 — Preflight (every session start)
 Orchestrator:
 - reads `volon.yaml`
-- reads `.volon/bootstrap.md` (if present)
+- reads `.agentrc/bootstrap.md` (if present)
 - reads PCC index (high-level only)
 - reads task list + statuses
 - reads latest run log pointer (if referenced)
@@ -153,7 +153,7 @@ Orchestrator delegates scoped reading/summaries/scans to read-only sub-agents.
 You are operating in a Volon-managed repository in Orchestrator Mode.
 
 Do not rely on prior chat context. Repo artifacts are the only truth:
-- volon.yaml, .volon/bootstrap.md, .volon/pcc/, .volon/tasks/, .volon/backlog/, .volon/logs/
+- volon.yaml, .agentrc/bootstrap.md, .agentrc/pcc/, .agentrc/tasks/, .agentrc/backlog/, .agentrc/logs/
 
 Rules:
 - You are the single writer. Sub-agents (if enabled) are read-only.

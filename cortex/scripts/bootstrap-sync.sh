@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BOOTSTRAP_PATH=".volon/bootstrap.md"
-TASKS_DIR=".volon/tasks"
-LOGS_DIR=".volon/logs"
+BOOTSTRAP_PATH=".agentrc/bootstrap.md"
+TASKS_DIR=".agentrc/tasks"
+LOGS_DIR=".agentrc/logs"
 APPLY=0
 
 usage() {
@@ -11,7 +11,7 @@ usage() {
 Usage: $(basename "$0") [--apply]
 
 Reports derived task counts and latest run-log path.
-With --apply, updates .volon/bootstrap.md Current state summary lines.
+With --apply, updates .agentrc/bootstrap.md Current state summary lines.
 USAGE
 }
 
@@ -50,7 +50,7 @@ done_count=$( (rg -n '^status:\s+done$' "$TASKS_DIR" || true) | wc -l | tr -d ' 
 latest_log=""
 if compgen -G "$LOGS_DIR/run-iteration-*.md" > /dev/null; then
   latest_file=$(ls -1 "$LOGS_DIR"/run-iteration-*.md | sort | tail -n1)
-  latest_log=".volon/logs/$(basename "$latest_file")"
+  latest_log=".agentrc/logs/$(basename "$latest_file")"
 fi
 
 echo "todo=$todo doing=$doing blocked=$blocked done=$done_count"

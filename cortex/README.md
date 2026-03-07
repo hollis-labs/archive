@@ -28,18 +28,18 @@ Context Memory Service. Bootstrap deliverables are located at:
 
 **Starting a Volon session (agents):** See [`CLAUDE.md`](CLAUDE.md) — contains the boot sequence and copy-paste Inception Run Prompt.
 
-**Authoritative boot doc:** [`.volon/agent-boot.md`](.volon/agent-boot.md) — ground truth sources, core rules, reference map.
+**Authoritative boot doc:** [`.agentrc/agent-boot.md`](.agentrc/agent-boot.md) — ground truth sources, core rules, reference map.
 
-**Current state:** [`.volon/bootstrap.md`](.volon/bootstrap.md) — iteration, active tasks, next actions.
+**Current state:** [`.agentrc/bootstrap.md`](.agentrc/bootstrap.md) — iteration, active tasks, next actions.
 
 ---
 
 ## What's in this repo
 
-- `volon.yaml` — system configuration
+- `agentrc.yaml` — system configuration
 - `plugins/` — Claude Code plugins (8 plugins, 22 skills)
 - `docs/` — system specs (config, PCC, workflow contracts, task model, orchestrator, inception)
-- `.volon/` — runtime state (bootstrap, PCC, tasks, logs, boot pack)
+- `.agentrc/` — runtime state (bootstrap, PCC, tasks, logs, boot pack)
 - `examples/` — sample configs and workflow traces
 - `user-docs-mini-site/` — static user-facing documentation site
 
@@ -81,7 +81,7 @@ claude \
   --plugin-dir /path/to/volon/plugins/prompt-volon
 ```
 
-Then in a target repo with `volon.yaml` (copy it from the Volon release repo):
+Then in a target repo with `agentrc.yaml` (copy it from the Volon release repo):
 
 ```
 /workflow-inception          # run the canonical self-building loop
@@ -121,5 +121,5 @@ If you cloned an older revision that still had `forge.yaml` and `.forge/`, run:
 scripts/migrate-to-volon.sh
 ```
 
-This renames the config/state to `volon.yaml` + `.volon/`. Then rerun
+This renames the config/state to `volon.yaml` + `.agentrc/`. Then rerun
 `scripts/volon-cli.sh /bootstrap-update` to regenerate bootstrap state.

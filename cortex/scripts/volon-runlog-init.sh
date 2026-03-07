@@ -11,7 +11,7 @@ usage() {
   cat <<USAGE
 Usage: $(basename "$0") --iteration N [--date YYYY-MM-DD] [--profile NAME] [--out PATH] [--force]
 
-Generates a run-log markdown skeleton matching .volon/logs conventions.
+Generates a run-log markdown skeleton matching .agentrc/logs conventions.
 USAGE
 }
 
@@ -63,7 +63,7 @@ if ! [[ "$RUN_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
 fi
 
 if [[ -z "$OUT_PATH" ]]; then
-  OUT_PATH=".volon/logs/run-iteration-$(printf '%03d' "$ITERATION")-${RUN_DATE}.md"
+  OUT_PATH=".agentrc/logs/run-iteration-$(printf '%03d' "$ITERATION")-${RUN_DATE}.md"
 fi
 
 mkdir -p "$(dirname "$OUT_PATH")"

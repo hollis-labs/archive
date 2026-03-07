@@ -7,4 +7,4 @@ next session):
 2. Coordinate the GitHub rename so `origin` points to `git@github.com:hollis-labs/volon-dev.git`.
 3. Confirm `scripts/volon-cli.sh` and `volon task …` work after the folder/remote rename.
 
-Resume by reopening this repo (post-rename) and following `.volon/reboot-prompt.md`.
+Resume by reopening this repo (post-rename) and following `.agentrc/reboot-prompt.md`.

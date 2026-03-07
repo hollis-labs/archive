@@ -356,7 +356,7 @@ Parity pack:
 - Script: `scripts/agents-boot-drift-check.sh`
 - Purpose: verify critical AGENTS/boot files exist and warn on AGENTS boot-reference drift.
 - Default output path pattern:
-  - `.volon/logs/run-iteration-<NNN>-<YYYY-MM-DD>.md`
+  - `.agentrc/logs/run-iteration-<NNN>-<YYYY-MM-DD>.md`
 - Quick validation sequence:
   1. `make contracts`
   2. Start `contextd serve ...`
@@ -366,4 +366,4 @@ Parity pack:
 - Product specifications: `docs/SPECS/`
 - Architecture decisions: `docs/DECISIONS/`
 - Agent artifacts: `artifacts/` and `outputs/`
-- Volon runtime state: `.volon/`
+- Volon runtime state: `.agentrc/`

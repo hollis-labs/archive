@@ -20,7 +20,7 @@ Date: 2026-02-25
 │   ├── repo-layout.md
 │   ├── bootstrap-steps.md
 │   └── open-questions.md
-└── .volon/
+└── .agentrc/
     ├── boot/
     ├── pcc/
     ├── tasks/
@@ -31,5 +31,5 @@ Date: 2026-02-25
 - `docs/` contains human-authored canonical project docs.
 - `outputs/` contains deliverables produced for task review.
 - `artifacts/` contains planning/support artifacts used by agent workflows.
-- `.volon/` contains Volon runtime state and orchestration metadata.
+- `.agentrc/` contains Volon runtime state and orchestration metadata.
 - Existing Volon platform docs are preserved; context-service docs are introduced as focused stubs.

@@ -20,7 +20,7 @@ This is a **process role**, not a new architecture.
 ### Orchestrator (default)
 Responsibilities:
 - Interpret ground truth from repo artifacts:
-  - `volon.yaml`, `.volon/bootstrap.md`, `.volon/pcc/`, `.volon/tasks/`, `.volon/logs/`
+  - `volon.yaml`, `.agentrc/bootstrap.md`, `.agentrc/pcc/`, `.agentrc/tasks/`, `.agentrc/logs/`
 - Decide what to do next (workflow step/task selection)
 - Enforce policies (single-writer, limits, verification, commits)
 - Delegate bounded work to sub-agents (optional)
@@ -49,11 +49,11 @@ Same constraints as Worker. Intended for:
 
 ## Single-writer rule (normative)
 Only the Orchestrator may write/update:
-- `.volon/tasks/**`
-- `.volon/backlog/**`
-- `.volon/logs/**`
-- `.volon/pcc/**`
-- `.volon/bootstrap.md` and `.volon/bootstrap/history/**`
+- `.agentrc/tasks/**`
+- `.agentrc/backlog/**`
+- `.agentrc/logs/**`
+- `.agentrc/pcc/**`
+- `.agentrc/bootstrap.md` and `.agentrc/bootstrap/history/**`
 
 All sub-agents are **read-only**.
 
@@ -76,7 +76,7 @@ The Orchestrator resolves the model for each dispatch using the hierarchy in `do
 - Task frontmatter `model:` overrides the tier lookup
 
 ## Orchestrator loop (canonical)
-1. Read `.volon/bootstrap.md` (if present)
+1. Read `.agentrc/bootstrap.md` (if present)
 2. Determine next action:
    - pick next `todo` task via `volon task list --status todo --priority A` OR the next workflow step
 3. Optional: delegate bounded analysis to sub-agents
@@ -84,7 +84,7 @@ The Orchestrator resolves the model for each dispatch using the hierarchy in `do
 5. Use the Volon CLI for lifecycle transitions:
    - `volon task create "<title>" [...]` to add work
    - `volon task start/done <id>` for status changes (never edit YAML directly)
-   - `volon task reindex` before `/bootstrap-update` or whenever `.volon/tasks/` changed manually
+   - `volon task reindex` before `/bootstrap-update` or whenever `.agentrc/tasks/` changed manually
 6. Verify (acceptance criteria)
 7. Commit per policy (task vs iteration)
 8. Update task status (via CLI) + append Updates

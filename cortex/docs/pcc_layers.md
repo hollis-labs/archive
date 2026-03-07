@@ -22,8 +22,8 @@ Volon implements two PCC layers. Higher-numbered layers are narrower in scope an
 
 | Layer | Name | Scope | Location | Lifetime |
 |---|---|---|---|---|
-| L0 | Global | Project-wide invariants | `.volon/pcc/global/` | Persistent; refreshed on workflow start or git change |
-| L2 | Task | Single task resume capsule | `.volon/pcc/tasks/<task_id>.md` | Per-task; written on pause, consumed on resume, retained for audit |
+| L0 | Global | Project-wide invariants | `.agentrc/pcc/global/` | Persistent; refreshed on workflow start or git change |
+| L2 | Task | Single task resume capsule | `.agentrc/pcc/tasks/<task_id>.md` | Per-task; written on pause, consumed on resume, retained for audit |
 
 > **L1 (Iteration) and L3/L4 (Sprint) layers are NOT implemented.** They are reserved for future use if iteration-scoped context becomes necessary.
 
@@ -33,7 +33,7 @@ Volon implements two PCC layers. Higher-numbered layers are narrower in scope an
 
 **Scope:** Project-wide facts that change rarely and apply to all agents in all tasks.
 
-**Required files** (in `.volon/pcc/global/`):
+**Required files** (in `.agentrc/pcc/global/`):
 - `00_project.md` — identity, purpose, goals/non-goals, active config
 - `01_architecture.md` — components, plugin/skill table, data flow
 - `02_conventions.md` — coding standards, branching, naming, test commands
@@ -56,8 +56,8 @@ Volon implements two PCC layers. Higher-numbered layers are narrower in scope an
 
 **Scope:** Everything needed to resume a single task after a context reset or session restart.
 
-**Location:** `.volon/pcc/tasks/<task_id>.md`
-*Example:* `.volon/pcc/tasks/TASK-20260222-007.md`
+**Location:** `.agentrc/pcc/tasks/<task_id>.md`
+*Example:* `.agentrc/pcc/tasks/TASK-20260222-007.md`
 
 **Written by:** `/pause-task` skill (every pause, overwrites if exists)
 **Read by:** `/resume-task` skill (on session start, before execution)
@@ -72,7 +72,7 @@ Volon implements two PCC layers. Higher-numbered layers are narrower in scope an
 - If diverged: agent notes delta and adjusts next actions if needed
 - Capsule is NOT deleted after resume (retained as audit record)
 
-**Schema:** See `.volon/templates/task-pcc-capsule.md`
+**Schema:** See `.agentrc/templates/task-pcc-capsule.md`
 
 ---
 
@@ -92,7 +92,7 @@ Volon implements two PCC layers. Higher-numbered layers are narrower in scope an
 - **PCC is not a transcript store.** It does not replay conversation history.
 - **PCC is not the PRD or spec.** Those live in `artifacts/` or `docs/`.
 - **Task PCC is not a diff store.** It summarizes; the git diff is the diff.
-- **No L1 iteration PCC.** Iteration state lives in `.volon/bootstrap.md`.
+- **No L1 iteration PCC.** Iteration state lives in `.agentrc/bootstrap.md`.
 - **No L3/L4 sprint PCC.** Sprint state is a future backlog item.
 - **No queue runner implementation.** See `docs/queue_task_runner.md` for the concept draft.
 

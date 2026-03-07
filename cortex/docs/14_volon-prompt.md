@@ -135,7 +135,7 @@ Five composable templates are included. Each produces a self-contained, runnable
 - Phase B: PRD (`artifacts/prd/<slug>.md`)
 - Phase C: Spec (`artifacts/spec/<slug>.md`)
 - Phase D: Plan (`artifacts/plan/<slug>.md`)
-- Phase E: Backlog tasks (`.volon/tasks/TASK-*.md`)
+- Phase E: Backlog tasks (`.agentrc/tasks/TASK-*.md`)
 
 **Key outputs:** planning artifacts, optional task files, bootstrap, commit
 

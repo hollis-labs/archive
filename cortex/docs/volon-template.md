@@ -10,9 +10,9 @@ for downstream consumption without inheriting internal history or runtime state.
 | --- | --- | --- |
 | `CLAUDE.md` | ✅ | Boot instructions required in every Volon repo. |
 | `volon.yaml` | ✅ | Core configuration (to be customized downstream). |
-| `.volon/agent-boot.md` | ✅ | Canonical boot reference. |
-| `.volon/boot/**` | ✅ | Role addenda for orchestrator/worker/reviewer/etc. |
-| `.volon/templates/**` | ✅ | Prompt/workflow templates referenced by skills. |
+| `.agentrc/agent-boot.md` | ✅ | Canonical boot reference. |
+| `.agentrc/boot/**` | ✅ | Role addenda for orchestrator/worker/reviewer/etc. |
+| `.agentrc/templates/**` | ✅ | Prompt/workflow templates referenced by skills. |
 | `cmd/`, `internal/`, `plugins/`, `schemas/`, `scripts/`, `workflows/` | ✅ | Volon runtime code and tooling. |
 | `docs/`, `examples/`, `user-docs-mini-site/`, `artifacts/knowledge/**`, `artifacts/plugins/**` | ✅ | Product documentation and reference artifacts that are not iteration-specific. |
 | `VOLON_*.md` (specs), `README.md`, `volon_v0.4_execution_brief.md` | ✅ | Reference docs useful to consumers. |
@@ -27,23 +27,23 @@ Remove the following from the template output (either skip copy or delete post-c
 | --- | --- |
 | `.git/`, `.gitmodules`, `.worktrees/` | Repo history stays local; new repo reinitializes git. |
 | `.DS_Store`, other editor caches | Host-specific noise. |
-| `.volon/tasks/**` | Historical tasks are project-specific. |
-| `.volon/backlog/**` | Past backlog has no relevance to consumers. |
-| `.volon/logs/**` (including archives) | Run logs are per-project history. |
-| `.volon/pcc/**` | Project context cache is regenerated on demand. |
-| `.volon/bootstrap.md`, `.volon/bootstrap/**` | New repo should run `/bootstrap-update` to initialize iteration state. |
-| `.volon/state/**` (e.g., `volon.db`) | Local SQLite cache only. |
-| `.volon/.gocache/**`, `.volon/.gomodcache/**` | Go build caches should not ship. |
+| `.agentrc/tasks/**` | Historical tasks are project-specific. |
+| `.agentrc/backlog/**` | Past backlog has no relevance to consumers. |
+| `.agentrc/logs/**` (including archives) | Run logs are per-project history. |
+| `.agentrc/pcc/**` | Project context cache is regenerated on demand. |
+| `.agentrc/bootstrap.md`, `.agentrc/bootstrap/**` | New repo should run `/bootstrap-update` to initialize iteration state. |
+| `.agentrc/state/**` (e.g., `volon.db`) | Local SQLite cache only. |
+| `.agentrc/.gocache/**`, `.agentrc/.gomodcache/**` | Go build caches should not ship. |
 | `tasks/**` (legacy packets) | Internal history not needed for consumers. |
 | `artifacts/plan/**`, `artifacts/spec/**` tied to past iterations | Unless explicitly referenced by docs, leave out planning history. |
-| `.volon/state`, `.volon/templates/.DS_Store`, similar | Residuals/caches. |
+| `.agentrc/state`, `.agentrc/templates/.DS_Store`, similar | Residuals/caches. |
 
 If uncertain, default to excluding writable/runtime directories unless documentation
 explicitly requires them.
 
-## 3. Sanitized `.volon/` Layout
+## 3. Sanitized `.agentrc/` Layout
 
-After export, `.volon/` should contain only immutable boot/config artifacts:
+After export, `.agentrc/` should contain only immutable boot/config artifacts:
 
 | `.volon` Path | Keep? | Notes |
 | --- | --- | --- |
@@ -60,7 +60,7 @@ After export, `.volon/` should contain only immutable boot/config artifacts:
 | `.gocache/`, `.gomodcache/` | 🚫 | Local build caches. |
 
 ```
-.volon/
+.agentrc/
   agent-boot.md
   boot/
     orchestrator.md
@@ -74,13 +74,13 @@ After export, `.volon/` should contain only immutable boot/config artifacts:
 
 The following are **intentionally absent** and will be recreated by consumers:
 
-- `.volon/tasks/` (not created; first `/volon task` command will add files)
-- `.volon/backlog/`
-- `.volon/logs/`
-- `.volon/pcc/`
-- `.volon/bootstrap.md` and `.volon/bootstrap/history/`
-- `.volon/state/` (reinited via CLI)
-- `.volon/.gocache`, `.volon/.gomodcache`
+- `.agentrc/tasks/` (not created; first `/volon task` command will add files)
+- `.agentrc/backlog/`
+- `.agentrc/logs/`
+- `.agentrc/pcc/`
+- `.agentrc/bootstrap.md` and `.agentrc/bootstrap/history/`
+- `.agentrc/state/` (reinited via CLI)
+- `.agentrc/.gocache`, `.agentrc/.gomodcache`
 
 If tooling requires directories to exist, create empty directories with a placeholder
 `.gitkeep` (document in automation requirements below) but leave them empty.
@@ -93,7 +93,7 @@ The automation script must:
 2. Remove any existing contents at the target path before copying.
 3. Copy required files/directories (see §1) using `rsync`/`cp` with an exclusion list
    that matches §2.
-4. Optionally create empty placeholder directories (`.volon/tasks`, `.volon/logs`, etc.)
+4. Optionally create empty placeholder directories (`.agentrc/tasks`, `.agentrc/logs`, etc.)
    with `.gitkeep` so downstream git history can track them, or document that the user
    should create them on first use.
 5. Initialize a new git repo in the target (`git init`, initial commit optional).
@@ -111,7 +111,7 @@ Automation workflow:
 scripts/create-volon.sh --target ~/Projects-apps/volon [--release-tag v0.1.0-dev]
   ↳ wipe target dir
   ↳ copy allowed paths
-  ↳ create empty directories (.volon/tasks, etc.) with .gitkeep
+  ↳ create empty directories (.agentrc/tasks, etc.) with .gitkeep
   ↳ remove caches/DBs/logs/backlog/tasks
   ↳ git init && git status (ensure clean)
   ↳ optional tag/archive
@@ -125,10 +125,10 @@ Run these after generating Volon (and include them in task verification logs):
 1. `cd ~/Projects-apps/volon && git status` → no changes.
 2. `go test ./...` (or `go build ./...` if tests disabled) succeeds.
 3. `scripts/volon-cli.sh /bootstrap-update` runs without errors and produces a fresh
-   `.volon/bootstrap.md`.
-4. Inspect `.volon/` contents: only boot/templates/optional empty directories present.
-5. Confirm absence of `.volon/tasks`, `.volon/logs`, `.volon/pcc`, `.volon/state`,
-   `.volon/bootstrap*`, `tasks/`, `todo.db*`, `.git/`.
+   `.agentrc/bootstrap.md`.
+4. Inspect `.agentrc/` contents: only boot/templates/optional empty directories present.
+5. Confirm absence of `.agentrc/tasks`, `.agentrc/logs`, `.agentrc/pcc`, `.agentrc/state`,
+   `.agentrc/bootstrap*`, `tasks/`, `todo.db*`, `.git/`.
 6. Open `docs/volon-template.md` in the target repo to ensure instructions shipped.
 
 Document the verification results (commands + summaries) in `artifacts/plan/` or within
@@ -142,7 +142,7 @@ this doc so future runs can compare outcomes.
 2. `cd` into the generated directory (default `~/Projects-apps/volon`).
 3. Optionally run `go test ./...` to verify your environment/setup.
 4. Run `scripts/volon-cli.sh /bootstrap-update` (or your automation) to generate the first
-   `.volon/bootstrap.md`.
+   `.agentrc/bootstrap.md`.
 5. Run `volon task reindex` followed by `volon task list --status todo --priority A` to seed the SQLite index and prove the CLI sees the queue (the CLI is now the canonical entry point for task management).
 6. Initialize your own remote (`git remote add origin git@github.com:hollis-labs/volon.git`)
    and push `main` + tags when ready.
@@ -163,14 +163,14 @@ this doc so future runs can compare outcomes.
   `~/Projects-apps/volon-release-artifacts/volon-v0.1.0-dev.tar.gz`).
 - `go test ./...` inside `~/Projects-apps/volon` → all packages built/tests passed.
 - `FORGE_NO_SYNC=1 CLAUDE_BIN=/tmp/claude-bootstrap-mock.sh scripts/volon-cli.sh --repo ~/Projects-apps/volon /bootstrap-update`
-  → generated `.volon/bootstrap.md` (mock CLAUDE writes bootstrap locally).
-- Confirmed `.volon/` only contains `agent-boot.md`, `boot/`, `bootstrap.md`, `templates/`.
+  → generated `.agentrc/bootstrap.md` (mock CLAUDE writes bootstrap locally).
+- Confirmed `.agentrc/` only contains `agent-boot.md`, `boot/`, `bootstrap.md`, `templates/`.
 
 ### Final rebrand verification & announcement — 2026-02-24
 
 - Tasks 007–011 (rename, docs, prompts, CLI wrapper, template cleanup) are all merged; this final pass re-ran `scripts/create-volon.sh --target /tmp/volon-rebrand-check` to ensure exports only mention “Volon.”
 - Docs refreshed to instruct operators to rely on the Volon CLI (`volon task …`) for queue review, lifecycle changes, and boot/cleanup checklists.
-- A rebrand run log (`.volon/logs/run-20260224-rebrand.md`) summarizes the verification commands and links the related tasks so future sessions know the rename is complete.
+- A rebrand run log (`.agentrc/logs/run-20260224-rebrand.md`) summarizes the verification commands and links the related tasks so future sessions know the rename is complete.
 - Downstream consumers can safely follow this template without encountering residual `forge` references; release instructions in this doc remain the canonical source.
 
 ### Publishing to hollis-labs/volon (release repo)
