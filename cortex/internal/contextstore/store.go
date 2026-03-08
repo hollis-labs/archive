@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -2365,4 +2366,130 @@ func (s *Store) UpdateRecordStatus(ctx context.Context, namespace, key, actor, n
 		Pointers:       head.Pointers,
 		Provenance:     head.Provenance,
 	})
+}
+
+// EmbeddingRow represents a stored embedding vector.
+type EmbeddingRow struct {
+	RecordID   string
+	Model      string
+	Dimensions int
+	Vector     []float32
+	CreatedAt  string
+}
+
+// UpsertEmbedding stores or replaces an embedding for a (record_id, model) pair.
+func (s *Store) UpsertEmbedding(ctx context.Context, row EmbeddingRow) error {
+	blob := float32ToBlob(row.Vector)
+	_, err := s.db.ExecContext(ctx, `
+INSERT INTO embeddings (record_id, model, dimensions, vector, created_at)
+VALUES (?, ?, ?, ?, ?)
+ON CONFLICT(record_id, model) DO UPDATE SET
+	dimensions = excluded.dimensions,
+	vector = excluded.vector,
+	created_at = excluded.created_at`,
+		row.RecordID, row.Model, row.Dimensions, blob, time.Now().UTC().Format(time.RFC3339))
+	return err
+}
+
+// EmbeddingFilter optionally narrows which embeddings are loaded.
+type EmbeddingFilter struct {
+	Namespaces []string // namespace prefix filters
+	Types      []string // record_type filters
+	Tags       []string // tag filters (any match)
+	Model      string   // required: which model's embeddings to search
+}
+
+// ListEmbeddings returns all embeddings matching the filter, joining records for metadata.
+func (s *Store) ListEmbeddings(ctx context.Context, f EmbeddingFilter) ([]EmbeddingRow, []Record, error) {
+	var args []any
+	query := `
+SELECT e.record_id, e.model, e.dimensions, e.vector, e.created_at,
+       r.namespace, r.key_name, r.revision, r.actor, r.created_at,
+       r.checksum, r.file_path, r.record_type, r.status
+FROM embeddings e
+JOIN records r ON e.record_id = r.record_id
+JOIN heads h ON r.namespace = h.namespace AND r.key_name = h.key_name AND r.record_id = h.head_record_id`
+
+	var conditions []string
+
+	if f.Model != "" {
+		conditions = append(conditions, "e.model = ?")
+		args = append(args, f.Model)
+	}
+
+	for _, ns := range f.Namespaces {
+		conditions = append(conditions, "r.namespace LIKE ?")
+		args = append(args, ns+"%")
+	}
+	for _, t := range f.Types {
+		conditions = append(conditions, "r.record_type = ?")
+		args = append(args, t)
+	}
+	if len(f.Tags) > 0 {
+		placeholders := make([]string, len(f.Tags))
+		for i, tag := range f.Tags {
+			placeholders[i] = "?"
+			args = append(args, tag)
+		}
+		conditions = append(conditions, "e.record_id IN (SELECT record_id FROM record_tags WHERE tag IN ("+strings.Join(placeholders, ",")+"))")
+	}
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	rows, err := s.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	var embeddings []EmbeddingRow
+	var records []Record
+	for rows.Next() {
+		var e EmbeddingRow
+		var r Record
+		var blob []byte
+		var filePath string
+		if err := rows.Scan(
+			&e.RecordID, &e.Model, &e.Dimensions, &blob, &e.CreatedAt,
+			&r.Namespace, &r.Key, &r.Revision, &r.Actor, &r.CreatedAt,
+			&r.Checksum, &filePath, &r.RecordType, &r.Status,
+		); err != nil {
+			return nil, nil, err
+		}
+		e.Vector = blobToFloat32(blob)
+		r.RecordID = e.RecordID
+		embeddings = append(embeddings, e)
+		records = append(records, r)
+	}
+	return embeddings, records, rows.Err()
+}
+
+// DeleteEmbedding removes an embedding for a (record_id, model) pair.
+func (s *Store) DeleteEmbedding(ctx context.Context, recordID, model string) error {
+	_, err := s.db.ExecContext(ctx, `DELETE FROM embeddings WHERE record_id = ? AND model = ?`, recordID, model)
+	return err
+}
+
+func float32ToBlob(v []float32) []byte {
+	buf := make([]byte, len(v)*4)
+	for i, f := range v {
+		bits := math.Float32bits(f)
+		buf[i*4] = byte(bits)
+		buf[i*4+1] = byte(bits >> 8)
+		buf[i*4+2] = byte(bits >> 16)
+		buf[i*4+3] = byte(bits >> 24)
+	}
+	return buf
+}
+
+func blobToFloat32(b []byte) []float32 {
+	n := len(b) / 4
+	v := make([]float32, n)
+	for i := 0; i < n; i++ {
+		bits := uint32(b[i*4]) | uint32(b[i*4+1])<<8 | uint32(b[i*4+2])<<16 | uint32(b[i*4+3])<<24
+		v[i] = math.Float32frombits(bits)
+	}
+	return v
 }
