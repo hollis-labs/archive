@@ -6,6 +6,7 @@ import (
 
 	"github.com/hollis-labs/cortex/internal/contextstore"
 	"github.com/hollis-labs/cortex/internal/contexttypes"
+	"github.com/hollis-labs/cortex/internal/embedding"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -17,9 +18,10 @@ import (
 // configured at startup via the Token field.
 // context_packet is read-only but respects namespace_globs from the token when present.
 type Adapter struct {
-	Store        *contextstore.Store
-	Token        string // capability token for mutating ops; may be empty
-	TypeRegistry *contexttypes.Registry
+	Store             *contextstore.Store
+	Token             string // capability token for mutating ops; may be empty
+	TypeRegistry      *contexttypes.Registry
+	EmbeddingProvider embedding.Provider // optional; nil disables context_embed/context_search
 }
 
 // New creates an Adapter for the given store and optional capability token.
@@ -37,6 +39,7 @@ func (a *Adapter) Run(ctx context.Context) error {
 	)
 	a.registerTools(s)
 	a.registerTypedTools(s)
+	a.registerEmbeddingTools(s)
 	ctxFunc := func(_ context.Context) context.Context { return ctx }
 	return server.ServeStdio(s, server.WithStdioContextFunc(ctxFunc))
 }
