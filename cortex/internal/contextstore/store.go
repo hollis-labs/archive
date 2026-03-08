@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	schemaVersion = 7
+	schemaVersion = 8
 
 	// defaultTokenScopes is the full-access scopes JSON assigned to legacy tokens and new tokens without explicit scopes.
 	defaultTokenScopes = `["write","promote.request","promote.approve","promote.apply","packet","repair","namespace.register"]`
@@ -419,6 +419,20 @@ CREATE TABLE IF NOT EXISTS record_tags (
 				return err
 			}
 			if _, err = tx.ExecContext(ctx, `ALTER TABLE heads ADD COLUMN status TEXT NOT NULL DEFAULT ''`); err != nil {
+				return err
+			}
+		case 8:
+			// Embeddings table for vector search (ADR-005).
+			if _, err = tx.ExecContext(ctx, `
+CREATE TABLE IF NOT EXISTS embeddings (
+	record_id TEXT NOT NULL,
+	model TEXT NOT NULL,
+	dimensions INTEGER NOT NULL,
+	vector BLOB NOT NULL,
+	created_at TEXT NOT NULL DEFAULT (datetime('now')),
+	PRIMARY KEY (record_id, model),
+	FOREIGN KEY (record_id) REFERENCES records(record_id) ON DELETE CASCADE
+)`); err != nil {
 				return err
 			}
 		}
