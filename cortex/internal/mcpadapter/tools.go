@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/hollis-labs/cortex/internal/contextstore"
+	"github.com/hollis-labs/tiamat-mcp-helpers/budget"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -28,14 +29,14 @@ func (a *Adapter) registerTools(s *server.MCPServer) {
 		mcp.WithDescription("Read the revision history for a namespace/key, newest first."),
 		mcp.WithString("namespace", mcp.Required(), mcp.Description("Namespace path")),
 		mcp.WithString("key", mcp.Required(), mcp.Description("Record key")),
-		mcp.WithNumber("limit", mcp.Description("Max revisions to return (default 20, max 100)")),
+		mcp.WithNumber("limit", mcp.Description("Max revisions to return (default 10, max 25)")),
 	), a.handleHistory)
 
 	s.AddTool(mcp.NewTool("context_view",
 		mcp.WithDescription("Evaluate a view selector and return matching records."),
 		mcp.WithString("namespaces", mcp.Description("Comma-separated namespace glob patterns, e.g. \"user/memory/*,app/test/session/*\"")),
 		mcp.WithString("revision_scope", mcp.Description("head or all (default: head)")),
-		mcp.WithNumber("limit", mcp.Description("Max records to return")),
+		mcp.WithNumber("limit", mcp.Description("Max records to return (default 10, max 25). Returns summaries; use context_head for full record.")),
 	), a.handleView)
 
 	s.AddTool(mcp.NewTool("context_packet",
@@ -69,6 +70,7 @@ func (a *Adapter) registerTools(s *server.MCPServer) {
 	s.AddTool(mcp.NewTool("context_promote_list",
 		mcp.WithDescription("List promotion requests. Read-only, no token required."),
 		mcp.WithString("status", mcp.Description("Filter by status: pending|approved|applied|all (default: pending)")),
+		mcp.WithNumber("limit", mcp.Description("Max requests to return (default 10, max 25)")),
 	), a.handlePromoteList)
 
 	s.AddTool(mcp.NewTool("context_promote_approve",
@@ -116,13 +118,14 @@ func (a *Adapter) registerTools(s *server.MCPServer) {
 	s.AddTool(mcp.NewTool("context_namespaces_list",
 		mcp.WithDescription("List all registered namespaces with ownership policies."),
 		mcp.WithString("prefix", mcp.Description("Filter namespaces by prefix pattern (e.g. \"user/*\", \"app/*\")")),
+		mcp.WithNumber("limit", mcp.Description("Max namespaces to return (default 10, max 25)")),
 	), a.handleNamespacesList)
 
 	s.AddTool(mcp.NewTool("context_audit",
 		mcp.WithDescription("Query the audit event log. No auth required."),
 		mcp.WithString("namespace", mcp.Description("Filter by exact namespace")),
 		mcp.WithString("event_type", mcp.Description("Filter by event type (e.g. write, promote)")),
-		mcp.WithNumber("limit", mcp.Description("Max events to return (default 50, max 200)")),
+		mcp.WithNumber("limit", mcp.Description("Max events to return (default 10, max 25)")),
 		mcp.WithNumber("cursor", mcp.Description("Pagination cursor (ID from previous response's next_cursor)")),
 	), a.handleAudit)
 }
@@ -153,19 +156,17 @@ func (a *Adapter) handleHistory(_ context.Context, req mcp.CallToolRequest) (*mc
 	if ns == "" || key == "" {
 		return toolError("validation_error", "namespace and key are required"), nil
 	}
-	limit := req.GetInt("limit", 20)
-	if limit <= 0 || limit > 100 {
-		limit = 20
-	}
+	limit := budget.ExtractLimit(argsMap(req), budget.DefaultLimit)
 	records, err := a.Store.History(ctx, ns, key, limit)
 	if err != nil {
 		return toolError("internal_error", err.Error()), nil
 	}
-	items := make([]map[string]any, len(records))
+	summaries := make([]map[string]any, len(records))
 	for i, rec := range records {
-		items[i] = recordJSON(rec)
+		summaries[i] = recordJSON(rec)
 	}
-	return toolJSON(map[string]any{"items": items, "count": len(items)}), nil
+	env := budget.Apply(summaries, budget.Config{Limit: limit}, "%d revisions available. Use context_head with namespace and key for full record content.")
+	return mcp.NewToolResultText(budget.ToolJSON(env)), nil
 }
 
 func (a *Adapter) handleView(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -180,11 +181,10 @@ func (a *Adapter) handleView(_ context.Context, req mcp.CallToolRequest) (*mcp.C
 		}
 	}
 	revScope := req.GetString("revision_scope", "head")
-	limit := req.GetInt("limit", 0)
+	limit := budget.ExtractLimit(argsMap(req), budget.DefaultLimit)
 	sel := contextstore.Selector{
 		Namespaces:    namespaces,
 		RevisionScope: revScope,
-		Limit:         limit,
 	}
 	records, err := a.Store.Select(ctx, sel)
 	if err != nil {
@@ -196,11 +196,16 @@ func (a *Adapter) handleView(_ context.Context, req mcp.CallToolRequest) (*mcp.C
 		records = filterByGlobs(records, claims.NamespaceGlobs)
 	}
 
-	items := make([]map[string]any, len(records))
+	// Build summary items (omit full payload from list view).
+	summaries := make([]map[string]any, len(records))
 	for i, rec := range records {
-		items[i] = recordJSON(rec)
+		s := recordJSON(rec)
+		s["status"] = "active"
+		s["updated_at"] = rec.CreatedAt
+		summaries[i] = s
 	}
-	return toolJSON(map[string]any{"items": items, "count": len(items), "truncated": false}), nil
+	env := budget.Apply(summaries, budget.Config{Limit: limit}, "%d records available. Use context_head with namespace and key for full record content.")
+	return mcp.NewToolResultText(budget.ToolJSON(env)), nil
 }
 
 // --- Packet tool ---
@@ -459,6 +464,7 @@ func (a *Adapter) handlePromoteRequest(ctx context.Context, req mcp.CallToolRequ
 func (a *Adapter) handlePromoteList(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	ctx := context.Background()
 	status := req.GetString("status", "pending")
+	limit := budget.ExtractLimit(argsMap(req), budget.DefaultLimit)
 
 	recs, err := a.Store.Select(ctx, contextstore.Selector{
 		Namespaces:    []string{"app/*/promotions"},
@@ -492,7 +498,8 @@ func (a *Adapter) handlePromoteList(_ context.Context, req mcp.CallToolRequest) 
 	if items == nil {
 		items = []map[string]any{}
 	}
-	return toolJSON(map[string]any{"items": items, "count": len(items)}), nil
+	env := budget.Apply(items, budget.Config{Limit: limit}, "%d promotion requests available. Use context_promote_approve or context_promote_apply for specific requests.")
+	return mcp.NewToolResultText(budget.ToolJSON(env)), nil
 }
 
 func (a *Adapter) handlePromoteApprove(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -641,6 +648,15 @@ func recordJSON(rec contextstore.Record) map[string]any {
 		"created_at": rec.CreatedAt,
 		"checksum":   rec.Checksum,
 	}
+}
+
+// argsMap extracts the Arguments from a CallToolRequest as map[string]any.
+// Returns nil if not present or wrong type — budget helpers handle nil safely.
+func argsMap(req mcp.CallToolRequest) map[string]any {
+	if m, ok := req.Params.Arguments.(map[string]any); ok {
+		return m
+	}
+	return nil
 }
 
 func newMCPRequestID() string {
@@ -921,41 +937,30 @@ func (a *Adapter) handleNamespaceShow(_ context.Context, req mcp.CallToolRequest
 func (a *Adapter) handleNamespacesList(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	ctx := context.Background()
 	prefix := req.GetString("prefix", "")
+	limit := budget.ExtractLimit(argsMap(req), budget.DefaultLimit)
 
 	entries, err := a.Store.ListNamespacePolicies(ctx)
 	if err != nil {
 		return toolError("internal_error", err.Error()), nil
 	}
 
-	// Filter by prefix pattern if provided.
-	if prefix != "" {
-		var filtered []map[string]any
-		for _, entry := range entries {
-			if globsPermit([]string{prefix}, entry.Namespace) {
-				filtered = append(filtered, map[string]any{
-					"namespace":  entry.Namespace,
-					"owner_type": entry.OwnerType,
-					"owner_id":   entry.OwnerID,
-					"policy":     entry.Policy,
-				})
-			}
+	var items []map[string]any
+	for _, entry := range entries {
+		if prefix != "" && !globsPermit([]string{prefix}, entry.Namespace) {
+			continue
 		}
-		if filtered == nil {
-			filtered = []map[string]any{}
-		}
-		return toolJSON(map[string]any{"items": filtered, "count": len(filtered)}), nil
-	}
-
-	items := make([]map[string]any, len(entries))
-	for i, entry := range entries {
-		items[i] = map[string]any{
+		items = append(items, map[string]any{
 			"namespace":  entry.Namespace,
 			"owner_type": entry.OwnerType,
 			"owner_id":   entry.OwnerID,
 			"policy":     entry.Policy,
-		}
+		})
 	}
-	return toolJSON(map[string]any{"items": items, "count": len(items)}), nil
+	if items == nil {
+		items = []map[string]any{}
+	}
+	env := budget.Apply(items, budget.Config{Limit: limit}, "%d namespaces available. Use context_namespace_show for details on a specific namespace.")
+	return mcp.NewToolResultText(budget.ToolJSON(env)), nil
 }
 
 // --- Audit tool ---
@@ -964,7 +969,7 @@ func (a *Adapter) handleAudit(_ context.Context, req mcp.CallToolRequest) (*mcp.
 	ctx := context.Background()
 	ns := req.GetString("namespace", "")
 	eventType := req.GetString("event_type", "")
-	limit := req.GetInt("limit", 50)
+	limit := budget.ExtractLimit(argsMap(req), budget.DefaultLimit)
 	cursor := req.GetInt("cursor", 0)
 
 	events, nextCursor, err := a.Store.QueryAuditEvents(ctx, contextstore.AuditQuery{
@@ -994,14 +999,15 @@ func (a *Adapter) handleAudit(_ context.Context, req mcp.CallToolRequest) (*mcp.
 		items[i] = item
 	}
 
-	result := map[string]any{
-		"items": items,
-		"count": len(items),
-	}
+	env := budget.Apply(items, budget.Config{Limit: limit}, "%d audit events available. Use cursor parameter for pagination.")
+	// Preserve cursor in the envelope for pagination continuity.
+	envMap := map[string]any{}
+	envJSON, _ := json.Marshal(env)
+	_ = json.Unmarshal(envJSON, &envMap)
 	if nextCursor != nil {
-		result["next_cursor"] = *nextCursor
+		envMap["next_cursor"] = *nextCursor
 	}
-	return toolJSON(result), nil
+	return mcp.NewToolResultText(budget.ToolJSON(envMap)), nil
 }
 
 // loadClaims returns the token claims if a token is configured and valid.

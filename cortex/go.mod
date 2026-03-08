@@ -3,11 +3,14 @@ module github.com/hollis-labs/cortex
 go 1.25.0
 
 require (
+	github.com/hollis-labs/tiamat-mcp-helpers v0.0.0
 	github.com/hollis-labs/tiamat-otel v0.0.0
 	github.com/mark3labs/mcp-go v0.44.1
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.37.0
 )
+
+replace github.com/hollis-labs/tiamat-mcp-helpers => ../tiamat-mcp-helpers
 
 replace github.com/hollis-labs/tiamat-otel => ../tiamat-otel
 
