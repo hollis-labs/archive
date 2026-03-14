@@ -50,7 +50,12 @@ func run(ctx context.Context, args []string, stdout, stderr *os.File) int {
 
 	root := os.Getenv("CONTEXTD_ROOT")
 	if root == "" {
-		root = "."
+		home, err := os.UserHomeDir()
+		if err != nil {
+			_, _ = stderr.WriteString("error: cannot determine home directory: " + err.Error() + "\n")
+			return 1
+		}
+		root = filepath.Join(home, ".cortex")
 	}
 
 	store, err := contextstore.Open(ctx, contextstore.Config{
