@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/hollis-labs/cortex/internal/contextstore"
-	"github.com/hollis-labs/tiamat-mcp-helpers/budget"
+	"github.com/hollis-labs/mcp-helpers/budget"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )

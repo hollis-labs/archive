@@ -20,8 +20,8 @@ import (
 	"github.com/hollis-labs/cortex/internal/contextstore"
 	"github.com/hollis-labs/cortex/internal/mcpadapter"
 	"github.com/hollis-labs/cortex/internal/webui"
-	tiamatotel "github.com/hollis-labs/tiamat-otel"
-	"github.com/hollis-labs/tiamat-otel/propagation"
+	tiamatotel "github.com/hollis-labs/otel"
+	"github.com/hollis-labs/otel/propagation"
 )
 
 type serveConfig struct {

@@ -18,7 +18,7 @@ import (
 	"github.com/hollis-labs/cortex/internal/contextpolicy"
 	"github.com/hollis-labs/cortex/internal/contextstore"
 	"github.com/hollis-labs/cortex/internal/contexttypes"
-	tiamatotel "github.com/hollis-labs/tiamat-otel"
+	tiamatotel "github.com/hollis-labs/otel"
 )
 
 type contextKey int
