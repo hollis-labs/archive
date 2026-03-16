@@ -10,7 +10,7 @@ require (
 	modernc.org/sqlite v1.37.0
 )
 
-replace github.com/hollis-labs/mcp-helpers => ../tiamat-mcp-helpers
+replace github.com/hollis-labs/mcp-helpers => ../mcp-helpers
 
 replace github.com/hollis-labs/otel => ../otel
 
