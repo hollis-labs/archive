@@ -40,6 +40,7 @@ func (a *Adapter) Run(ctx context.Context) error {
 	a.registerTools(s)
 	a.registerTypedTools(s)
 	a.registerEmbeddingTools(s)
+	a.registerSessionTools(s)
 	ctxFunc := func(_ context.Context) context.Context { return ctx }
 	return server.ServeStdio(s, server.WithStdioContextFunc(ctxFunc))
 }

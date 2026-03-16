@@ -86,22 +86,24 @@ func (a *Adapter) registerTools(s *server.MCPServer) {
 		mcp.WithString("actor", mcp.Description("Actor identity (default: user)")),
 	), a.handlePromoteApply)
 
+	// NOTE: MCP tool names retain "broker" for backward compatibility with consumers.
+	// Internally these are the context query planner, not the universal ContextBroker.
 	s.AddTool(mcp.NewTool("context_broker_plan",
 		mcp.WithDescription("Generate a context fetch plan for a given intent. Returns namespace patterns, budget, and rationale. No auth required."),
 		mcp.WithString("intent", mcp.Description("Intent: resume_task|boot_project|review_session|custom (default: custom)")),
 		mcp.WithString("summary", mcp.Description("Task summary for keyword extraction (used with resume_task intent)")),
 		mcp.WithNumber("budget_items", mcp.Description("Max items budget (default 50)")),
 		mcp.WithNumber("budget_tokens", mcp.Description("Max tokens estimate budget (default 4000)")),
-	), a.handleBrokerPlan)
+	), a.handleContextPlan)
 
 	s.AddTool(mcp.NewTool("context_broker_fetch",
-		mcp.WithDescription("Execute a broker plan and return a context packet in one call. Combines broker_plan and context_packet. No auth required."),
+		mcp.WithDescription("Execute a context plan and return a context packet in one call. Combines context_broker_plan and context_packet. No auth required."),
 		mcp.WithString("intent", mcp.Description("Intent: resume_task|boot_project|review_session|custom (default: custom)")),
 		mcp.WithString("summary", mcp.Description("Task summary for keyword extraction")),
 		mcp.WithNumber("budget_items", mcp.Description("Max items budget (default 50)")),
 		mcp.WithNumber("budget_tokens", mcp.Description("Max tokens estimate budget (default 4000)")),
 		mcp.WithString("payload_mode", mcp.Description("full or head_only (default: full)")),
-	), a.handleBrokerFetch)
+	), a.handleContextFetch)
 
 	s.AddTool(mcp.NewTool("context_namespace_register",
 		mcp.WithDescription("Register a namespace with ownership policy. Requires 'namespace.admin' scope."),
@@ -323,15 +325,15 @@ func (a *Adapter) handlePacket(_ context.Context, req mcp.CallToolRequest) (*mcp
 	}
 
 	manifest := map[string]any{
-		"request_id":       reqID,
-		"pins_included":    pinsIncluded,
-		"items_total":      itemsTotal,
-		"items_returned":   len(items) - pinsIncluded,
-		"bytes_returned":   bytesSoFar,
-		"tokens_estimate":  tokensSoFar,
-		"truncated":        truncated,
+		"request_id":        reqID,
+		"pins_included":     pinsIncluded,
+		"items_total":       itemsTotal,
+		"items_returned":    len(items) - pinsIncluded,
+		"bytes_returned":    bytesSoFar,
+		"tokens_estimate":   tokensSoFar,
+		"truncated":         truncated,
 		"truncation_reason": truncationReason,
-		"sources":          sources,
+		"sources":           sources,
 	}
 
 	return toolJSON(map[string]any{"items": items, "manifest": manifest}), nil
@@ -665,15 +667,15 @@ func newMCPRequestID() string {
 	return "mcp-" + hex.EncodeToString(b)
 }
 
-// --- Broker tools ---
+// --- Context planner tools ---
 
-func (a *Adapter) handleBrokerPlan(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (a *Adapter) handleContextPlan(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	intent := req.GetString("intent", "custom")
 	summary := req.GetString("summary", "")
 	maxItems := req.GetInt("budget_items", 50)
 	maxTokens := req.GetInt("budget_tokens", 4000)
 
-	namespaces, includePins, rationale := brokerBuildPlan(intent, summary, maxItems, maxTokens)
+	namespaces, includePins, rationale := buildContextPlan(intent, summary, maxItems, maxTokens)
 
 	return toolJSON(map[string]any{
 		"plan": map[string]any{
@@ -688,7 +690,7 @@ func (a *Adapter) handleBrokerPlan(_ context.Context, req mcp.CallToolRequest) (
 	}), nil
 }
 
-func (a *Adapter) handleBrokerFetch(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (a *Adapter) handleContextFetch(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	ctx := context.Background()
 	intent := req.GetString("intent", "custom")
 	summary := req.GetString("summary", "")
@@ -696,7 +698,7 @@ func (a *Adapter) handleBrokerFetch(_ context.Context, req mcp.CallToolRequest) 
 	maxTokens := req.GetInt("budget_tokens", 4000)
 	payloadMode := req.GetString("payload_mode", "full")
 
-	namespaces, includePins, rationale := brokerBuildPlan(intent, summary, maxItems, maxTokens)
+	namespaces, includePins, rationale := buildContextPlan(intent, summary, maxItems, maxTokens)
 
 	// Load optional token globs for filtering.
 	var tokenGlobs []string
@@ -746,7 +748,7 @@ func (a *Adapter) handleBrokerFetch(_ context.Context, req mcp.CallToolRequest) 
 		return true
 	}
 
-	// Pins first (when broker plan includes them).
+	// Pins first (when context plan includes them).
 	if includePins {
 		pins, err := a.Store.Select(ctx, contextstore.Selector{
 			Namespaces:    []string{"user/pins/*"},
@@ -764,7 +766,7 @@ func (a *Adapter) handleBrokerFetch(_ context.Context, req mcp.CallToolRequest) 
 		}
 	}
 
-	// Main namespaces from broker plan.
+	// Main namespaces from context plan.
 	seen := map[string]bool{}
 	for _, ns := range namespaces {
 		if budgetExceeded() {
@@ -815,12 +817,12 @@ func (a *Adapter) handleBrokerFetch(_ context.Context, req mcp.CallToolRequest) 
 	}), nil
 }
 
-// brokerBuildPlan derives namespace patterns and fetch strategy from an intent.
-// Mirrors the CLI's brokerBuildPlan for deterministic behavior.
-func brokerBuildPlan(intent, summary string, maxItems, maxTokens int) (namespaces []string, includePins bool, rationale string) {
+// buildContextPlan derives namespace patterns and fetch strategy from an intent.
+// This is Cortex's internal query planner — not the universal ContextBroker.
+func buildContextPlan(intent, summary string, maxItems, _ int) (namespaces []string, includePins bool, rationale string) {
 	switch intent {
 	case "resume_task":
-		keywords := brokerExtractKeywords(summary, 3)
+		keywords := plannerExtractKeywords(summary, 3)
 		for _, kw := range keywords {
 			namespaces = append(namespaces, "user/memory/"+kw+"*")
 		}
@@ -850,8 +852,8 @@ func brokerBuildPlan(intent, summary string, maxItems, maxTokens int) (namespace
 	return namespaces, includePins, rationale
 }
 
-// brokerExtractKeywords pulls up to n meaningful words from text, skipping stopwords.
-var brokerStopwords = map[string]bool{
+// plannerExtractKeywords pulls up to n meaningful words from text, skipping stopwords.
+var plannerStopwords = map[string]bool{
 	"a": true, "an": true, "and": true, "are": true, "as": true,
 	"at": true, "be": true, "by": true, "for": true, "from": true,
 	"has": true, "have": true, "in": true, "is": true, "it": true,
@@ -863,14 +865,14 @@ var brokerStopwords = map[string]bool{
 	"using": true, "use": true, "via": true, "which": true, "all": true,
 }
 
-func brokerExtractKeywords(text string, n int) []string {
+func plannerExtractKeywords(text string, n int) []string {
 	words := strings.FieldsFunc(strings.ToLower(text), func(r rune) bool {
 		return !('a' <= r && r <= 'z') && !('0' <= r && r <= '9') && r != '-' && r != '_'
 	})
 	seen := map[string]bool{}
 	var out []string
 	for _, w := range words {
-		if len(w) < 3 || brokerStopwords[w] || seen[w] {
+		if len(w) < 3 || plannerStopwords[w] || seen[w] {
 			continue
 		}
 		seen[w] = true

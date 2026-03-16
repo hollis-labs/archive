@@ -66,6 +66,157 @@ func (a *Adapter) registerTypedTools(s *server.MCPServer) {
 	), a.handleViewsList)
 }
 
+// ── Session Snapshot ──────────────────────────────────────────────────────────
+
+func (a *Adapter) registerSessionTools(s *server.MCPServer) {
+	s.AddTool(mcp.NewTool("context_session_snapshot",
+		mcp.WithDescription("Write a structured session snapshot to Cortex and auto-embed for semantic search. Combines typed_write + embed into one call with enforced session schema."),
+		mcp.WithString("session_id", mcp.Required(), mcp.Description("Session identifier")),
+		mcp.WithString("project_id", mcp.Required(), mcp.Description("Project identifier (used in namespace)")),
+		mcp.WithString("summary", mcp.Required(), mcp.Description("Brief session summary (1-3 sentences)")),
+		mcp.WithString("decisions", mcp.Description("JSON array of decisions made during the session")),
+		mcp.WithString("tasks_touched", mcp.Description("JSON array of task IDs worked on")),
+		mcp.WithString("context_learned", mcp.Description("Key context or insights gained")),
+		mcp.WithString("open_questions", mcp.Description("JSON array of unresolved questions")),
+		mcp.WithString("handoff_notes", mcp.Description("Notes for the next session/agent")),
+		mcp.WithString("actor", mcp.Description("Actor identity (default: mcp-agent)")),
+	), a.handleSessionSnapshot)
+}
+
+func (a *Adapter) handleSessionSnapshot(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	// Auth: require write scope
+	errResult, claims := a.checkScope(ctx, "write")
+	if errResult != nil {
+		return errResult, nil
+	}
+
+	sessionID := req.GetString("session_id", "")
+	projectID := req.GetString("project_id", "")
+	summary := req.GetString("summary", "")
+	actor := req.GetString("actor", "mcp-agent")
+
+	if sessionID == "" || projectID == "" || summary == "" {
+		return toolError("validation_error", "session_id, project_id, and summary are required"), nil
+	}
+
+	// Build namespace: system/sessions/<project_id>
+	ns := "system/sessions/" + projectID
+	key := sessionID
+
+	// Check namespace permission
+	if !globsPermit(claims.NamespaceGlobs, ns) {
+		return toolError("namespace_not_permitted", fmt.Sprintf("token does not permit writes to namespace %q", ns)), nil
+	}
+
+	// Build structured payload
+	payload := map[string]any{
+		"session_id": sessionID,
+		"project_id": projectID,
+		"summary":    summary,
+		"created_at": time.Now().UTC().Format(time.RFC3339),
+	}
+
+	// Parse optional JSON array fields
+	if v := req.GetString("decisions", ""); v != "" {
+		var arr []any
+		if err := json.Unmarshal([]byte(v), &arr); err == nil {
+			payload["decisions"] = arr
+		} else {
+			payload["decisions"] = []string{v}
+		}
+	}
+	if v := req.GetString("tasks_touched", ""); v != "" {
+		var arr []any
+		if err := json.Unmarshal([]byte(v), &arr); err == nil {
+			payload["tasks_touched"] = arr
+		} else {
+			payload["tasks_touched"] = []string{v}
+		}
+	}
+	if v := req.GetString("context_learned", ""); v != "" {
+		payload["context_learned"] = v
+	}
+	if v := req.GetString("open_questions", ""); v != "" {
+		var arr []any
+		if err := json.Unmarshal([]byte(v), &arr); err == nil {
+			payload["open_questions"] = arr
+		} else {
+			payload["open_questions"] = []string{v}
+		}
+	}
+	if v := req.GetString("handoff_notes", ""); v != "" {
+		payload["handoff_notes"] = v
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return toolError("internal_error", "failed to marshal payload: "+err.Error()), nil
+	}
+
+	// Write record
+	rec, err := a.Store.AppendRecord(ctx, contextstore.AppendInput{
+		Namespace:  ns,
+		Key:        key,
+		Actor:      actor,
+		Payload:    payloadBytes,
+		RecordType: "session/snapshot",
+		Status:     "draft",
+		Pointers:   []string{"session:" + sessionID},
+	})
+	if err != nil {
+		return toolError("write_failed", err.Error()), nil
+	}
+
+	// Audit log
+	_ = a.Store.RecordAuditEvent(ctx, contextstore.AuditEvent{
+		EventType: "session_snapshot",
+		Actor:     actor,
+		Namespace: ns,
+		Key:       key,
+		Revision:  rec.Revision,
+		RecordID:  rec.RecordID,
+		Metadata:  json.RawMessage(fmt.Sprintf(`{"session_id":%q,"project_id":%q}`, sessionID, projectID)),
+	})
+
+	result := map[string]any{
+		"record_id": rec.RecordID,
+		"revision":  rec.Revision,
+		"namespace": rec.Namespace,
+		"key":       rec.Key,
+		"status":    "written",
+	}
+
+	// Auto-embed if provider is available
+	if a.EmbeddingProvider != nil {
+		text := extractTextForEmbedding(contextstore.Record{
+			RecordID:  rec.RecordID,
+			Namespace: rec.Namespace,
+			Key:       rec.Key,
+			Payload:   payloadBytes,
+		})
+		if text != "" {
+			vec, err := a.EmbeddingProvider.Embed(ctx, text)
+			if err == nil {
+				model := a.EmbeddingProvider.Model()
+				_ = a.Store.UpsertEmbedding(ctx, contextstore.EmbeddingRow{
+					RecordID:   rec.RecordID,
+					Model:      model,
+					Dimensions: len(vec),
+					Vector:     vec,
+				})
+				result["embedded"] = true
+				result["embedding_model"] = model
+				result["embedding_dimensions"] = len(vec)
+			} else {
+				result["embedded"] = false
+				result["embedding_error"] = err.Error()
+			}
+		}
+	}
+
+	return toolJSON(result), nil
+}
+
 func (a *Adapter) getRegistry() *contexttypes.Registry {
 	if a.TypeRegistry != nil {
 		return a.TypeRegistry
