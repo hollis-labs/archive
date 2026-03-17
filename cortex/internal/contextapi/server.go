@@ -18,7 +18,7 @@ import (
 	"github.com/hollis-labs/cortex/internal/contextpolicy"
 	"github.com/hollis-labs/cortex/internal/contextstore"
 	"github.com/hollis-labs/cortex/internal/contexttypes"
-	tiamatotel "github.com/hollis-labs/otel"
+	feotel "github.com/hollis-labs/otel"
 )
 
 type contextKey int
@@ -90,8 +90,9 @@ type Server struct {
 	AuthToken string
 	// ManagedAuth enables token lifecycle validation using store-backed auth_tokens.
 	ManagedAuth bool
-	// Broker holds server-side caps for broker plan validation.
-	Broker BrokerConfig
+	// Planner holds server-side caps for context plan validation.
+	// (Renamed from Broker to avoid confusion with the universal ContextBroker.)
+	Planner PlannerConfig
 	// EnableMetrics exposes /v1/metrics and records per-route request/latency counters.
 	EnableMetrics bool
 	// EnableRequestLogging emits one structured line per request.
@@ -225,7 +226,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		s.handleTokenRevoke(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/broker/plan":
-		s.handleBrokerPlan(w, r)
+		// Legacy route kept for backward compatibility; internally renamed to context plan.
+		s.handleContextPlan(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/plan":
+		s.handleContextPlan(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/packet":
 		s.handlePacket(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/estimate":
@@ -235,6 +239,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.handleTypedWrite(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/bulk-ingest":
+		if r = s.authorizeMutatingRequest(w, r); r == nil {
+			return
+		}
+		s.handleBulkIngest(w, r)
 	case r.Method == http.MethodPost && r.URL.Path == "/v1/context/status/promote":
 		if r = s.authorizeMutatingRequest(w, r); r == nil {
 			return
@@ -584,7 +593,7 @@ func (s *Server) handleWrite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, span := tiamatotel.MemoryWriteSpan(r.Context(), req.Namespace, req.Key)
+	ctx, span := feotel.MemoryWriteSpan(r.Context(), req.Namespace, req.Key)
 	defer span.End()
 
 	if err := s.Policy.CanWrite(req.ClientID, req.Actor, req.Namespace); err != nil {
@@ -707,7 +716,7 @@ func (s *Server) handleHead(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, span := tiamatotel.MemoryReadSpan(r.Context(), namespace, key)
+	ctx, span := feotel.MemoryReadSpan(r.Context(), namespace, key)
 	defer span.End()
 
 	rec, err := s.Store.Head(ctx, namespace, key)
@@ -739,7 +748,7 @@ func (s *Server) handleHistory(w http.ResponseWriter, r *http.Request) {
 		limit = n
 	}
 
-	ctx, span := tiamatotel.MemoryReadSpan(r.Context(), namespace, key)
+	ctx, span := feotel.MemoryReadSpan(r.Context(), namespace, key)
 	defer span.End()
 
 	items, err := s.Store.History(ctx, namespace, key, limit)

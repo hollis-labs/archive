@@ -20,7 +20,7 @@ import (
 	"github.com/hollis-labs/cortex/internal/contextstore"
 	"github.com/hollis-labs/cortex/internal/mcpadapter"
 	"github.com/hollis-labs/cortex/internal/webui"
-	tiamatotel "github.com/hollis-labs/otel"
+	feotel "github.com/hollis-labs/otel"
 	"github.com/hollis-labs/otel/propagation"
 )
 
@@ -41,7 +41,7 @@ func main() {
 }
 
 func run(ctx context.Context, args []string, stdout, stderr *os.File) int {
-	shutdown, err := tiamatotel.Init(ctx, tiamatotel.WithServiceName("cortex"))
+	shutdown, err := feotel.Init(ctx, feotel.WithServiceName("cortex"))
 	if err != nil {
 		log.Printf("warning: OTel init failed: %v", err)
 	} else {
@@ -175,8 +175,8 @@ func runServe(ctx context.Context, store *contextstore.Store, stderr *os.File, c
 
 	httpServer := &http.Server{Addr: cfg.Addr, Handler: propagation.HTTPMiddleware(mux)}
 	_, _ = stderr.WriteString("Cortex — Content Memory Service\n")
-	_, _ = stderr.WriteString("  API: http://"+cfg.Addr+"/v1/\n")
-	_, _ = stderr.WriteString("  UI:  http://"+cfg.Addr+"/\n")
+	_, _ = stderr.WriteString("  API: http://" + cfg.Addr + "/v1/\n")
+	_, _ = stderr.WriteString("  UI:  http://" + cfg.Addr + "/\n")
 	errCh := make(chan error, 1)
 	go func() {
 		errCh <- httpServer.ListenAndServe()
