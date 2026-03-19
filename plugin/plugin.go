@@ -127,6 +127,20 @@ const (
 	UIComponentTypeView      UIComponentType = "view"
 )
 
+// Installable is an optional interface plugins can implement to run setup
+// logic during first-time installation (e.g., seed agent profiles, create tables).
+// If not implemented, Load() handles all setup.
+type Installable interface {
+	Install(host Host) error
+}
+
+// Uninstallable is an optional interface plugins can implement to clean up
+// artifacts during uninstallation (e.g., remove seeded agent profiles).
+// Data created by users through the plugin (tickets, etc.) is preserved.
+type Uninstallable interface {
+	Uninstall(host Host) error
+}
+
 // Logger provides logging capabilities for plugins
 type Logger interface {
 	Debug(msg string, keysAndValues ...interface{})
