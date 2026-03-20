@@ -19,6 +19,7 @@ import (
 	"github.com/hollis-labs/cortex/internal/contextpolicy"
 	"github.com/hollis-labs/cortex/internal/contextstore"
 	"github.com/hollis-labs/cortex/internal/mcpadapter"
+	cplugin "github.com/hollis-labs/cortex/internal/plugin"
 	"github.com/hollis-labs/cortex/internal/webui"
 	feotel "github.com/hollis-labs/otel"
 	"github.com/hollis-labs/otel/propagation"
@@ -78,6 +79,10 @@ func run(ctx context.Context, args []string, stdout, stderr *os.File) int {
 		return runServe(ctx, store, stderr, cfg)
 	}
 
+	if len(args) > 0 && args[0] == "plugin" {
+		return contextcli.RunPluginCmd(args[1:], stdout, stderr)
+	}
+
 	if len(args) > 0 && args[0] == "mcp" {
 		token, err := parseMCPArgs(args[1:])
 		if err != nil {
@@ -99,7 +104,7 @@ func run(ctx context.Context, args []string, stdout, stderr *os.File) int {
 func parseServeArgs(args []string) (serveConfig, error) {
 	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
-	addr := fs.String("addr", ":8080", "listen address")
+	addr := fs.String("addr", ":8089", "listen address")
 	managed := fs.Bool("managed-auth", false, "enable managed token auth")
 	static := fs.String("static-token", "", "static bearer token (legacy mode)")
 	metrics := fs.Bool("metrics", false, "enable /v1/metrics endpoint")
@@ -167,6 +172,27 @@ func runServe(ctx context.Context, store *contextstore.Store, stderr *os.File, c
 			return 1
 		}
 	}
+
+	// Initialise plugin host and discover plugins.
+	pluginLogger := cplugin.NewLogger("cortex-plugin")
+	pluginHost := cplugin.NewHost(http.NewServeMux(), pluginLogger)
+	pluginHost.RegisterService("store", store)
+
+	pluginsDir := "./plugins"
+	if d := os.Getenv("CORTEX_PLUGINS_DIR"); d != "" {
+		pluginsDir = d
+	}
+	discovered, discoverErr := cplugin.DiscoverPlugins(pluginsDir)
+	if discoverErr != nil {
+		_, _ = stderr.WriteString("warning: plugin discovery failed: " + discoverErr.Error() + "\n")
+	} else if len(discovered) > 0 {
+		loaded, loadErrs := cplugin.LoadDiscovered(pluginHost, discovered)
+		for _, e := range loadErrs {
+			_, _ = stderr.WriteString("warning: plugin load error: " + e.Error() + "\n")
+		}
+		_, _ = stderr.WriteString(fmt.Sprintf("loaded %d plugin(s)\n", len(loaded)))
+	}
+	defer pluginHost.Shutdown()
 
 	// Multiplex: /v1/* → API server, everything else → embedded UI
 	mux := http.NewServeMux()
