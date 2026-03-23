@@ -1,0 +1,16 @@
+# Project agentrc config — nexus
+agentrc_version: 2.2.0
+
+agents:
+  nexus-backend:
+    name: Nexus Backend Engineer
+    description: Go service development for the Nexus agent discovery and routing service
+    roles: [backend, go]
+    skills: [go-build, go-lint, go-test]
+    context: agents/backend.md
+
+  nexus-reviewer:
+    name: Nexus Code Reviewer
+    description: Code review for Nexus PRs
+    roles: [code-review, go]
+    skills: [go-lint, go-test]
