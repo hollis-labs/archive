@@ -870,14 +870,14 @@ func TestGatedPromotionHappyPath(t *testing.T) {
 
 	// Create a promotion request.
 	reqRes := performJSON(t, s, "POST", "/v1/context/promote/request", map[string]any{
-		"actor":             "app:myapp",
-		"client_id":         "myapp",
-		"source_namespace":  "app/myapp/draft",
-		"source_key":        "pref-v2",
+		"actor":              "app:myapp",
+		"client_id":          "myapp",
+		"source_namespace":   "app/myapp/draft",
+		"source_key":         "pref-v2",
 		"source_revision_id": srcRecordID,
-		"target_namespace":  "user/memory/preferences",
-		"target_key":        "user-prefs",
-		"reason":            "user confirmed",
+		"target_namespace":   "user/memory/preferences",
+		"target_key":         "user-prefs",
+		"reason":             "user confirmed",
 	})
 	if reqRes.Code != http.StatusOK {
 		t.Fatalf("promote/request: %s", reqRes.Body)
@@ -1201,7 +1201,7 @@ func TestWildcardNamespaceGlobAllowsAnyNamespace(t *testing.T) {
 	}
 }
 
-func TestBrokerPlanResumeTask(t *testing.T) {
+func TestContextPlanResumeTask(t *testing.T) {
 	s := newTestServer(t)
 
 	res := performJSON(t, s, http.MethodPost, "/v1/broker/plan", map[string]any{
@@ -1209,7 +1209,7 @@ func TestBrokerPlanResumeTask(t *testing.T) {
 		"intent":       "resume_task",
 	})
 	if res.Code != http.StatusOK {
-		t.Fatalf("broker plan: %d %s", res.Code, res.Body)
+		t.Fatalf("context plan: %d %s", res.Code, res.Body)
 	}
 	var resp map[string]any
 	json.NewDecoder(res.Body).Decode(&resp)
@@ -1243,14 +1243,14 @@ func TestBrokerPlanResumeTask(t *testing.T) {
 	}
 }
 
-func TestBrokerPlanBootProject(t *testing.T) {
+func TestContextPlanBootProject(t *testing.T) {
 	s := newTestServer(t)
 
 	res := performJSON(t, s, http.MethodPost, "/v1/broker/plan", map[string]any{
 		"intent": "boot_project",
 	})
 	if res.Code != http.StatusOK {
-		t.Fatalf("broker plan boot_project: %d %s", res.Code, res.Body)
+		t.Fatalf("context plan boot_project: %d %s", res.Code, res.Body)
 	}
 	var resp map[string]any
 	json.NewDecoder(res.Body).Decode(&resp)
@@ -1275,9 +1275,9 @@ func TestBrokerPlanBootProject(t *testing.T) {
 	}
 }
 
-func TestBrokerPlanForbiddenNamespaceStripped(t *testing.T) {
+func TestContextPlanForbiddenNamespaceStripped(t *testing.T) {
 	s := newTestServer(t)
-	s.Broker = BrokerConfig{
+	s.Planner = PlannerConfig{
 		ForbiddenNamespacePatterns: []string{"system/*"},
 	}
 
@@ -1288,7 +1288,7 @@ func TestBrokerPlanForbiddenNamespaceStripped(t *testing.T) {
 		},
 	})
 	if res.Code != http.StatusOK {
-		t.Fatalf("broker plan forbidden namespace: %d %s", res.Code, res.Body)
+		t.Fatalf("context plan forbidden namespace: %d %s", res.Code, res.Body)
 	}
 	var resp map[string]any
 	json.NewDecoder(res.Body).Decode(&resp)
@@ -1315,9 +1315,9 @@ func TestBrokerPlanForbiddenNamespaceStripped(t *testing.T) {
 	}
 }
 
-func TestBrokerPlanNoPermittedNamespacesReturns403(t *testing.T) {
+func TestContextPlanNoPermittedNamespacesReturns403(t *testing.T) {
 	s := newTestServer(t)
-	s.Broker = BrokerConfig{
+	s.Planner = PlannerConfig{
 		ForbiddenNamespacePatterns: []string{"user/*"},
 	}
 
@@ -1329,9 +1329,9 @@ func TestBrokerPlanNoPermittedNamespacesReturns403(t *testing.T) {
 	}
 }
 
-func TestBrokerPlanBudgetClamped(t *testing.T) {
+func TestContextPlanBudgetClamped(t *testing.T) {
 	s := newTestServer(t)
-	s.Broker = BrokerConfig{
+	s.Planner = PlannerConfig{
 		MaxItemsCap:  10,
 		MaxTokensCap: 500,
 	}
@@ -1344,7 +1344,7 @@ func TestBrokerPlanBudgetClamped(t *testing.T) {
 		},
 	})
 	if res.Code != http.StatusOK {
-		t.Fatalf("broker plan budget clamp: %d %s", res.Code, res.Body)
+		t.Fatalf("context plan budget clamp: %d %s", res.Code, res.Body)
 	}
 	var resp map[string]any
 	json.NewDecoder(res.Body).Decode(&resp)
@@ -1363,5 +1363,99 @@ func TestBrokerPlanBudgetClamped(t *testing.T) {
 	}
 	if !foundItemsClamp || !foundTokensClamp {
 		t.Errorf("expected clamping warnings, got %v", warnings)
+	}
+}
+
+func TestBulkIngest_Success(t *testing.T) {
+	srv := newTestServer(t)
+	body := map[string]any{
+		"client_id": "test",
+		"actor":     "bulk-test",
+		"items": []map[string]any{
+			{"namespace": "test/bulk", "key": "item-1", "payload": map[string]any{"title": "First"}, "record_type": "task/spec"},
+			{"namespace": "test/bulk", "key": "item-2", "payload": map[string]any{"title": "Second"}, "record_type": "task/spec"},
+		},
+	}
+	res := performJSON(t, srv, http.MethodPost, "/v1/context/bulk-ingest", body)
+	if res.Code != http.StatusOK {
+		t.Fatalf("bulk ingest status=%d body=%s", res.Code, res.Body.String())
+	}
+	var resp struct {
+		Total   int `json:"total"`
+		Written int `json:"written"`
+		Errors  int `json:"errors"`
+	}
+	if err := json.Unmarshal(res.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if resp.Total != 2 || resp.Written != 2 || resp.Errors != 0 {
+		t.Errorf("expected total=2, written=2, errors=0; got total=%d, written=%d, errors=%d", resp.Total, resp.Written, resp.Errors)
+	}
+}
+
+func TestBulkIngest_ValidationErrors(t *testing.T) {
+	srv := newTestServer(t)
+	body := map[string]any{
+		"client_id": "test",
+		"actor":     "bulk-test",
+		"items": []map[string]any{
+			{"namespace": "test/bulk", "key": "item-ok", "payload": map[string]any{"title": "OK"}, "record_type": "task/spec"},
+			{"namespace": "", "key": "missing-ns", "payload": map[string]any{}},
+			{"namespace": "test/bulk", "key": "bad-type", "payload": map[string]any{}, "record_type": "unknown/type"},
+		},
+	}
+	res := performJSON(t, srv, http.MethodPost, "/v1/context/bulk-ingest", body)
+	if res.Code != http.StatusOK {
+		t.Fatalf("bulk ingest status=%d body=%s", res.Code, res.Body.String())
+	}
+	var resp struct {
+		Total   int `json:"total"`
+		Written int `json:"written"`
+		Errors  int `json:"errors"`
+	}
+	if err := json.Unmarshal(res.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if resp.Written != 1 || resp.Errors != 2 {
+		t.Errorf("expected written=1, errors=2; got written=%d, errors=%d", resp.Written, resp.Errors)
+	}
+}
+
+func TestBulkIngest_RequiredFieldsEnforced(t *testing.T) {
+	srv := newTestServer(t)
+	body := map[string]any{
+		"client_id": "test",
+		"actor":     "bulk-test",
+		"items": []map[string]any{
+			{"namespace": "test/bulk", "key": "no-title", "payload": map[string]any{"description": "missing title"}, "record_type": "task/spec"},
+		},
+	}
+	res := performJSON(t, srv, http.MethodPost, "/v1/context/bulk-ingest", body)
+	if res.Code != http.StatusOK {
+		t.Fatalf("bulk ingest status=%d body=%s", res.Code, res.Body.String())
+	}
+	var resp struct {
+		Errors  int `json:"errors"`
+		Results []struct {
+			Error string `json:"error"`
+		} `json:"results"`
+	}
+	if err := json.Unmarshal(res.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if resp.Errors != 1 {
+		t.Errorf("expected 1 error for missing required field, got %d", resp.Errors)
+	}
+}
+
+func TestBulkIngest_Empty(t *testing.T) {
+	srv := newTestServer(t)
+	body := map[string]any{
+		"client_id": "test",
+		"items":     []map[string]any{},
+	}
+	res := performJSON(t, srv, http.MethodPost, "/v1/context/bulk-ingest", body)
+	if res.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for empty items, got %d", res.Code)
 	}
 }

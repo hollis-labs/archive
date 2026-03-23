@@ -21,7 +21,8 @@ type Adapter struct {
 	Store             *contextstore.Store
 	Token             string // capability token for mutating ops; may be empty
 	TypeRegistry      *contexttypes.Registry
-	EmbeddingProvider embedding.Provider // optional; nil disables context_embed/context_search
+	EmbeddingProvider embedding.Provider    // optional; nil disables context_embed/context_search
+	VectorIndex       embedding.VectorIndex // optional; nil uses brute-force search via Store
 }
 
 // New creates an Adapter for the given store and optional capability token.
@@ -41,6 +42,8 @@ func (a *Adapter) Run(ctx context.Context) error {
 	a.registerTypedTools(s)
 	a.registerEmbeddingTools(s)
 	a.registerSessionTools(s)
+	a.registerBulkTools(s)
+	a.registerRAGTools(s)
 	ctxFunc := func(_ context.Context) context.Context { return ctx }
 	return server.ServeStdio(s, server.WithStdioContextFunc(ctxFunc))
 }

@@ -10,8 +10,11 @@ import (
 	"github.com/hollis-labs/cortex/internal/contextstore"
 )
 
-// BrokerConfig holds server-side caps for broker plan validation.
-type BrokerConfig struct {
+// PlannerConfig holds server-side caps for context plan validation.
+// NOTE: The MCP tool names (context_broker_plan, context_broker_fetch) and
+// HTTP route (/v1/broker/plan) retain "broker" for backward compatibility.
+// Internally this is the context query planner, not the universal ContextBroker.
+type PlannerConfig struct {
 	// MaxItemsCap is the server-enforced maximum for plan budget max_items. Default 200.
 	MaxItemsCap int
 	// MaxTokensCap is the server-enforced maximum for plan budget max_tokens_estimate. Default 32000.
@@ -20,43 +23,43 @@ type BrokerConfig struct {
 	ForbiddenNamespacePatterns []string
 }
 
-func (c BrokerConfig) maxItems() int {
+func (c PlannerConfig) maxItems() int {
 	if c.MaxItemsCap <= 0 {
 		return 200
 	}
 	return c.MaxItemsCap
 }
 
-func (c BrokerConfig) maxTokens() int {
+func (c PlannerConfig) maxTokens() int {
 	if c.MaxTokensCap <= 0 {
 		return 32000
 	}
 	return c.MaxTokensCap
 }
 
-func (c BrokerConfig) forbidden() []string {
+func (c PlannerConfig) forbidden() []string {
 	if len(c.ForbiddenNamespacePatterns) == 0 {
 		return []string{"system/*", "internal/*"}
 	}
 	return c.ForbiddenNamespacePatterns
 }
 
-// BrokerConstraints is the optional constraints block in a plan request.
-type BrokerConstraints struct {
+// PlannerConstraints is the optional constraints block in a context plan request.
+type PlannerConstraints struct {
 	Namespaces        []string `json:"namespaces,omitempty"`
 	MaxItems          int      `json:"max_items,omitempty"`
 	MaxTokensEstimate int      `json:"max_tokens_estimate,omitempty"`
 }
 
-// BrokerPlanRequest is the body for POST /v1/broker/plan.
-type BrokerPlanRequest struct {
-	TaskSummary string            `json:"task_summary,omitempty"`
-	Intent      string            `json:"intent"` // resume_task|boot_project|review_session|custom
-	Constraints BrokerConstraints `json:"constraints,omitempty"`
+// ContextPlanRequest is the body for POST /v1/broker/plan (and /v1/context/plan alias).
+type ContextPlanRequest struct {
+	TaskSummary string             `json:"task_summary,omitempty"`
+	Intent      string             `json:"intent"` // resume_task|boot_project|review_session|custom
+	Constraints PlannerConstraints `json:"constraints,omitempty"`
 }
 
-// BrokerPlanResponse is the response for POST /v1/broker/plan.
-type BrokerPlanResponse struct {
+// ContextPlanResponse is the response for POST /v1/broker/plan (and /v1/context/plan alias).
+type ContextPlanResponse struct {
 	Plan      PacketRequest `json:"plan"`
 	Rationale string        `json:"rationale"`
 	Warnings  []string      `json:"warnings"`
@@ -95,8 +98,8 @@ func extractKeywords(text string, n int) []string {
 	return out
 }
 
-func (s *Server) handleBrokerPlan(w http.ResponseWriter, r *http.Request) {
-	var req BrokerPlanRequest
+func (s *Server) handleContextPlan(w http.ResponseWriter, r *http.Request) {
+	var req ContextPlanRequest
 	if err := decodeJSON(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
 		return
@@ -168,7 +171,7 @@ func (s *Server) handleBrokerPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validation (TASK-018): strip forbidden namespaces.
-	forbidden := s.Broker.forbidden()
+	forbidden := s.Planner.forbidden()
 	namespaces, warnings = stripForbiddenNamespaces(namespaces, forbidden, warnings)
 
 	// Validation: strip namespaces outside caller's token globs.
@@ -182,8 +185,8 @@ func (s *Server) handleBrokerPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validation: clamp budget to server caps.
-	serverMaxItems := s.Broker.maxItems()
-	serverMaxTokens := s.Broker.maxTokens()
+	serverMaxItems := s.Planner.maxItems()
+	serverMaxTokens := s.Planner.maxTokens()
 	if maxItems > serverMaxItems {
 		warnings = append(warnings, fmt.Sprintf("budget max_items clamped from %d to server cap %d", maxItems, serverMaxItems))
 		maxItems = serverMaxItems
@@ -214,7 +217,7 @@ func (s *Server) handleBrokerPlan(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	resp := BrokerPlanResponse{
+	resp := ContextPlanResponse{
 		Plan:      plan,
 		Rationale: rationale,
 		Warnings:  warnings,

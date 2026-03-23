@@ -85,9 +85,9 @@ type Selector struct {
 	RevisionScope string   `json:"revision_scope,omitempty"` // head|all
 	Order         []string `json:"order,omitempty"`          // namespace|key|revision|created_asc|created_desc
 	Limit         int      `json:"limit,omitempty"`
-	TagsAny       []string `json:"tags_any,omitempty"`    // records with at least one of these tags
-	Types         []string `json:"types,omitempty"`        // filter by record_type
-	Statuses      []string `json:"statuses,omitempty"`     // filter by status
+	TagsAny       []string `json:"tags_any,omitempty"` // records with at least one of these tags
+	Types         []string `json:"types,omitempty"`    // filter by record_type
+	Statuses      []string `json:"statuses,omitempty"` // filter by status
 }
 
 // ConsistencyIssue reports a deterministic storage/index inconsistency finding.
@@ -2470,6 +2470,66 @@ JOIN heads h ON r.namespace = h.namespace AND r.key_name = h.key_name AND r.reco
 func (s *Store) DeleteEmbedding(ctx context.Context, recordID, model string) error {
 	_, err := s.db.ExecContext(ctx, `DELETE FROM embeddings WHERE record_id = ? AND model = ?`, recordID, model)
 	return err
+}
+
+// UpsertEmbeddingRaw implements the embedding.StoreBackend interface.
+func (s *Store) UpsertEmbeddingRaw(ctx context.Context, recordID, model string, dimensions int, vector []float32) error {
+	return s.UpsertEmbedding(ctx, EmbeddingRow{
+		RecordID:   recordID,
+		Model:      model,
+		Dimensions: dimensions,
+		Vector:     vector,
+	})
+}
+
+// UpsertEmbeddingVec implements embedding.EmbeddingStore.
+func (s *Store) UpsertEmbeddingVec(ctx context.Context, recordID, model string, dimensions int, vector []float32) error {
+	return s.UpsertEmbedding(ctx, EmbeddingRow{
+		RecordID:   recordID,
+		Model:      model,
+		Dimensions: dimensions,
+		Vector:     vector,
+	})
+}
+
+// EmbeddingCandidate is a flat embedding row used by the vector index.
+type EmbeddingCandidate struct {
+	RecordID  string
+	Namespace string
+	Key       string
+	Vector    []float32
+}
+
+// SearchEmbeddings implements embedding.EmbeddingStore.
+func (s *Store) SearchEmbeddings(ctx context.Context, model string, namespaces, types []string) ([]EmbeddingCandidate, error) {
+	rows, records, err := s.ListEmbeddings(ctx, EmbeddingFilter{
+		Model:      model,
+		Namespaces: namespaces,
+		Types:      types,
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]EmbeddingCandidate, len(rows))
+	for i, e := range rows {
+		out[i] = EmbeddingCandidate{
+			RecordID:  e.RecordID,
+			Namespace: records[i].Namespace,
+			Key:       records[i].Key,
+			Vector:    e.Vector,
+		}
+	}
+	return out, nil
+}
+
+// DeleteEmbeddingVec implements embedding.EmbeddingStore.
+func (s *Store) DeleteEmbeddingVec(ctx context.Context, recordID, model string) error {
+	return s.DeleteEmbedding(ctx, recordID, model)
+}
+
+// DeleteEmbeddingRaw implements the embedding.StoreBackend interface.
+func (s *Store) DeleteEmbeddingRaw(ctx context.Context, recordID, model string) error {
+	return s.DeleteEmbedding(ctx, recordID, model)
 }
 
 func float32ToBlob(v []float32) []byte {

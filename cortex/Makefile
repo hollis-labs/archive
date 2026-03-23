@@ -1,6 +1,6 @@
-.PHONY: test contracts contract-api contract-errors contract-metrics smoke smoke-invalid-token validate e2e-local e2e-managed runlog-init contract-lint agents-boot-check contract-commands contract-cli-list contract-cli-run bootstrap-sync bootstrap-report bootstrap-sync-apply bootstrap-sync-report frontend build
+.PHONY: test contracts contract-api contract-errors contract-metrics smoke smoke-invalid-token validate e2e-local e2e-managed runlog-init contract-lint agents-boot-check contract-commands contract-cli-list contract-cli-run bootstrap-sync bootstrap-report bootstrap-sync-apply bootstrap-sync-report frontend build install
 
-BASE_URL ?= http://127.0.0.1:8080
+BASE_URL ?= http://127.0.0.1:8089
 TOKEN ?=
 METRICS ?= 0
 AUTH_MODE ?= none
@@ -40,6 +40,9 @@ frontend:
 
 build: frontend
 	go build -o contextd ./cmd/contextd/
+
+install: frontend
+	go install ./cmd/contextd/
 
 test:
 	$(TEST)

@@ -75,10 +75,10 @@ func (ct ContextType) HasAllowedStatus(s string) bool {
 
 // ViewDef defines a purpose-driven bounded retrieval preset.
 type ViewDef struct {
-	ViewID     string            `json:"view_id" yaml:"view_id"`
-	Types      []string          `json:"types" yaml:"types"`
-	MaxItems   int               `json:"max_items,omitempty" yaml:"max_items,omitempty"`
-	MaxBytes   int               `json:"max_bytes,omitempty" yaml:"max_bytes,omitempty"`
+	ViewID      string             `json:"view_id" yaml:"view_id"`
+	Types       []string           `json:"types" yaml:"types"`
+	MaxItems    int                `json:"max_items,omitempty" yaml:"max_items,omitempty"`
+	MaxBytes    int                `json:"max_bytes,omitempty" yaml:"max_bytes,omitempty"`
 	RankWeights map[string]float64 `json:"rank_weights,omitempty" yaml:"rank_weights,omitempty"`
 }
 
@@ -232,6 +232,35 @@ func (r *Registry) ValidateStatus(typeID, status string) error {
 	return nil
 }
 
+// ValidateRequiredFields checks that all required fields for a registered type
+// are present as top-level keys in the payload. Returns nil if the type has no
+// required fields, is empty, or is a custom/ type.
+func (r *Registry) ValidateRequiredFields(typeID string, payload map[string]any) error {
+	if typeID == "" || strings.HasPrefix(typeID, "custom/") {
+		return nil
+	}
+	ct, ok := r.GetType(typeID)
+	if !ok || len(ct.RequiredFields) == 0 {
+		return nil
+	}
+	var missing []string
+	for _, f := range ct.RequiredFields {
+		v, exists := payload[f]
+		if !exists {
+			missing = append(missing, f)
+			continue
+		}
+		// Treat empty strings as missing.
+		if s, ok := v.(string); ok && s == "" {
+			missing = append(missing, f)
+		}
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf("type %q requires fields: %s", typeID, strings.Join(missing, ", "))
+	}
+	return nil
+}
+
 // DefaultTypes returns the MVP core types.
 func DefaultTypes() []ContextType {
 	return []ContextType{
@@ -303,6 +332,27 @@ func DefaultTypes() []ContextType {
 			AllowedStatuses:   []string{"draft", "reviewed", "canonical", "deprecated"},
 			RetrievalRankBias: 1.5,
 		},
+		// Session
+		{
+			TypeID:            "session/snapshot",
+			DefaultTTL:        "720h", // 30 days
+			AllowedStatuses:   []string{"draft", "reviewed", "canonical", "deprecated"},
+			RequiredFields:    []string{"summary"},
+			RetrievalRankBias: 0.7,
+		},
+		// Configuration
+		{
+			TypeID:            "config/service",
+			AllowedStatuses:   []string{"draft", "reviewed", "canonical", "deprecated"},
+			RetrievalRankBias: 1.0,
+		},
+		// Identity
+		{
+			TypeID:            "project/identity",
+			AllowedStatuses:   []string{"draft", "reviewed", "canonical", "deprecated"},
+			RequiredFields:    []string{"name"},
+			RetrievalRankBias: 1.2,
+		},
 	}
 }
 
@@ -324,6 +374,28 @@ func DefaultViews() []ViewDef {
 			ViewID:   "strategy",
 			Types:    []string{"strategy/goal", "strategy/constraints", "strategy/roadmap", "decision/adr", "system/map"},
 			MaxItems: 30,
+			RankWeights: map[string]float64{
+				"canonical":  1.0,
+				"reviewed":   0.8,
+				"draft":      0.5,
+				"deprecated": 0.1,
+			},
+		},
+		{
+			ViewID:   "agent_boot",
+			Types:    []string{"system/map", "principles", "strategy/constraints", "contract/api", "contract/data"},
+			MaxItems: 20,
+			RankWeights: map[string]float64{
+				"canonical":  1.0,
+				"reviewed":   0.9,
+				"draft":      0.4,
+				"deprecated": 0.0,
+			},
+		},
+		{
+			ViewID:   "briefing",
+			Types:    []string{"brief/summary", "decision/adr", "system/map", "strategy/goal"},
+			MaxItems: 25,
 			RankWeights: map[string]float64{
 				"canonical":  1.0,
 				"reviewed":   0.8,

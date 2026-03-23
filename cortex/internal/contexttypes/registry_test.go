@@ -14,6 +14,7 @@ func TestDefaultTypes(t *testing.T) {
 		"strategy/goal", "strategy/constraints", "strategy/roadmap", "system/map",
 		"task/spec", "runbook", "contract/api", "contract/data",
 		"decision/adr", "brief/summary", "note/volatile", "principles",
+		"session/snapshot", "config/service", "project/identity",
 	}
 	idSet := map[string]bool{}
 	for _, ct := range types {
@@ -28,18 +29,17 @@ func TestDefaultTypes(t *testing.T) {
 
 func TestDefaultViews(t *testing.T) {
 	views := DefaultViews()
-	if len(views) < 2 {
-		t.Fatalf("expected at least 2 views, got %d", len(views))
+	if len(views) < 4 {
+		t.Fatalf("expected at least 4 views, got %d", len(views))
 	}
 	viewIDs := map[string]bool{}
 	for _, v := range views {
 		viewIDs[v.ViewID] = true
 	}
-	if !viewIDs["task_exec"] {
-		t.Error("missing task_exec view")
-	}
-	if !viewIDs["strategy"] {
-		t.Error("missing strategy view")
+	for _, id := range []string{"task_exec", "strategy", "agent_boot", "briefing"} {
+		if !viewIDs[id] {
+			t.Errorf("missing %s view", id)
+		}
 	}
 }
 
@@ -199,13 +199,53 @@ func TestListTypes(t *testing.T) {
 func TestListViews(t *testing.T) {
 	r := NewRegistry()
 	views := r.ListViews()
-	if len(views) < 2 {
-		t.Fatalf("expected at least 2 views, got %d", len(views))
+	if len(views) < 4 {
+		t.Fatalf("expected at least 4 views, got %d", len(views))
 	}
 	for i := 1; i < len(views); i++ {
 		if views[i].ViewID < views[i-1].ViewID {
 			t.Fatalf("views not sorted: %s < %s", views[i].ViewID, views[i-1].ViewID)
 		}
+	}
+}
+
+func TestValidateRequiredFields(t *testing.T) {
+	r := NewRegistry()
+
+	// task/spec requires "title"
+	err := r.ValidateRequiredFields("task/spec", map[string]any{"title": "My Task"})
+	if err != nil {
+		t.Errorf("valid payload should pass: %v", err)
+	}
+
+	// Missing required field
+	err = r.ValidateRequiredFields("task/spec", map[string]any{"description": "no title"})
+	if err == nil {
+		t.Error("missing title should fail")
+	}
+
+	// Empty string counts as missing
+	err = r.ValidateRequiredFields("task/spec", map[string]any{"title": ""})
+	if err == nil {
+		t.Error("empty title should fail")
+	}
+
+	// custom/ types skip validation
+	err = r.ValidateRequiredFields("custom/my-app", map[string]any{})
+	if err != nil {
+		t.Errorf("custom types should skip validation: %v", err)
+	}
+
+	// Empty type skips validation
+	err = r.ValidateRequiredFields("", map[string]any{})
+	if err != nil {
+		t.Errorf("empty type should skip validation: %v", err)
+	}
+
+	// Type with no required fields
+	err = r.ValidateRequiredFields("strategy/goal", map[string]any{})
+	if err != nil {
+		t.Errorf("type without required_fields should pass: %v", err)
 	}
 }
 

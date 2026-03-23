@@ -745,17 +745,17 @@ func TestContextPromoteApply_Success(t *testing.T) {
 	}
 }
 
-// --- P3: Broker tools ---
+// --- P3: Context planner tools ---
 
-func TestContextBrokerPlan_BootProject(t *testing.T) {
+func TestContextPlan_BootProject(t *testing.T) {
 	a := New(newTestStore(t), "")
 	req := mcp.CallToolRequest{}
 	req.Params.Arguments = map[string]any{
 		"intent": "boot_project",
 	}
-	res, err := a.handleBrokerPlan(context.Background(), req)
+	res, err := a.handleContextPlan(context.Background(), req)
 	if err != nil {
-		t.Fatalf("handleBrokerPlan: %v", err)
+		t.Fatalf("handleContextPlan: %v", err)
 	}
 	body := parseResult(t, res)
 	if body["code"] != nil {
@@ -782,14 +782,14 @@ func TestContextBrokerPlan_BootProject(t *testing.T) {
 	}
 }
 
-func TestContextBrokerPlan_ResumeTask_ExtractsKeywords(t *testing.T) {
+func TestContextPlan_ResumeTask_ExtractsKeywords(t *testing.T) {
 	a := New(newTestStore(t), "")
 	req := mcp.CallToolRequest{}
 	req.Params.Arguments = map[string]any{
 		"intent":  "resume_task",
 		"summary": "implementing authentication middleware for the API",
 	}
-	res, _ := a.handleBrokerPlan(context.Background(), req)
+	res, _ := a.handleContextPlan(context.Background(), req)
 	body := parseResult(t, res)
 	plan := body["plan"].(map[string]any)
 	ns := plan["namespaces"].([]any)
@@ -799,11 +799,11 @@ func TestContextBrokerPlan_ResumeTask_ExtractsKeywords(t *testing.T) {
 	}
 }
 
-func TestContextBrokerPlan_Custom_ReturnsUserStar(t *testing.T) {
+func TestContextPlan_Custom_ReturnsUserStar(t *testing.T) {
 	a := New(newTestStore(t), "")
 	req := mcp.CallToolRequest{}
 	req.Params.Arguments = map[string]any{"intent": "custom"}
-	res, _ := a.handleBrokerPlan(context.Background(), req)
+	res, _ := a.handleContextPlan(context.Background(), req)
 	body := parseResult(t, res)
 	plan := body["plan"].(map[string]any)
 	ns := plan["namespaces"].([]any)
@@ -818,7 +818,7 @@ func TestContextBrokerPlan_Custom_ReturnsUserStar(t *testing.T) {
 	}
 }
 
-func TestContextBrokerFetch_ReturnsPacketWithManifest(t *testing.T) {
+func TestContextFetch_ReturnsPacketWithManifest(t *testing.T) {
 	s := newTestStore(t)
 	writeRecord(t, s, "user/memory/task-001", "state", `{"v":1}`)
 	writeRecord(t, s, "user/pins/brief", "context", `{"brief":"project"}`)
@@ -829,9 +829,9 @@ func TestContextBrokerFetch_ReturnsPacketWithManifest(t *testing.T) {
 		"intent":       "boot_project",
 		"budget_items": float64(50),
 	}
-	res, err := a.handleBrokerFetch(context.Background(), req)
+	res, err := a.handleContextFetch(context.Background(), req)
 	if err != nil {
-		t.Fatalf("handleBrokerFetch: %v", err)
+		t.Fatalf("handleContextFetch: %v", err)
 	}
 	body := parseResult(t, res)
 	if body["code"] != nil {
@@ -850,11 +850,11 @@ func TestContextBrokerFetch_ReturnsPacketWithManifest(t *testing.T) {
 	}
 }
 
-func TestContextBrokerFetch_Empty(t *testing.T) {
+func TestContextFetch_Empty(t *testing.T) {
 	a := New(newTestStore(t), "")
 	req := mcp.CallToolRequest{}
 	req.Params.Arguments = map[string]any{"intent": "boot_project"}
-	res, _ := a.handleBrokerFetch(context.Background(), req)
+	res, _ := a.handleContextFetch(context.Background(), req)
 	body := parseResult(t, res)
 	items := parseItems(t, body)
 	if len(items) != 0 {

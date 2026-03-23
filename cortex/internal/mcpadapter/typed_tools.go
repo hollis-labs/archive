@@ -259,6 +259,16 @@ func (a *Adapter) handleTypedWrite(ctx context.Context, req mcp.CallToolRequest)
 		return toolError("validation_error", err.Error()), nil
 	}
 
+	// Validate required fields for the type.
+	if recordType != "" {
+		var payloadMap map[string]any
+		if err := json.Unmarshal(payload, &payloadMap); err == nil {
+			if err := reg.ValidateRequiredFields(recordType, payloadMap); err != nil {
+				return toolError("validation_error", err.Error()), nil
+			}
+		}
+	}
+
 	// Apply default TTL.
 	if ttl == "" && recordType != "" {
 		ct, ok := reg.GetType(recordType)

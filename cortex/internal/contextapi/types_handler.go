@@ -382,10 +382,10 @@ func (s *Server) handleTypedView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"view":    req.ViewID,
-		"items":   resultItems,
-		"count":   len(resultItems),
-		"types":   viewDef.Types,
+		"view":           req.ViewID,
+		"items":          resultItems,
+		"count":          len(resultItems),
+		"types":          viewDef.Types,
 		"token_estimate": contextstore.EstimateTokens(make([]byte, totalBytes)),
 	})
 }
@@ -411,6 +411,200 @@ func (s *Server) handleViewsList(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"views": reg.ListViews(),
+	})
+}
+
+// BulkIngestRequest is the body for the bulk ingestion endpoint.
+type BulkIngestRequest struct {
+	ClientID    string           `json:"client_id"`
+	Actor       string           `json:"actor"`
+	Items       []BulkIngestItem `json:"items"`
+	StopOnError bool             `json:"stop_on_error"`
+}
+
+// BulkIngestItem represents a single item in a bulk ingestion batch.
+type BulkIngestItem struct {
+	Namespace  string          `json:"namespace"`
+	Key        string          `json:"key"`
+	Payload    json.RawMessage `json:"payload"`
+	RecordType string          `json:"record_type"`
+	Status     string          `json:"status"`
+	TTL        string          `json:"ttl,omitempty"`
+	Pointers   []string        `json:"pointers,omitempty"`
+	Actor      string          `json:"actor,omitempty"`
+}
+
+func (s *Server) handleBulkIngest(w http.ResponseWriter, r *http.Request) {
+	if !requireScope(w, r, "write") {
+		return
+	}
+	var req BulkIngestRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_request", err.Error(), nil)
+		return
+	}
+	if len(req.Items) == 0 {
+		writeError(w, http.StatusBadRequest, "validation_error", "items array is empty", nil)
+		return
+	}
+	if len(req.Items) > 100 {
+		writeError(w, http.StatusBadRequest, "validation_error", "max 100 items per batch", nil)
+		return
+	}
+
+	reg := s.TypeRegistry
+	if reg == nil {
+		reg = contexttypes.NewRegistry()
+	}
+
+	type itemResult struct {
+		Index    int    `json:"index"`
+		RecordID string `json:"record_id,omitempty"`
+		Status   string `json:"status"`
+		Error    string `json:"error,omitempty"`
+	}
+
+	results := make([]itemResult, 0, len(req.Items))
+	written := 0
+	errCount := 0
+
+	for i, item := range req.Items {
+		res := itemResult{Index: i}
+
+		if item.Namespace == "" || item.Key == "" {
+			res.Status = "error"
+			res.Error = "namespace and key are required"
+			results = append(results, res)
+			errCount++
+			if req.StopOnError {
+				break
+			}
+			continue
+		}
+
+		if !requireNamespaceAccess(w, r, item.Namespace) {
+			// Response already written by requireNamespaceAccess.
+			return
+		}
+
+		actor := item.Actor
+		if actor == "" {
+			actor = req.Actor
+		}
+		if actor == "" {
+			actor = "api"
+		}
+
+		if err := s.Policy.CanWrite(req.ClientID, actor, item.Namespace); err != nil {
+			res.Status = "error"
+			res.Error = "policy_denied: " + err.Error()
+			results = append(results, res)
+			errCount++
+			if req.StopOnError {
+				break
+			}
+			continue
+		}
+
+		if err := reg.ValidateType(item.RecordType); err != nil {
+			res.Status = "error"
+			res.Error = err.Error()
+			results = append(results, res)
+			errCount++
+			if req.StopOnError {
+				break
+			}
+			continue
+		}
+
+		status := item.Status
+		if status == "" {
+			status = "draft"
+		}
+		if err := reg.ValidateStatus(item.RecordType, status); err != nil {
+			res.Status = "error"
+			res.Error = err.Error()
+			results = append(results, res)
+			errCount++
+			if req.StopOnError {
+				break
+			}
+			continue
+		}
+
+		// Required fields validation.
+		if item.RecordType != "" {
+			var payloadMap map[string]any
+			if err := json.Unmarshal(item.Payload, &payloadMap); err == nil {
+				if err := reg.ValidateRequiredFields(item.RecordType, payloadMap); err != nil {
+					res.Status = "error"
+					res.Error = err.Error()
+					results = append(results, res)
+					errCount++
+					if req.StopOnError {
+						break
+					}
+					continue
+				}
+			}
+		}
+
+		ttl := item.TTL
+		if ttl == "" && item.RecordType != "" {
+			ct, ok := reg.GetType(item.RecordType)
+			if ok {
+				defaultTTL := ct.ParseDefaultTTL()
+				if defaultTTL > 0 {
+					ttl = time.Now().UTC().Add(defaultTTL).Format(time.RFC3339)
+				}
+			}
+		}
+
+		rec, err := s.Store.AppendRecord(r.Context(), contextstore.AppendInput{
+			Namespace:  item.Namespace,
+			Key:        item.Key,
+			Actor:      actor,
+			Payload:    item.Payload,
+			RecordType: item.RecordType,
+			Status:     status,
+			TTL:        ttl,
+			Pointers:   item.Pointers,
+		})
+		if err != nil {
+			res.Status = "error"
+			res.Error = "write_failed: " + err.Error()
+			results = append(results, res)
+			errCount++
+			if req.StopOnError {
+				break
+			}
+			continue
+		}
+
+		res.RecordID = rec.RecordID
+		res.Status = "written"
+		written++
+
+		_ = s.Store.RecordAuditEvent(r.Context(), contextstore.AuditEvent{
+			EventType: "bulk_ingest",
+			Actor:     actor,
+			Namespace: item.Namespace,
+			Key:       item.Key,
+			Revision:  rec.Revision,
+			RecordID:  rec.RecordID,
+			Metadata: json.RawMessage(fmt.Sprintf(
+				`{"source":"http","record_type":%s,"status":%s,"batch_index":%d}`,
+				quoteJSON(item.RecordType), quoteJSON(status), i)),
+		})
+
+		results = append(results, res)
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"total":   len(req.Items),
+		"written": written,
+		"errors":  errCount,
+		"results": results,
 	})
 }
 
