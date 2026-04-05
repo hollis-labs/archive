@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	schemaVersion = 8
+	schemaVersion = 9
 
 	// defaultTokenScopes is the full-access scopes JSON assigned to legacy tokens and new tokens without explicit scopes.
 	defaultTokenScopes = `["write","promote.request","promote.approve","promote.apply","packet","repair","namespace.register"]`
@@ -235,6 +235,13 @@ func (s *Store) Close() error {
 	return s.db.Close()
 }
 
+// DB returns the underlying database handle. Used by sibling subsystems
+// (memory) that share the same SQLite file but manage their own code paths.
+// The returned *sql.DB is owned by Store — callers must not close it.
+func (s *Store) DB() *sql.DB {
+	return s.db
+}
+
 func (s *Store) migrate(ctx context.Context) (err error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -434,6 +441,71 @@ CREATE TABLE IF NOT EXISTS embeddings (
 	PRIMARY KEY (record_id, model),
 	FOREIGN KEY (record_id) REFERENCES records(record_id) ON DELETE CASCADE
 )`); err != nil {
+				return err
+			}
+		case 9:
+			// Memory subsystem tables — mutable state + append-only revision log.
+			if _, err = tx.ExecContext(ctx, `
+CREATE TABLE IF NOT EXISTS memory_state (
+	memory_id        TEXT PRIMARY KEY,
+	namespace        TEXT NOT NULL,
+	memory_key       TEXT NULL,
+	current_revision TEXT NULL,
+	activation       REAL NOT NULL DEFAULT 1.0,
+	access_count     INTEGER NOT NULL DEFAULT 0,
+	last_accessed_at TEXT NULL,
+	created_at       TEXT NOT NULL DEFAULT (datetime('now')),
+	UNIQUE(namespace, memory_key)
+)`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_memory_state_namespace ON memory_state(namespace)`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_memory_state_activation ON memory_state(activation DESC)`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `
+CREATE TABLE IF NOT EXISTS memory_revisions (
+	revision_id      TEXT PRIMARY KEY,
+	memory_id        TEXT NOT NULL,
+	namespace        TEXT NOT NULL,
+	memory_key       TEXT NULL,
+	status           TEXT NOT NULL,
+	supersedes       TEXT NULL,
+	created_at       TEXT NOT NULL DEFAULT (datetime('now')),
+	author_agent_id  TEXT NOT NULL,
+	author_version   TEXT NOT NULL,
+	-- "trigger" is a SQLite reserved word; always quote it in DML (INSERT/SELECT/WHERE).
+	"trigger"        TEXT NOT NULL,
+	session_id       TEXT NOT NULL,
+	origin           TEXT NOT NULL,
+	confidence       REAL NOT NULL,
+	tags             TEXT NOT NULL DEFAULT '[]',
+	ttl_seconds      INTEGER NULL,
+	expires_at       TEXT NULL,
+	payload_summary  TEXT NULL,
+	payload_body     TEXT NULL,
+	embedding_model  TEXT NULL,
+	embedding_vector BLOB NULL,
+	FOREIGN KEY (memory_id) REFERENCES memory_state(memory_id) ON DELETE CASCADE,
+	FOREIGN KEY (supersedes) REFERENCES memory_revisions(revision_id)
+)`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_memory_revisions_memory_id ON memory_revisions(memory_id)`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_memory_revisions_namespace ON memory_revisions(namespace)`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_memory_revisions_created_at ON memory_revisions(created_at)`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_memory_revisions_status ON memory_revisions(status)`); err != nil {
+				return err
+			}
+			if _, err = tx.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS idx_memory_revisions_expires_at ON memory_revisions(expires_at) WHERE expires_at IS NOT NULL`); err != nil {
 				return err
 			}
 		}
