@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/hollis-labs/cortex/internal/plugin"
-	fplugin "github.com/hollis-labs/fragments-engine/plugin"
+	fplugin "github.com/hollis-labs/plugin"
 )
 
 const pluginGitOrg = "hollis-labs"

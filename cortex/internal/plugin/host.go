@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hollis-labs/fragments-engine/plugin"
+	"github.com/hollis-labs/plugin"
 )
 
 // Host implements the plugin.Host interface for Cortex.
@@ -247,6 +247,46 @@ func (h *Host) ListPlugins() []plugin.Plugin {
 		plugins = append(plugins, p)
 	}
 	return plugins
+}
+
+// RegisterConnector implements the Host interface. Not supported by Cortex host.
+func (h *Host) RegisterConnector(name string, connector plugin.Connector) error {
+	return fmt.Errorf("RegisterConnector not supported by Cortex host")
+}
+
+// RegisterProvider implements the Host interface. Not supported by Cortex host.
+func (h *Host) RegisterProvider(name string, provider interface{}) error {
+	return fmt.Errorf("RegisterProvider not supported by Cortex host")
+}
+
+// RegisterCLIAdapter implements the Host interface. Not supported by Cortex host.
+func (h *Host) RegisterCLIAdapter(name string, adapter interface{}) error {
+	return fmt.Errorf("RegisterCLIAdapter not supported by Cortex host")
+}
+
+// SetConfig implements the Host interface. Not supported by Cortex host.
+func (h *Host) SetConfig(key string, value string) error {
+	return fmt.Errorf("SetConfig not supported by Cortex host")
+}
+
+// RegisterConfigSchema implements the Host interface. Not supported by Cortex host.
+func (h *Host) RegisterConfigSchema(fields []plugin.ConfigFieldDef) error {
+	return fmt.Errorf("RegisterConfigSchema not supported by Cortex host")
+}
+
+// RegisterCommand implements the Host interface. Not supported by Cortex host.
+func (h *Host) RegisterCommand(cmd plugin.SlashCommandDef) error {
+	return fmt.Errorf("RegisterCommand not supported by Cortex host")
+}
+
+// RegisterSlot implements the Host interface. Not supported by Cortex host.
+func (h *Host) RegisterSlot(entry plugin.UISlotEntry) error {
+	return fmt.Errorf("RegisterSlot not supported by Cortex host")
+}
+
+// RegisterKeybinding implements the Host interface. Not supported by Cortex host.
+func (h *Host) RegisterKeybinding(kb plugin.KeybindingDef) error {
+	return fmt.Errorf("RegisterKeybinding not supported by Cortex host")
 }
 
 // Shutdown gracefully shuts down the plugin host and all loaded plugins.

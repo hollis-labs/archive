@@ -3,7 +3,7 @@ package plugin
 import (
 	"time"
 
-	"github.com/hollis-labs/fragments-engine/plugin"
+	"github.com/hollis-labs/plugin"
 )
 
 // Cortex Event Catalog

@@ -3,7 +3,7 @@ module github.com/hollis-labs/cortex
 go 1.26.1
 
 require (
-	github.com/hollis-labs/fragments-engine/plugin v0.0.0
+	github.com/hollis-labs/plugin v0.0.0
 	github.com/hollis-labs/mcp-helpers v0.0.0
 	github.com/hollis-labs/otel v0.0.0
 	github.com/mark3labs/mcp-go v0.44.1
@@ -15,7 +15,7 @@ replace github.com/hollis-labs/mcp-helpers => ../libs/mcp
 
 replace github.com/hollis-labs/otel => ../libs/otel
 
-replace github.com/hollis-labs/fragments-engine/plugin => ../libs/plugin
+replace github.com/hollis-labs/plugin => ../../plugin
 
 require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
