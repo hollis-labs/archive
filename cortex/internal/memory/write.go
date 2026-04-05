@@ -55,12 +55,13 @@ func (s *Store) WriteRevision(ctx context.Context, in WriteInput) (Revision, err
 	}
 
 	revisionID := NewULID()
+	now := time.Now().UTC()
 
 	var expiresAt *time.Time
 	var ttlSeconds int64
 	if in.TTL > 0 {
 		ttlSeconds = int64(in.TTL.Seconds())
-		exp := time.Now().Add(in.TTL)
+		exp := now.Add(in.TTL)
 		expiresAt = &exp
 	}
 
@@ -96,15 +97,16 @@ func (s *Store) WriteRevision(ctx context.Context, in WriteInput) (Revision, err
 	_, err = tx.ExecContext(ctx, `
 INSERT INTO memory_revisions (
     revision_id, memory_id, namespace, memory_key, status, supersedes,
-    author_agent_id, author_version, trigger, session_id, origin,
+    created_at, author_agent_id, author_version, trigger, session_id, origin,
     confidence, tags, ttl_seconds, expires_at, payload_summary, payload_body
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		revisionID,
 		memoryID,
 		in.Namespace,
 		nullStr(in.MemoryKey),
 		string(status),
 		nullStr(in.Supersedes),
+		now.Format(time.DateTime),
 		in.Author.AgentID,
 		in.Author.AgentVersion,
 		string(in.Trigger),
@@ -154,7 +156,7 @@ INSERT INTO memory_revisions (
 		MemoryKey:  in.MemoryKey,
 		Status:     status,
 		Supersedes: in.Supersedes,
-		CreatedAt:  time.Now(),
+		CreatedAt:  now,
 		Author:     in.Author,
 		Trigger:    in.Trigger,
 		SessionID:  in.SessionID,
@@ -206,16 +208,12 @@ VALUES (?, ?, ?, 1.0, 0)`,
 // deprecateRevisionTx is the ONE authorized mutation of
 // memory_revisions.status. Guard test enforces this constraint.
 func deprecateRevisionTx(ctx context.Context, tx *sql.Tx, revisionID string) error {
-	res, err := tx.ExecContext(ctx,
+	_, err := tx.ExecContext(ctx,
 		`UPDATE memory_revisions SET status = ? WHERE revision_id = ? AND status != ?`,
 		string(StatusDeprecated), revisionID, string(StatusDeprecated),
 	)
-	if err != nil {
-		return err
-	}
 	// RowsAffected == 0 is OK (idempotent — already deprecated or does not exist).
-	_ = res
-	return nil
+	return err
 }
 
 // validateWriteInput checks all required fields before a revision is written.
