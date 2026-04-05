@@ -7,6 +7,7 @@ require (
 	github.com/hollis-labs/mcp-helpers v0.0.0
 	github.com/hollis-labs/otel v0.0.0
 	github.com/mark3labs/mcp-go v0.44.1
+	github.com/oklog/ulid/v2 v2.1.1
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.37.0
 )
