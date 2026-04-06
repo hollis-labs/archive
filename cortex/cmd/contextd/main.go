@@ -19,6 +19,7 @@ import (
 	"github.com/hollis-labs/cortex/internal/contextpolicy"
 	"github.com/hollis-labs/cortex/internal/contextstore"
 	"github.com/hollis-labs/cortex/internal/mcpadapter"
+	"github.com/hollis-labs/cortex/internal/memory"
 	cplugin "github.com/hollis-labs/cortex/internal/plugin"
 	"github.com/hollis-labs/cortex/internal/webui"
 	feotel "github.com/hollis-labs/otel"
@@ -144,7 +145,28 @@ func parseMCPArgs(args []string) (string, error) {
 
 func runMCP(ctx context.Context, store *contextstore.Store, stderr *os.File, token string) int {
 	_, _ = stderr.WriteString("Cortex MCP adapter starting (stdio)\n")
+
+	// Memory subsystem (D-core). Shares contextstore's *sql.DB.
+	memStore := memory.NewStore(store.DB(), memory.NoopEmbedder{}, memory.NoopQueue{})
+
+	// Start decay job.
+	decayInterval := 1 * time.Hour
+	if v := os.Getenv("CORTEX_MEMORY_DECAY_INTERVAL"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			decayInterval = d
+		} else {
+			log.Print("warning: invalid CORTEX_MEMORY_DECAY_INTERVAL, using default 1h")
+		}
+	}
+	decayJob := &memory.DecayJob{
+		Store:    memStore,
+		Interval: decayInterval,
+		Logger:   log.Printf,
+	}
+	go decayJob.Run(ctx)
+
 	adapter := mcpadapter.New(store, token)
+	adapter.MemoryStore = memStore
 	if err := adapter.Run(ctx); err != nil {
 		_, _ = stderr.WriteString("error: " + err.Error() + "\n")
 		return 1
