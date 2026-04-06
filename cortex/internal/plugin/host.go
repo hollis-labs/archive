@@ -274,21 +274,6 @@ func (h *Host) RegisterConfigSchema(fields []plugin.ConfigFieldDef) error {
 	return fmt.Errorf("RegisterConfigSchema not supported by Cortex host")
 }
 
-// RegisterCommand implements the Host interface. Not supported by Cortex host.
-func (h *Host) RegisterCommand(cmd plugin.SlashCommandDef) error {
-	return fmt.Errorf("RegisterCommand not supported by Cortex host")
-}
-
-// RegisterSlot implements the Host interface. Not supported by Cortex host.
-func (h *Host) RegisterSlot(entry plugin.UISlotEntry) error {
-	return fmt.Errorf("RegisterSlot not supported by Cortex host")
-}
-
-// RegisterKeybinding implements the Host interface. Not supported by Cortex host.
-func (h *Host) RegisterKeybinding(kb plugin.KeybindingDef) error {
-	return fmt.Errorf("RegisterKeybinding not supported by Cortex host")
-}
-
 // Shutdown gracefully shuts down the plugin host and all loaded plugins.
 func (h *Host) Shutdown() error {
 	h.mu.Lock()
