@@ -56,10 +56,10 @@ func (j *DecayJob) runOnce(ctx context.Context) {
 // Half-life is 14 days. Floor is 0.05. Updates that would change activation
 // by less than 0.001 are skipped.
 //
-// The decay is absolute (not relative to the current stored activation), so
-// repeated runs with the same baseline timestamp are idempotent:
+// The decay is relative to the current stored activation (per plan-time
+// decision 1):
 //
-//	new_activation = exp(-elapsed_hours * ln(2) / halfLifeHours)
+//	new_activation = activation * exp(-elapsed_hours * ln(2) / halfLifeHours)
 func (s *Store) applyActivationDecay(ctx context.Context) error {
 	updates, err := s.collectDecayUpdates(ctx)
 	if err != nil {
@@ -134,8 +134,8 @@ func (s *Store) collectDecayUpdates(ctx context.Context) ([]decayUpdate, error) 
 			elapsedHours = 0
 		}
 
-		// Absolute exponential decay from baseline — idempotent for same timestamp.
-		newActivation := math.Exp(-elapsedHours * math.Ln2 / halfLifeHours)
+		// Relative exponential decay: preserves reinforcement boosts.
+		newActivation := activation * math.Exp(-elapsedHours*math.Ln2/halfLifeHours)
 
 		// Apply floor.
 		if newActivation < activationFloor {

@@ -80,8 +80,7 @@ func (a *Adapter) registerMemoryTools(s *server.MCPServer) {
 
 // ── Handlers ─────────────────────────────────────────────────────────────────
 
-func (a *Adapter) handleMemoryWrite(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	ctx := context.Background()
+func (a *Adapter) handleMemoryWrite(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	if res, _ := a.checkScope(ctx, "memory:write"); res != nil {
 		return res, nil
 	}
@@ -127,8 +126,7 @@ func (a *Adapter) handleMemoryWrite(_ context.Context, req mcp.CallToolRequest) 
 	return toolJSON(rev), nil
 }
 
-func (a *Adapter) handleMemoryGet(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	ctx := context.Background()
+func (a *Adapter) handleMemoryGet(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	if res, _ := a.checkScope(ctx, "memory:read"); res != nil {
 		return res, nil
 	}
@@ -146,8 +144,7 @@ func (a *Adapter) handleMemoryGet(_ context.Context, req mcp.CallToolRequest) (*
 	return toolJSON(rev), nil
 }
 
-func (a *Adapter) handleMemoryHistory(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	ctx := context.Background()
+func (a *Adapter) handleMemoryHistory(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	if res, _ := a.checkScope(ctx, "memory:read"); res != nil {
 		return res, nil
 	}
@@ -165,8 +162,7 @@ func (a *Adapter) handleMemoryHistory(_ context.Context, req mcp.CallToolRequest
 	return toolJSON(revs), nil
 }
 
-func (a *Adapter) handleMemoryRecall(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	ctx := context.Background()
+func (a *Adapter) handleMemoryRecall(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	if res, _ := a.checkScope(ctx, "memory:read"); res != nil {
 		return res, nil
 	}
@@ -256,8 +252,7 @@ func (a *Adapter) handleMemoryRecall(_ context.Context, req mcp.CallToolRequest)
 	return toolJSON(results), nil
 }
 
-func (a *Adapter) handleMemoryPromote(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	ctx := context.Background()
+func (a *Adapter) handleMemoryPromote(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	if res, _ := a.checkScope(ctx, "memory:write"); res != nil {
 		return res, nil
 	}
@@ -283,8 +278,7 @@ func (a *Adapter) handleMemoryPromote(_ context.Context, req mcp.CallToolRequest
 	return toolJSON(promoted), nil
 }
 
-func (a *Adapter) handleMemoryDeprecate(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	ctx := context.Background()
+func (a *Adapter) handleMemoryDeprecate(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	if res, _ := a.checkScope(ctx, "memory:write"); res != nil {
 		return res, nil
 	}

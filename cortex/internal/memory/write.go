@@ -123,8 +123,24 @@ INSERT INTO memory_revisions (
 		return Revision{}, fmt.Errorf("insert revision: %w", err)
 	}
 
-	// If supersedes is set, auto-deprecate the referenced revision.
+	// If supersedes is set, verify it belongs to the same logical memory
+	// and auto-deprecate it. Cross-memory deprecation is rejected to prevent
+	// corrupting unrelated memory_state.current_revision pointers.
 	if in.Supersedes != "" {
+		var supersededMemID string
+		supErr := tx.QueryRowContext(ctx,
+			`SELECT memory_id FROM memory_revisions WHERE revision_id = ?`,
+			in.Supersedes,
+		).Scan(&supersededMemID)
+		if supErr != nil {
+			if errors.Is(supErr, sql.ErrNoRows) {
+				return Revision{}, fmt.Errorf("%w: supersedes revision %s not found", ErrInvalidInput, in.Supersedes)
+			}
+			return Revision{}, fmt.Errorf("verify supersedes: %w", supErr)
+		}
+		if supersededMemID != memoryID {
+			return Revision{}, fmt.Errorf("%w: supersedes revision %s belongs to a different memory", ErrInvalidInput, in.Supersedes)
+		}
 		if depErr := deprecateRevisionTx(ctx, tx, in.Supersedes); depErr != nil {
 			return Revision{}, fmt.Errorf("deprecate superseded: %w", depErr)
 		}
@@ -249,6 +265,9 @@ func validateWriteInput(in WriteInput) error {
 	}
 	if in.Confidence < 0 || in.Confidence > 1.0 {
 		return fmt.Errorf("%w: confidence must be in [0, 1.0], got %f", ErrInvalidInput, in.Confidence)
+	}
+	if in.Status != "" && !in.Status.Valid() {
+		return fmt.Errorf("%w: invalid status %q", ErrInvalidInput, in.Status)
 	}
 	if in.Payload.Summary == "" {
 		return fmt.Errorf("%w: payload.summary is required", ErrInvalidInput)

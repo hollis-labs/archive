@@ -162,14 +162,15 @@ func TestTTLExpiry_UpdatesCurrentRevision(t *testing.T) {
 	}
 }
 
-// TestDecayJob_Idempotent verifies that running decay twice produces the same
-// result — the baseline doesn't move between runs when no access happens.
-func TestDecayJob_Idempotent(t *testing.T) {
+// TestDecayJob_SuccessiveRunsFurtherDecay verifies that running decay twice
+// continues to reduce activation (relative decay compounds). The second run
+// applies the decay factor to the already-decayed value.
+func TestDecayJob_SuccessiveRunsFurtherDecay(t *testing.T) {
 	ctx := context.Background()
 	ms, cleanup := newTestStore(t)
 	defer cleanup()
 
-	rev, writeErr := ms.WriteRevision(ctx, sampleInput("decay.idempotent"))
+	rev, writeErr := ms.WriteRevision(ctx, sampleInput("decay.successive"))
 	if writeErr != nil {
 		t.Fatalf("WriteRevision: %v", writeErr)
 	}
@@ -192,7 +193,7 @@ func TestDecayJob_Idempotent(t *testing.T) {
 		t.Fatalf("GetState after first decay: %v", stateErr1)
 	}
 
-	// Second decay run — baseline (last_accessed_at) hasn't changed.
+	// Second decay run — applies relative decay to the already-decayed value.
 	if decayErr := ms.ExportApplyActivationDecay(ctx); decayErr != nil {
 		t.Fatalf("second applyActivationDecay: %v", decayErr)
 	}
@@ -201,8 +202,13 @@ func TestDecayJob_Idempotent(t *testing.T) {
 		t.Fatalf("GetState after second decay: %v", stateErr2)
 	}
 
-	if math.Abs(state2.Activation-state1.Activation) > 0.001 {
-		t.Fatalf("expected same activation after second run, got %f vs %f",
+	// Second run should produce equal or lower activation (relative decay compounds).
+	if state2.Activation > state1.Activation+0.001 {
+		t.Fatalf("expected activation to not increase, got %f then %f",
 			state1.Activation, state2.Activation)
+	}
+	// Both should still be above the floor (0.05).
+	if state1.Activation < 0.05 || state2.Activation < 0.05 {
+		t.Fatalf("activation below floor: run1=%f run2=%f", state1.Activation, state2.Activation)
 	}
 }

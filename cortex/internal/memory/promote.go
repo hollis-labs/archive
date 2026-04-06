@@ -78,10 +78,10 @@ func (s *Store) Promote(ctx context.Context, in PromoteInput) (Revision, error) 
 	if srcRev.MemoryKey != "" {
 		existing, getCurErr := s.GetCurrent(ctx, in.TargetNamespace, srcRev.MemoryKey)
 		if getCurErr == nil {
-			// A current revision exists in the target for this key — supersede it.
 			writeIn.Supersedes = existing.RevisionID
+		} else if !errors.Is(getCurErr, ErrNotFound) {
+			return Revision{}, fmt.Errorf("check target namespace for key %s: %w", srcRev.MemoryKey, getCurErr)
 		}
-		// ErrNotFound is fine; no existing keyed memory in target namespace.
 	}
 
 	// Write the promoted revision into the target namespace.
@@ -118,7 +118,10 @@ func (s *Store) Deprecate(ctx context.Context, revisionID string) error {
 	)
 	scanErr := row.Scan(&memoryID, &status)
 	if scanErr != nil {
-		return fmt.Errorf("%w: revision_id %s", ErrNotFound, revisionID)
+		if errors.Is(scanErr, sql.ErrNoRows) {
+			return fmt.Errorf("%w: revision_id %s", ErrNotFound, revisionID)
+		}
+		return fmt.Errorf("scan revision: %w", scanErr)
 	}
 
 	// Idempotent no-op if already deprecated.
