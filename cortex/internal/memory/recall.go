@@ -292,12 +292,6 @@ FROM memory_state WHERE memory_id IN (%s)`, ph)
 	return states, rows.Err()
 }
 
-// reinforceAccess is a stub that will be replaced by the real implementation
-// in activation.go (Task 9).
-func (s *Store) reinforceAccess(_ context.Context, _ []RecallResult) error {
-	return nil // stub
-}
-
 // tagsAnyMatch returns true if any element in want appears in have.
 func tagsAnyMatch(have, want []string) bool {
 	set := make(map[string]struct{}, len(have))
