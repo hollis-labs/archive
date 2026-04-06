@@ -7,6 +7,7 @@ import (
 	"github.com/hollis-labs/cortex/internal/contextstore"
 	"github.com/hollis-labs/cortex/internal/contexttypes"
 	"github.com/hollis-labs/cortex/internal/embedding"
+	"github.com/hollis-labs/cortex/internal/memory"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -23,6 +24,7 @@ type Adapter struct {
 	TypeRegistry      *contexttypes.Registry
 	EmbeddingProvider embedding.Provider    // optional; nil disables context_embed/context_search
 	VectorIndex       embedding.VectorIndex // optional; nil uses brute-force search via Store
+	MemoryStore       *memory.Store         // optional; nil disables memory_* tools
 }
 
 // New creates an Adapter for the given store and optional capability token.
@@ -44,6 +46,9 @@ func (a *Adapter) Run(ctx context.Context) error {
 	a.registerSessionTools(s)
 	a.registerBulkTools(s)
 	a.registerRAGTools(s)
+	if a.MemoryStore != nil {
+		a.registerMemoryTools(s)
+	}
 	ctxFunc := func(_ context.Context) context.Context { return ctx }
 	return server.ServeStdio(s, server.WithStdioContextFunc(ctxFunc))
 }

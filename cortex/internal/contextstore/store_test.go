@@ -751,9 +751,9 @@ func TestTagsAnySelector(t *testing.T) {
 	checkCount := func(tagsAny []string, want int) {
 		t.Helper()
 		recs, err := s.Select(context.Background(), Selector{
-			Namespaces: []string{"user/memory/tags-test"},
+			Namespaces:    []string{"user/memory/tags-test"},
 			RevisionScope: "head",
-			TagsAny:    tagsAny,
+			TagsAny:       tagsAny,
 		})
 		if err != nil {
 			t.Fatalf("select tags_any=%v: %v", tagsAny, err)
@@ -793,9 +793,9 @@ func TestAppendRecordWithMetadata(t *testing.T) {
 
 	// Tag filter should find the record.
 	recs, err := s.Select(context.Background(), Selector{
-		Namespaces: []string{"user/memory/meta-test"},
+		Namespaces:    []string{"user/memory/meta-test"},
 		RevisionScope: "head",
-		TagsAny:    []string{"foo"},
+		TagsAny:       []string{"foo"},
 	})
 	if err != nil {
 		t.Fatalf("select: %v", err)
@@ -868,8 +868,8 @@ func TestSelectByType(t *testing.T) {
 
 	// Write records with different types.
 	for _, tc := range []struct {
-		key  string
-		typ  string
+		key string
+		typ string
 	}{
 		{"task1", "task/spec"},
 		{"adr1", "decision/adr"},
@@ -1165,5 +1165,49 @@ func TestProvenanceOnWrite(t *testing.T) {
 	}
 	if p["source"] != "carrier" {
 		t.Errorf("provenance source: want carrier, got %s", p["source"])
+	}
+}
+
+func TestMigrationCreatesMemoryTables(t *testing.T) {
+	dir := t.TempDir()
+	s, err := Open(context.Background(), Config{RootDir: dir})
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+
+	db := s.DB()
+	if db == nil {
+		t.Fatal("DB() returned nil")
+	}
+
+	for _, table := range []string{"memory_state", "memory_revisions"} {
+		var name string
+		err := db.QueryRow(
+			`SELECT name FROM sqlite_master WHERE type='table' AND name=?`,
+			table,
+		).Scan(&name)
+		if err != nil {
+			t.Errorf("expected table %s to exist: %v", table, err)
+		}
+	}
+
+	for _, idx := range []string{
+		"idx_memory_state_namespace",
+		"idx_memory_state_activation",
+		"idx_memory_revisions_memory_id",
+		"idx_memory_revisions_namespace",
+		"idx_memory_revisions_created_at",
+		"idx_memory_revisions_status",
+		"idx_memory_revisions_expires_at",
+	} {
+		var name string
+		err := db.QueryRow(
+			`SELECT name FROM sqlite_master WHERE type='index' AND name=?`,
+			idx,
+		).Scan(&name)
+		if err != nil {
+			t.Errorf("expected index %s to exist: %v", idx, err)
+		}
 	}
 }
