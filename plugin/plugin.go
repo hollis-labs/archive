@@ -1,7 +1,15 @@
+// Package plugin defines the universal plugin contract for Hollis Labs applications.
+//
+// RULE: This package contains ONLY generic interfaces and structs.
+// App-specific types (UI slots, slash commands, keybindings, etc.) belong
+// in the consuming application's internal/plugin/ package.
+// If you need to add a type here, ask: "Would every app need this?"
+// If not, it goes in the app.
 package plugin
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 )
@@ -59,9 +67,28 @@ type Host interface {
 	// GetService provides access to core services (MCP clients, databases, etc.)
 	GetService(name string) (interface{}, error)
 
-	// GetConfig returns a plugin configuration value. Resolution order: env var → config file → default.
+	// GetConfig returns a plugin configuration value.
+	// Resolution order: env var → DB setting → config file → default.
 	// Returns error if key is required and not found.
 	GetConfig(key string) (string, error)
+
+	// SetConfig persists a configuration value for the calling plugin.
+	SetConfig(key string, value string) error
+
+	// RegisterConfigSchema registers the config field definitions for the calling plugin.
+	// The frontend reads this schema to render settings forms automatically.
+	RegisterConfigSchema(fields []ConfigFieldDef) error
+
+	// RegisterConnector registers a named connector (e.g., webhook, email sender).
+	// Connectors implement a Send(ctx, payload) pattern for outbound integrations.
+	RegisterConnector(name string, connector Connector) error
+
+	// RegisterProvider registers a runtime LLM provider.
+	// This is the preferred way for plugins to add third-party providers.
+	RegisterProvider(name string, provider interface{}) error
+
+	// RegisterCLIAdapter registers a runtime CLI adapter for PTY/subprocess bridges.
+	RegisterCLIAdapter(name string, adapter interface{}) error
 
 	// Logger provides a logger instance for the plugin
 	Logger() Logger
@@ -140,6 +167,49 @@ type Installable interface {
 type Uninstallable interface {
 	Uninstall(host Host) error
 }
+
+// Connector is the interface for outbound integrations (email, webhook, Slack, etc.).
+type Connector interface {
+	// Name returns the connector identifier.
+	Name() string
+	// Send delivers a payload through this connector.
+	Send(ctx context.Context, payload map[string]interface{}) error
+	// Health checks the connector's availability. Returns nil if healthy.
+	Health(ctx context.Context) error
+}
+
+// ConfigFieldDef defines a single configuration field for frontend rendering.
+type ConfigFieldDef struct {
+	Key         string   `json:"key"`
+	Type        string   `json:"type"` // "string", "bool", "int", "select", "secret"
+	Label       string   `json:"label"`
+	Description string   `json:"description,omitempty"`
+	Default     any      `json:"default,omitempty"`
+	Required    bool     `json:"required,omitempty"`
+	Options     []string `json:"options,omitempty"`   // for "select" type
+	Component   string   `json:"component,omitempty"` // custom React component name (requires developer_mode)
+}
+
+// ErrCancelled is returned by an EventHook's Handle method to signal that
+// the pre-hook action should be cancelled. Only meaningful for pre-hook events
+// (e.g. message.sending, tool.executing). Regular post-events ignore this.
+var ErrCancelled = errors.New("plugin: action cancelled by hook")
+
+// PluginError is a typed error that carries an HTTP-friendly status code.
+// Plugin CRUD handlers should return these instead of plain errors so the
+// host can map them to proper HTTP status codes.
+type PluginError struct {
+	Code    int    // HTTP status code (404, 409, 422, etc.)
+	Message string
+}
+
+func (e *PluginError) Error() string { return e.Message }
+
+// Sentinel constructors for common CRUD errors.
+
+func ErrNotFound(msg string) *PluginError    { return &PluginError{Code: 404, Message: msg} }
+func ErrConflict(msg string) *PluginError    { return &PluginError{Code: 409, Message: msg} }
+func ErrValidation(msg string) *PluginError  { return &PluginError{Code: 422, Message: msg} }
 
 // Logger provides logging capabilities for plugins
 type Logger interface {

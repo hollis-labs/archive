@@ -56,30 +56,34 @@ func NewRegistry(logger Logger) *Registry {
 // LoadPlugin loads a plugin into the registry
 func (r *Registry) LoadPlugin(plugin Plugin) error {
 	r.mu.Lock()
-	defer r.mu.Unlock()
-
 	id := plugin.ID()
 
 	// Check for conflicts
 	if _, exists := r.plugins[id]; exists {
+		r.mu.Unlock()
 		return fmt.Errorf("plugin with ID %s is already loaded", id)
 	}
 
 	// Validate dependencies
 	for _, dep := range plugin.Dependencies() {
 		if _, exists := r.plugins[dep]; !exists {
+			r.mu.Unlock()
 			return fmt.Errorf("plugin %s depends on %s which is not loaded", id, dep)
 		}
 	}
+	r.mu.Unlock()
 
-	// Load the plugin
+	// Load the plugin WITHOUT holding the lock — Load calls back into
+	// Register* methods which acquire r.mu.
 	if err := plugin.Load(r); err != nil {
 		return fmt.Errorf("failed to load plugin %s: %w", id, err)
 	}
 
+	r.mu.Lock()
 	r.plugins[id] = plugin
-	r.logger.Info("Plugin loaded", "id", id, "name", plugin.Name(), "version", plugin.Version())
+	r.mu.Unlock()
 
+	r.logger.Info("Plugin loaded", "id", id, "name", plugin.Name(), "version", plugin.Version())
 	return nil
 }
 
@@ -236,6 +240,31 @@ func (r *Registry) Context() context.Context {
 // implementation for config support.
 func (r *Registry) GetConfig(key string) (string, error) {
 	return "", fmt.Errorf("GetConfig not supported by shared Registry; use Conduit Host")
+}
+
+// SetConfig implements the Host interface. Not supported by shared Registry.
+func (r *Registry) SetConfig(key string, value string) error {
+	return fmt.Errorf("SetConfig not supported by shared Registry; use Conduit Host")
+}
+
+// RegisterConfigSchema implements the Host interface. Not supported by shared Registry.
+func (r *Registry) RegisterConfigSchema(fields []ConfigFieldDef) error {
+	return fmt.Errorf("RegisterConfigSchema not supported by shared Registry; use Conduit Host")
+}
+
+// RegisterConnector implements the Host interface. Not supported by shared Registry.
+func (r *Registry) RegisterConnector(name string, connector Connector) error {
+	return fmt.Errorf("RegisterConnector not supported by shared Registry; use Conduit Host")
+}
+
+// RegisterProvider implements the Host interface. Not supported by shared Registry.
+func (r *Registry) RegisterProvider(name string, provider interface{}) error {
+	return fmt.Errorf("RegisterProvider not supported by shared Registry; use Conduit Host")
+}
+
+// RegisterCLIAdapter implements the Host interface. Not supported by shared Registry.
+func (r *Registry) RegisterCLIAdapter(name string, adapter interface{}) error {
+	return fmt.Errorf("RegisterCLIAdapter not supported by shared Registry; use Conduit Host")
 }
 
 // Shutdown gracefully shuts down the registry and all loaded plugins
