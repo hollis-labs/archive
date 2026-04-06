@@ -23,3 +23,7 @@ func NewStore(db *sql.DB, embedder Embedder, queue JobQueue) *Store {
 	}
 	return &Store{db: db, embedder: embedder, queue: queue}
 }
+
+// DB returns the underlying *sql.DB. Used by tests that need direct DB access
+// (e.g., to backdate timestamps for decay testing).
+func (s *Store) DB() *sql.DB { return s.db }
