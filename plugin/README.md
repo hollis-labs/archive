@@ -1,171 +1,117 @@
-# Fragments Engine Plugin System
+# Hollis Labs Plugin SDK
 
-Universal plugin interface for the Fragments Engine platform. This module defines the contracts that all applications use for plugin integration according to ADR-029.
+Universal plugin contract for Hollis Labs applications. This module defines the generic interfaces that all applications implement for plugin integration (ADR-029).
 
-## Overview
+## Architectural Rule
 
-The plugin system enables extensibility across the Fragments Engine platform without modifying core code. Applications import this module and implement the plugin host interface, while plugins implement the plugin interface to provide additional functionality.
+**This package contains ONLY generic interfaces and structs.**
+
+App-specific types — UI slots, slash commands, keybindings, frontend layout concepts — belong in the consuming application's `internal/plugin/` package, not here.
+
+Before adding a type to this SDK, ask: **"Would every app need this?"** If the answer is no, it goes in the app. If you're unsure, it goes in the app. This boundary exists because leaking app-specific types into the SDK forces every consumer to implement stubs for concepts that don't apply to them.
+
+### What belongs here
+
+- Lifecycle interfaces: `Plugin`, `Host`, `Installable`, `Uninstallable`
+- Extension interfaces: `CRUDHandler`, `EventHook`, `Connector`
+- Generic data types: `Event`, `UIComponent`, `ConfigFieldDef`, `PluginStatus`
+- Infrastructure: `Registry`, `UIRegistry`, `Logger`
+- Error types: `PluginError`, `ErrCancelled`
+
+### What does NOT belong here
+
+- Named UI mount points (slots, navbars, sidebars, composers)
+- Slash command definitions (handler signatures are app-specific)
+- Keyboard shortcut definitions (assumes a specific frontend model)
+- Event name constants (each app defines its own event vocabulary)
+- Any type that references a specific app's UI layout or interaction model
 
 ## Core Interfaces
 
 ### Plugin
 
-Main interface that all plugins must implement:
+All plugins implement this interface:
 
-- `ID()` - Unique plugin identifier
-- `Name()` - Human-readable name
-- `Version()` - Plugin version
-- `Description()` - Brief description
-- `Dependencies()` - Required dependencies
-- `Load(host Host)` - Initialize the plugin
-- `Unload()` - Clean up resources
-- `Status()` - Current plugin status
+```go
+type Plugin interface {
+    ID() string
+    Name() string
+    Version() string
+    Description() string
+    Dependencies() []string
+    Load(host Host) error
+    Unload() error
+    Status() PluginStatus
+}
+```
 
 ### Host
 
-Runtime environment provided to plugins:
+Runtime environment provided to plugins during `Load()`:
 
-- `GetPlugin(id)` - Access other loaded plugins
-- `RegisterCRUDHandler()` - Register resource handlers
-- `RegisterEventHook()` - Register event processors
-- `RegisterUIComponent()` - Register UI elements
-- `GetService()` - Access core services
-- `Logger()` - Plugin logging
-- `Context()` - Execution context
+```go
+type Host interface {
+    GetPlugin(id string) (Plugin, bool)
+    RegisterCRUDHandler(resourceType string, handler CRUDHandler) error
+    RegisterEventHook(eventTypes []string, hook EventHook) error
+    RegisterUIComponent(component UIComponent) error
+    GetService(name string) (interface{}, error)
+    GetConfig(key string) (string, error)
+    SetConfig(key string, value string) error
+    RegisterConfigSchema(fields []ConfigFieldDef) error
+    RegisterConnector(name string, connector Connector) error
+    RegisterProvider(name string, provider interface{}) error
+    RegisterCLIAdapter(name string, adapter interface{}) error
+    Logger() Logger
+    Context() context.Context
+}
+```
 
-### CRUDHandler
-
-Defines CRUD operations for plugin-provided resources:
-
-- `Create(ctx, resource)` - Create new resource
-- `Read(ctx, id)` - Retrieve resource by ID
-- `Update(ctx, id, resource)` - Update existing resource
-- `Delete(ctx, id)` - Remove resource
-- `List(ctx, filters)` - Query multiple resources
-
-### EventHook
-
-Processes events from the host application:
-
-- `Handle(ctx, event)` - Process an event
-- `EventTypes()` - Supported event types
-
-### UIRegistry
-
-Manages UI components from plugins:
-
-- `RegisterComponent()` - Add UI component
-- `GetComponent(id)` - Retrieve component by ID
-- `GetComponentsByType()` - Get components of specific type
-- `ListComponents()` - List all components
-- `UnregisterComponent()` - Remove component
+Each application implements `Host` and may add extra methods for app-specific registrations (e.g., Nanite adds `RegisterSlot`, `RegisterCommand`, `RegisterKeybinding` on its Host struct). Plugins that need these app-specific methods use type assertions.
 
 ## Usage
 
 ### Creating a Plugin
 
 ```go
-import "github.com/hollis-labs/fragments-engine/plugin"
+import "github.com/hollis-labs/plugin"
 
-type MyPlugin struct {
-    // ... fields
-}
-
-func (p *MyPlugin) ID() string { return "my-plugin" }
-func (p *MyPlugin) Name() string { return "My Plugin" }
-// ... implement other Plugin interface methods
+type MyPlugin struct { /* ... */ }
 
 func (p *MyPlugin) Load(host plugin.Host) error {
-    // Register handlers, hooks, UI components
+    // Register generic capabilities via the Host interface.
+    host.RegisterEventHook([]string{"session.start"}, myHook)
+    host.RegisterCRUDHandler("my-resource", myHandler)
+
+    // For app-specific features, type-assert to the app's Host:
+    // if nh, ok := host.(*nanitePlugin.Host); ok {
+    //     nh.RegisterSlot(...)
+    // }
+
     return nil
 }
 ```
 
-### Setting up a Plugin Host
+### Setting Up a Plugin Host
 
 ```go
-import "github.com/hollis-labs/fragments-engine/plugin"
+import "github.com/hollis-labs/plugin"
 
-// Create registry
 logger := plugin.NewDefaultLogger("app")
 registry := plugin.NewRegistry(logger)
-
-// Register core services
 registry.RegisterService("database", dbConnection)
 
-// Load plugins
-myPlugin := NewMyPlugin()
 if err := registry.LoadPlugin(myPlugin); err != nil {
     log.Fatal(err)
 }
 ```
 
-### UI Components
+## Consumers
 
-Plugins can register UI components that the host application can render:
+Applications using this SDK:
 
-```go
-component := plugin.UIComponent{
-    ID:          "my-widget",
-    Type:        plugin.UIComponentTypeWidget,
-    Name:        "My Widget",
-    Description: "A custom widget",
-    Props: map[string]interface{}{
-        "title": "Hello World",
-        "color": "blue",
-    },
-}
+- **Nanite** — Chat harness (`internal/plugin/` adds slots, commands, keybindings, filters)
+- **Hadron** — Blueprint/pipeline runner (`internal/plugin/` adds pipeline-specific extensions)
+- **Cortex** — Context store (`internal/plugin/` minimal, mostly event hooks)
 
-host.RegisterUIComponent(component)
-```
-
-### Event System
-
-Plugins can listen to and handle application events:
-
-```go
-type MyEventHook struct{}
-
-func (h *MyEventHook) Handle(ctx context.Context, event plugin.Event) error {
-    // Process the event
-    return nil
-}
-
-func (h *MyEventHook) EventTypes() []string {
-    return []string{"user.login", "session.start"}
-}
-```
-
-## Registry
-
-The `Registry` type provides the central plugin management:
-
-- `LoadPlugin(plugin)` - Load and initialize a plugin
-- `UnloadPlugin(id)` - Unload a plugin
-- `GetPlugin(id)` - Retrieve a loaded plugin
-- `ListPlugins()` - List all loaded plugins
-- `EmitEvent(event)` - Dispatch events to hooks
-- `Shutdown()` - Gracefully shut down all plugins
-
-## Example
-
-See `example.go` for a complete plugin implementation demonstrating all interface capabilities.
-
-## Architecture
-
-This module implements the Component Autonomy & Plugin Contract architecture (ADR-029), enabling:
-
-- **Extensibility**: Add capabilities without core modifications
-- **Isolation**: Plugins run in controlled environments
-- **Composability**: Mix and match plugin functionality
-- **Consistency**: Standard interfaces across all applications
-
-## Integration
-
-Applications using this plugin system:
-
-- **Conduit**: Chat harness with plugin-based extensions
-- **Hadron**: Blueprint system with workflow plugins
-- **Volon**: Task management with agent plugins
-
-Each application implements the `Host` interface and manages a `Registry` to load relevant plugins.
+Each application's `internal/plugin/` package is where app-specific types and Host extensions live.
