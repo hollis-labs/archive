@@ -137,7 +137,7 @@ func TestWriteRevision_SupersedesAutoDeprecates(t *testing.T) {
 	_ = rev2
 
 	// Read rev1 back and check its status is deprecated.
-	gotRev1, err := ms.GetRevision(context.Background(), rev1.RevisionID)
+	gotRev1, err := ms.GetRevisionByID(context.Background(), rev1.RevisionID)
 	if err != nil {
 		t.Fatalf("GetRevision for rev1: %v", err)
 	}
