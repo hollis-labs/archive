@@ -38,6 +38,7 @@ func TestContextEmbed_Success(t *testing.T) {
 
 	a := New(s, "")
 	a.EmbeddingProvider = embedding.NewMockProvider(128)
+	a.EmbeddingModel = "mock-embed"
 
 	req := mcp.CallToolRequest{}
 	req.Params.Arguments = map[string]any{
@@ -63,6 +64,7 @@ func TestContextEmbed_RecordNotFound(t *testing.T) {
 	s := newTestStore(t)
 	a := New(s, "")
 	a.EmbeddingProvider = embedding.NewMockProvider(128)
+	a.EmbeddingModel = "mock-embed"
 
 	req := mcp.CallToolRequest{}
 	req.Params.Arguments = map[string]any{
@@ -87,6 +89,7 @@ func TestContextEmbed_Idempotent(t *testing.T) {
 
 	a := New(s, "")
 	a.EmbeddingProvider = embedding.NewMockProvider(128)
+	a.EmbeddingModel = "mock-embed"
 
 	req := mcp.CallToolRequest{}
 	req.Params.Arguments = map[string]any{
@@ -129,6 +132,7 @@ func TestContextSearch_EmptyResults(t *testing.T) {
 	s := newTestStore(t)
 	a := New(s, "")
 	a.EmbeddingProvider = embedding.NewMockProvider(128)
+	a.EmbeddingModel = "mock-embed"
 
 	req := mcp.CallToolRequest{}
 	req.Params.Arguments = map[string]any{"query": "test"}
@@ -149,6 +153,7 @@ func TestContextSearch_RankedResults(t *testing.T) {
 	a := New(s, "")
 	provider := embedding.NewMockProvider(128)
 	a.EmbeddingProvider = provider
+	a.EmbeddingModel = "mock-embed"
 
 	// Write and embed several records.
 	records := []struct {
@@ -213,6 +218,7 @@ func TestContextSearch_NamespaceFilter(t *testing.T) {
 	a := New(s, "")
 	provider := embedding.NewMockProvider(128)
 	a.EmbeddingProvider = provider
+	a.EmbeddingModel = "mock-embed"
 
 	// Write records in different namespaces.
 	rec1 := writeRecord(t, s, "app/notes", "a", `{"content":"test content one"}`)
