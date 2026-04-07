@@ -1,23 +1,24 @@
 package memory
 
-import "database/sql"
+import (
+	"database/sql"
+
+	"github.com/hollis-labs/nanite/pkg/provider"
+)
 
 // Store is the memory subsystem's storage handle. It shares a *sql.DB with
 // contextstore.Store but owns its own read/write paths against the memory_*
 // tables.
 type Store struct {
 	db       *sql.DB
-	embedder Embedder
+	embedder provider.Embedder
 	queue    JobQueue
 }
 
-// NewStore constructs a memory.Store bound to the given database. The
-// embedder and queue parameters may be NoopEmbedder{} / NoopQueue{} during
-// D-core; real implementations are swapped in when Tracks H and I land.
-func NewStore(db *sql.DB, embedder Embedder, queue JobQueue) *Store {
-	if embedder == nil {
-		embedder = NoopEmbedder{}
-	}
+// NewStore constructs a memory.Store bound to the given database. embedder may
+// be nil when embedding is unavailable; callers must check before use. queue
+// may be nil and will be replaced with NoopQueue{}.
+func NewStore(db *sql.DB, embedder provider.Embedder, queue JobQueue) *Store {
 	if queue == nil {
 		queue = NoopQueue{}
 	}
