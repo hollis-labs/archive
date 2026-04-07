@@ -147,7 +147,7 @@ func runMCP(ctx context.Context, store *contextstore.Store, stderr *os.File, tok
 	_, _ = stderr.WriteString("Cortex MCP adapter starting (stdio)\n")
 
 	// Memory subsystem (D-core). Shares contextstore's *sql.DB.
-	memStore := memory.NewStore(store.DB(), memory.NoopEmbedder{}, memory.NoopQueue{})
+	memStore := memory.NewStore(store.DB(), nil, memory.NoopQueue{})
 
 	// Start decay job.
 	decayInterval := 1 * time.Hour

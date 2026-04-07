@@ -259,14 +259,13 @@ func (a *Adapter) handleBulkIngest(ctx context.Context, req mcp.CallToolRequest)
 				Payload:   payloadBytes,
 			})
 			if text != "" {
-				vec, err := a.EmbeddingProvider.Embed(ctx, text)
+				embResult, err := a.EmbeddingProvider.Embed(ctx, text, a.EmbeddingModel)
 				if err == nil {
-					model := a.EmbeddingProvider.Model()
 					_ = a.Store.UpsertEmbedding(ctx, contextstore.EmbeddingRow{
 						RecordID:   rec.RecordID,
-						Model:      model,
-						Dimensions: len(vec),
-						Vector:     vec,
+						Model:      a.EmbeddingModel,
+						Dimensions: len(embResult.Embedding),
+						Vector:     embResult.Embedding,
 					})
 					res.Status = "embedded"
 					res.Embedded = true
@@ -380,14 +379,13 @@ func (a *Adapter) handleChunkedIngest(ctx context.Context, req mcp.CallToolReque
 
 		// Auto-embed.
 		if a.EmbeddingProvider != nil {
-			vec, err := a.EmbeddingProvider.Embed(ctx, chunk.Text)
+			embResult, err := a.EmbeddingProvider.Embed(ctx, chunk.Text, a.EmbeddingModel)
 			if err == nil {
-				model := a.EmbeddingProvider.Model()
 				_ = a.Store.UpsertEmbedding(ctx, contextstore.EmbeddingRow{
 					RecordID:   rec.RecordID,
-					Model:      model,
-					Dimensions: len(vec),
-					Vector:     vec,
+					Model:      a.EmbeddingModel,
+					Dimensions: len(embResult.Embedding),
+					Vector:     embResult.Embedding,
 				})
 				res.Embedded = true
 				embeddedCount++

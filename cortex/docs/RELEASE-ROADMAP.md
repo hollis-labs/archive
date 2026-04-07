@@ -145,9 +145,18 @@ collapses cleanly.
 - [ ] A. Rename + identity — deferred (sidebar)
 - [ ] B. Repository extraction — not started
 - [ ] C. Cross-repo TODO audit — not started
-- [ ] **D. Memory domain — in design (active)**
-- [ ] E. Embedded-runtime API surface — blocked on D
-- [ ] F. Dual-mode packaging — blocked on D, E
-- [ ] G. Release readiness — blocked on D, E, F
-- [ ] H. Shared AI provider module — not started; blocks D's embedding subsystem
-- [ ] I. Shared queue module — not started; blocks D's auto-embed
+- [x] **D. Memory domain — D-core complete** (merged via PR #1, 2026-04-05)
+  - D-core: 15 tasks, all merged. Types, keys, namespaces, stubs, schema v9,
+    write/read/recall/promote/deprecate, activation, decay, 6 MCP tools,
+    main.go wiring, integration test. 44 test functions, all passing.
+  - D-embedding: provider integration complete (shared provider.Embedder,
+    on-demand embed/search via library API). Auto-embed deferred to Track I.
+  - D-deferred: backfill, semantic similarity, semantic dedup —
+    blocked on I. Stub `NoopQueue` in place; swap is mechanical.
+- [ ] E. Embedded-runtime API surface — **partially complete**; `cortex.Open()`
+  with functional options provides the library init pattern. Full API surface TBD.
+- [ ] F. Dual-mode packaging — blocked on E
+- [ ] G. Release readiness — blocked on E, F
+- [ ] H. Shared AI provider module — **in progress**; `pkg/provider` extracted in
+  Nanite, Cortex consuming via replace directive. Standalone repo extraction pending.
+- [ ] I. Shared queue module — not started; blocks D-deferred auto-embed
