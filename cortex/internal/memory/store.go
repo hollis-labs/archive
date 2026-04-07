@@ -16,8 +16,9 @@ type Store struct {
 }
 
 // NewStore constructs a memory.Store bound to the given database. embedder may
-// be nil when embedding is unavailable; callers must check before use. queue
-// may be nil and will be replaced with NoopQueue{}.
+// be nil when embedding is unavailable; embedding-dependent Store methods must
+// handle that case internally. queue may be nil and will be replaced with
+// NoopQueue{}.
 func NewStore(db *sql.DB, embedder provider.Embedder, queue JobQueue) *Store {
 	if queue == nil {
 		queue = NoopQueue{}

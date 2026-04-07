@@ -33,7 +33,7 @@ func (c *Cortex) Embed(ctx context.Context, recordID string) error {
 
 	rec, err := c.store.GetByRecordID(ctx, recordID)
 	if err != nil {
-		return fmt.Errorf("cortex: record %s not found: %w", recordID, err)
+		return fmt.Errorf("cortex: failed to load record %s: %w", recordID, err)
 	}
 
 	text := extractTextForEmbedding(rec)
