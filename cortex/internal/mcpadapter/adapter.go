@@ -8,6 +8,7 @@ import (
 	"github.com/hollis-labs/cortex/internal/contexttypes"
 	"github.com/hollis-labs/cortex/internal/embedding"
 	"github.com/hollis-labs/cortex/internal/memory"
+	"github.com/hollis-labs/nanite/pkg/provider"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -22,7 +23,8 @@ type Adapter struct {
 	Store             *contextstore.Store
 	Token             string // capability token for mutating ops; may be empty
 	TypeRegistry      *contexttypes.Registry
-	EmbeddingProvider embedding.Provider    // optional; nil disables context_embed/context_search
+	EmbeddingProvider provider.Embedder     // optional; nil disables context_embed/context_search
+	EmbeddingModel    string                // model name passed to EmbeddingProvider (default: "")
 	VectorIndex       embedding.VectorIndex // optional; nil uses brute-force search via Store
 	MemoryStore       *memory.Store         // optional; nil disables memory_* tools
 }

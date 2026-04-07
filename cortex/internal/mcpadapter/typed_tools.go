@@ -195,18 +195,17 @@ func (a *Adapter) handleSessionSnapshot(ctx context.Context, req mcp.CallToolReq
 			Payload:   payloadBytes,
 		})
 		if text != "" {
-			vec, err := a.EmbeddingProvider.Embed(ctx, text)
+			embResult, err := a.EmbeddingProvider.Embed(ctx, text, a.EmbeddingModel)
 			if err == nil {
-				model := a.EmbeddingProvider.Model()
 				_ = a.Store.UpsertEmbedding(ctx, contextstore.EmbeddingRow{
 					RecordID:   rec.RecordID,
-					Model:      model,
-					Dimensions: len(vec),
-					Vector:     vec,
+					Model:      a.EmbeddingModel,
+					Dimensions: len(embResult.Embedding),
+					Vector:     embResult.Embedding,
 				})
 				result["embedded"] = true
-				result["embedding_model"] = model
-				result["embedding_dimensions"] = len(vec)
+				result["embedding_model"] = a.EmbeddingModel
+				result["embedding_dimensions"] = len(embResult.Embedding)
 			} else {
 				result["embedded"] = false
 				result["embedding_error"] = err.Error()

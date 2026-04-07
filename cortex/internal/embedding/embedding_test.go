@@ -4,45 +4,47 @@ import (
 	"context"
 	"math"
 	"testing"
+
+	"github.com/hollis-labs/nanite/pkg/provider"
 )
+
+// Compile-time assertion: MockProvider must satisfy provider.Embedder.
+var _ provider.Embedder = (*MockProvider)(nil)
 
 func TestMockProvider_Deterministic(t *testing.T) {
 	p := NewMockProvider(768)
 
-	if p.Model() != "mock-embed" {
-		t.Errorf("model = %q, want mock-embed", p.Model())
-	}
-	if p.Dimensions() != 768 {
-		t.Errorf("dimensions = %d, want 768", p.Dimensions())
+	if p.EmbeddingDimensions("mock-embed") != 768 {
+		t.Errorf("dimensions = %d, want 768", p.EmbeddingDimensions("mock-embed"))
 	}
 
-	v1, err := p.Embed(context.Background(), "hello world")
+	r1, err := p.Embed(context.Background(), "hello world", "mock-embed")
 	if err != nil {
 		t.Fatalf("embed: %v", err)
 	}
-	if len(v1) != 768 {
-		t.Fatalf("len = %d, want 768", len(v1))
+	if len(r1.Embedding) != 768 {
+		t.Fatalf("len = %d, want 768", len(r1.Embedding))
 	}
 
 	// Same text → same vector.
-	v2, err := p.Embed(context.Background(), "hello world")
+	r2, err := p.Embed(context.Background(), "hello world", "mock-embed")
 	if err != nil {
 		t.Fatalf("embed: %v", err)
 	}
-	for i := range v1 {
-		if v1[i] != v2[i] {
-			t.Fatalf("non-deterministic at index %d: %f != %f", i, v1[i], v2[i])
+	for i := range r1.Embedding {
+		if r1.Embedding[i] != r2.Embedding[i] {
+			t.Fatalf("non-deterministic at index %d: %f != %f", i, r1.Embedding[i], r2.Embedding[i])
 		}
 	}
 
 	// Different text → different vector.
-	v3, err := p.Embed(context.Background(), "goodbye world")
+	r3, err := p.Embed(context.Background(), "goodbye world", "mock-embed")
 	if err != nil {
 		t.Fatalf("embed: %v", err)
 	}
 	same := true
-	for i := range v1 {
-		if v1[i] != v3[i] {
+	for i := range r1.Embedding {
+		if r1.Embedding[i] != r3.Embedding[i] {
 			same = false
 			break
 		}
@@ -54,18 +56,58 @@ func TestMockProvider_Deterministic(t *testing.T) {
 
 func TestMockProvider_UnitVector(t *testing.T) {
 	p := NewMockProvider(128)
-	v, err := p.Embed(context.Background(), "test")
+	result, err := p.Embed(context.Background(), "test", "mock-embed")
 	if err != nil {
 		t.Fatalf("embed: %v", err)
 	}
 
 	var norm float64
-	for _, f := range v {
+	for _, f := range result.Embedding {
 		norm += float64(f) * float64(f)
 	}
 	norm = math.Sqrt(norm)
 	if math.Abs(norm-1.0) > 0.001 {
 		t.Errorf("vector norm = %f, want ~1.0", norm)
+	}
+}
+
+func TestMockProvider_EmbedBatch(t *testing.T) {
+	p := NewMockProvider(64)
+	texts := []string{"hello", "world"}
+
+	results, err := p.EmbedBatch(context.Background(), texts, "mock-embed")
+	if err != nil {
+		t.Fatalf("embed batch: %v", err)
+	}
+	if len(results) != 2 {
+		t.Fatalf("got %d results, want 2", len(results))
+	}
+	for i, r := range results {
+		if len(r.Embedding) != 64 {
+			t.Errorf("results[%d]: len = %d, want 64", i, len(r.Embedding))
+		}
+	}
+	// Different texts should produce different vectors.
+	same := true
+	for i := range results[0].Embedding {
+		if results[0].Embedding[i] != results[1].Embedding[i] {
+			same = false
+			break
+		}
+	}
+	if same {
+		t.Error("batch: different texts produced identical vectors")
+	}
+}
+
+func TestMockProvider_EmbeddingDimensions(t *testing.T) {
+	p := NewMockProvider(512)
+	// Returns configured dimensions regardless of model name.
+	if got := p.EmbeddingDimensions("any-model"); got != 512 {
+		t.Errorf("EmbeddingDimensions = %d, want 512", got)
+	}
+	if got := p.EmbeddingDimensions(""); got != 512 {
+		t.Errorf("EmbeddingDimensions(\"\") = %d, want 512", got)
 	}
 }
 
@@ -115,10 +157,10 @@ func TestRankByCosineSimilarity(t *testing.T) {
 	// Create a query and 5 candidates with known similarities.
 	query := []float32{1, 0, 0}
 	vectors := [][]float32{
-		{0, 1, 0},    // orthogonal → 0
-		{1, 0, 0},    // identical → 1
+		{0, 1, 0},     // orthogonal → 0
+		{1, 0, 0},     // identical → 1
 		{0.7, 0.7, 0}, // ~0.707
-		{-1, 0, 0},   // opposite → -1
+		{-1, 0, 0},    // opposite → -1
 		{0.9, 0.4, 0}, // ~0.914
 	}
 	ids := []string{"a", "b", "c", "d", "e"}

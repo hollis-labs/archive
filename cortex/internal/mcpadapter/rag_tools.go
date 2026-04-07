@@ -52,7 +52,7 @@ func (a *Adapter) handleRAGQuery(_ context.Context, req mcp.CallToolRequest) (*m
 	opts := embedding.SearchOptions{
 		Limit:     limit * 2, // fetch extra for token budget trimming
 		Threshold: threshold,
-		Model:     a.EmbeddingProvider.Model(),
+		Model:     a.EmbeddingModel,
 	}
 
 	if ns := req.GetString("namespace", ""); ns != "" {
@@ -69,18 +69,18 @@ func (a *Adapter) handleRAGQuery(_ context.Context, req mcp.CallToolRequest) (*m
 	// Use VectorIndex if available, otherwise fall back to brute-force.
 	var results []embedding.SearchResult
 	if a.VectorIndex != nil {
-		queryVec, err := a.EmbeddingProvider.Embed(ctx, query)
+		queryResult, err := a.EmbeddingProvider.Embed(ctx, query, a.EmbeddingModel)
 		if err != nil {
 			return toolError("embedding_error", fmt.Sprintf("query embedding failed: %v", err)), nil
 		}
-		results, err = a.VectorIndex.Search(ctx, queryVec, opts)
+		results, err = a.VectorIndex.Search(ctx, queryResult.Embedding, opts)
 		if err != nil {
 			return toolError("search_error", fmt.Sprintf("vector search failed: %v", err)), nil
 		}
 	} else {
 		// Brute-force via Store.
 		filter := contextstore.EmbeddingFilter{
-			Model: a.EmbeddingProvider.Model(),
+			Model: a.EmbeddingModel,
 		}
 		if len(opts.Namespaces) > 0 {
 			filter.Namespaces = opts.Namespaces
@@ -95,10 +95,11 @@ func (a *Adapter) handleRAGQuery(_ context.Context, req mcp.CallToolRequest) (*m
 		}
 
 		if len(embeddings) > 0 {
-			queryVec, err := a.EmbeddingProvider.Embed(ctx, query)
+			queryResult, err := a.EmbeddingProvider.Embed(ctx, query, a.EmbeddingModel)
 			if err != nil {
 				return toolError("embedding_error", fmt.Sprintf("query embedding failed: %v", err)), nil
 			}
+			queryVec := queryResult.Embedding
 
 			vectors := make([][]float32, len(embeddings))
 			recordIDs := make([]string, len(embeddings))

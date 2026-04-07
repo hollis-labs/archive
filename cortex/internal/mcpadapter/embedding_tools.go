@@ -59,18 +59,18 @@ func (a *Adapter) handleEmbed(_ context.Context, req mcp.CallToolRequest) (*mcp.
 	}
 
 	// Generate embedding.
-	vec, err := a.EmbeddingProvider.Embed(ctx, text)
+	model := req.GetString("model", a.EmbeddingModel)
+	result, err := a.EmbeddingProvider.Embed(ctx, text, model)
 	if err != nil {
 		return toolError("embedding_error", fmt.Sprintf("embedding generation failed: %v", err)), nil
 	}
 
 	// Store the embedding.
-	model := req.GetString("model", a.EmbeddingProvider.Model())
 	if err := a.Store.UpsertEmbedding(ctx, contextstore.EmbeddingRow{
 		RecordID:   recordID,
 		Model:      model,
-		Dimensions: len(vec),
-		Vector:     vec,
+		Dimensions: len(result.Embedding),
+		Vector:     result.Embedding,
 	}); err != nil {
 		return toolError("internal_error", fmt.Sprintf("failed to store embedding: %v", err)), nil
 	}
@@ -80,7 +80,7 @@ func (a *Adapter) handleEmbed(_ context.Context, req mcp.CallToolRequest) (*mcp.
 		"namespace":  ns,
 		"key":        key,
 		"model":      model,
-		"dimensions": len(vec),
+		"dimensions": len(result.Embedding),
 		"status":     "stored",
 	}), nil
 }
@@ -109,7 +109,7 @@ func (a *Adapter) handleSearch(_ context.Context, req mcp.CallToolRequest) (*mcp
 
 	// Build filter.
 	filter := contextstore.EmbeddingFilter{
-		Model: a.EmbeddingProvider.Model(),
+		Model: a.EmbeddingModel,
 	}
 	if ns := req.GetString("namespace", ""); ns != "" {
 		filter.Namespaces = []string{ns}
@@ -137,10 +137,11 @@ func (a *Adapter) handleSearch(_ context.Context, req mcp.CallToolRequest) (*mcp
 	}
 
 	// Embed the query.
-	queryVec, err := a.EmbeddingProvider.Embed(ctx, query)
+	queryResult, err := a.EmbeddingProvider.Embed(ctx, query, a.EmbeddingModel)
 	if err != nil {
 		return toolError("embedding_error", fmt.Sprintf("query embedding failed: %v", err)), nil
 	}
+	queryVec := queryResult.Embedding
 
 	// Build parallel arrays for the ranking function.
 	vectors := make([][]float32, len(embeddings))
