@@ -56,27 +56,33 @@ func NewRegistry(logger Logger) *Registry {
 // LoadPlugin loads a plugin into the registry
 func (r *Registry) LoadPlugin(plugin Plugin) error {
 	r.mu.Lock()
-	defer r.mu.Unlock()
-
 	id := plugin.ID()
 
 	// Check for conflicts
 	if _, exists := r.plugins[id]; exists {
+		r.mu.Unlock()
 		return fmt.Errorf("plugin with ID %s is already loaded", id)
 	}
 
 	// Validate dependencies
 	for _, dep := range plugin.Dependencies() {
 		if _, exists := r.plugins[dep]; !exists {
+			r.mu.Unlock()
 			return fmt.Errorf("plugin %s depends on %s which is not loaded", id, dep)
 		}
 	}
+	r.mu.Unlock()
 
 	// Load the plugin
 	if err := plugin.Load(r); err != nil {
 		return fmt.Errorf("failed to load plugin %s: %w", id, err)
 	}
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, exists := r.plugins[id]; exists {
+		return fmt.Errorf("plugin with ID %s became loaded during initialization", id)
+	}
 	r.plugins[id] = plugin
 	r.logger.Info("Plugin loaded", "id", id, "name", plugin.Name(), "version", plugin.Version())
 

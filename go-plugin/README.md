@@ -1,171 +1,104 @@
-# Fragments Engine Plugin System
+# go-plugin
 
-Universal plugin interface for the Fragments Engine platform. This module defines the contracts that all applications use for plugin integration according to ADR-029.
+Universal plugin contract for Fragments Engine applications. This package defines the interfaces a host application implements and the interfaces a plugin must satisfy, plus a shared in-memory `Registry` that loads plugins, enforces dependency ordering, and fans out events to registered hooks. Host applications (e.g. Conduit, Hadron, Volon per the existing README) import this module so plugins can register CRUD handlers, event hooks, UI components, slash commands, connectors, providers, keybindings, and config schemas against a single contract.
 
-## Overview
+## Status
 
-The plugin system enables extensibility across the Fragments Engine platform without modifying core code. Applications import this module and implement the plugin host interface, while plugins implement the plugin interface to provide additional functionality.
+Beta — the core `Plugin`, `Host`, `Registry`, and `UIRegistry` surfaces are covered by unit tests in `plugin_test.go`, but a large number of `Host` methods on the shared `Registry` are explicit stubs that return `"not supported by shared Registry; use Conduit Host"`, indicating the full host implementation lives out-of-tree.
 
-## Core Interfaces
+## Install
 
-### Plugin
-
-Main interface that all plugins must implement:
-
-- `ID()` - Unique plugin identifier
-- `Name()` - Human-readable name
-- `Version()` - Plugin version
-- `Description()` - Brief description
-- `Dependencies()` - Required dependencies
-- `Load(host Host)` - Initialize the plugin
-- `Unload()` - Clean up resources
-- `Status()` - Current plugin status
-
-### Host
-
-Runtime environment provided to plugins:
-
-- `GetPlugin(id)` - Access other loaded plugins
-- `RegisterCRUDHandler()` - Register resource handlers
-- `RegisterEventHook()` - Register event processors
-- `RegisterUIComponent()` - Register UI elements
-- `GetService()` - Access core services
-- `Logger()` - Plugin logging
-- `Context()` - Execution context
-
-### CRUDHandler
-
-Defines CRUD operations for plugin-provided resources:
-
-- `Create(ctx, resource)` - Create new resource
-- `Read(ctx, id)` - Retrieve resource by ID
-- `Update(ctx, id, resource)` - Update existing resource
-- `Delete(ctx, id)` - Remove resource
-- `List(ctx, filters)` - Query multiple resources
-
-### EventHook
-
-Processes events from the host application:
-
-- `Handle(ctx, event)` - Process an event
-- `EventTypes()` - Supported event types
-
-### UIRegistry
-
-Manages UI components from plugins:
-
-- `RegisterComponent()` - Add UI component
-- `GetComponent(id)` - Retrieve component by ID
-- `GetComponentsByType()` - Get components of specific type
-- `ListComponents()` - List all components
-- `UnregisterComponent()` - Remove component
+```bash
+go get github.com/hollis-labs/go-plugin
+```
 
 ## Usage
 
-### Creating a Plugin
+Minimal end-to-end flow adapted from `plugin_test.go` and `example.go`:
 
 ```go
-import "github.com/hollis-labs/fragments-engine/plugin"
+package main
 
-type MyPlugin struct {
-    // ... fields
-}
+import (
+    "log"
 
-func (p *MyPlugin) ID() string { return "my-plugin" }
-func (p *MyPlugin) Name() string { return "My Plugin" }
-// ... implement other Plugin interface methods
+    plugin "github.com/hollis-labs/go-plugin"
+)
 
-func (p *MyPlugin) Load(host plugin.Host) error {
-    // Register handlers, hooks, UI components
-    return nil
+func main() {
+    logger := plugin.NewDefaultLogger("app ")
+    registry := plugin.NewRegistry(logger)
+
+    // Load the bundled example plugin.
+    p := plugin.NewExamplePlugin()
+    if err := registry.LoadPlugin(p); err != nil {
+        log.Fatalf("load: %v", err)
+    }
+
+    // Dispatch an event to any registered hooks.
+    _ = registry.EmitEvent(plugin.Event{
+        Type:   "example-event",
+        Source: "main",
+        Data:   map[string]interface{}{"hello": "world"},
+    })
+
+    if err := registry.Shutdown(); err != nil {
+        log.Fatalf("shutdown: %v", err)
+    }
 }
 ```
 
-### Setting up a Plugin Host
+See `example.go` for a full `Plugin` implementation that registers a `CRUDHandler`, `EventHook`, and `UIComponent` during `Load`.
 
-```go
-import "github.com/hollis-labs/fragments-engine/plugin"
+## API Overview
 
-// Create registry
-logger := plugin.NewDefaultLogger("app")
-registry := plugin.NewRegistry(logger)
+**Core plugin contract (`plugin.go`)**
+- `Plugin` — interface every plugin implements (`ID`, `Name`, `Version`, `Description`, `Dependencies`, `Load`, `Unload`, `Status`).
+- `PluginStatus` — struct reporting loaded/enabled flags, load time, last error.
+- `Host` — runtime services exposed to plugins: `GetPlugin`, `RegisterCRUDHandler`, `RegisterEventHook`, `RegisterUIComponent`, `GetService`, `GetConfig`/`SetConfig`/`RegisterConfigSchema`, `RegisterConnector`, `RegisterProvider`, `RegisterCLIAdapter`, `RegisterCommand`, `RegisterSlot`, `RegisterKeybinding`, `Logger`, `Context`.
+- `Installable` / `Uninstallable` — optional lifecycle interfaces for first-install and cleanup.
+- `CRUDHandler`, `EventHook`, `Event`, `Connector` — resource, event, and outbound integration contracts.
+- `UIComponent` + `UIComponentType` constants (`Widget`, `Envelope`, `Action`, `Workflow`, `View`) and `UISlotName` constants (`SlotNavRail`, `SlotSettingsTab`, `SlotRightRailTab`, `SlotComposerToolbar`, `SlotChatHeaderAction`, `SlotContextMenuMessage`, `SlotContextMenuSession`, `SlotCommandPalette`) plus `UISlotEntry`.
+- `ConfigFieldDef`, `CommandArg`, `SlashCommandDef`, `KeybindingDef` — structured registration payloads.
+- `ErrCancelled` sentinel and `PluginError` typed error with `ErrNotFound`/`ErrConflict`/`ErrValidation` constructors carrying HTTP status codes (404/409/422).
+- `Logger` — structured logging interface used by plugins and the registry.
 
-// Register core services
-registry.RegisterService("database", dbConnection)
+**Shared registry (`registry.go`)**
+- `Registry` — in-memory plugin manager that implements most of `Host`.
+- `NewRegistry(logger Logger) *Registry` — constructor that wires a cancelable context and empty maps.
+- `LoadPlugin` / `UnloadPlugin` / `GetPlugin` / `ListPlugins` — lifecycle with dependency validation and reverse-order shutdown.
+- `RegisterCRUDHandler` / `GetCRUDHandler`, `RegisterEventHook` / `EmitEvent`, `RegisterUIComponent` / `GetUIRegistry`, `RegisterService` / `GetService`.
+- `Shutdown()` — unloads every plugin and cancels the registry context.
+- `GetConfig`, `SetConfig`, `RegisterConfigSchema`, `RegisterConnector`, `RegisterProvider`, `RegisterCLIAdapter`, `RegisterCommand`, `RegisterSlot`, `RegisterKeybinding` — satisfy the `Host` interface with explicit "not supported by shared Registry; use Conduit Host" errors.
 
-// Load plugins
-myPlugin := NewMyPlugin()
-if err := registry.LoadPlugin(myPlugin); err != nil {
-    log.Fatal(err)
-}
+**UI registry (`uiregistry.go`)**
+- `UIRegistry` interface and `NewUIRegistry()` constructor backing a thread-safe `map[string]UIComponent` with `RegisterComponent`, `GetComponent`, `GetComponentsByType`, `ListComponents`, `UnregisterComponent`.
+
+**Default logger (`logger.go`)**
+- `NewDefaultLogger(prefix string) Logger` — minimal stdlib `log` adapter; `With` is a no-op.
+
+**Bundled example (`example.go`)**
+- `ExamplePlugin` + `NewExamplePlugin()` — reference `Plugin` implementation.
+- Internal `exampleCRUDHandler` and `exampleEventHook` demonstrate the handler/hook contracts.
+
+## Architecture Notes
+
+The shared `Registry` is intentionally a thin substrate: it holds a single map of plugins plus sibling maps for CRUD handlers, event hooks, UI components, and generic services, all guarded by a `sync.RWMutex`. It validates that a plugin's `Dependencies()` are already loaded at `LoadPlugin` time and prevents unloading a plugin that another loaded plugin still depends on. A cancelable `context.Context` is created in `NewRegistry` and surfaced to plugins via `Host.Context()`; `Shutdown()` unloads every plugin then calls `cancel()`. The registry is designed to be embedded or wrapped by a richer host implementation — every `Host` method tied to higher-level subsystems (config, connectors, providers, CLI adapters, slash commands, UI slots, keybindings) is a placeholder that returns an explicit error directing callers to "Conduit Host," so real applications must supply their own implementation of those capabilities.
+
+## Dependencies
+
+**Framework-internal:** none.
+
+**External:** none — `go.mod` declares only the module path and `go 1.26.1`; the package depends solely on the Go standard library (`context`, `errors`, `fmt`, `log`, `net/http`, `sync`, `time`).
+
+## Testing
+
+```bash
+go test ./...
 ```
 
-### UI Components
+Tests live in `plugin_test.go` and exercise the plugin lifecycle, UI registry registration/retrieval, and the event hook dispatch path. No external services, fixtures, or environment variables are required.
 
-Plugins can register UI components that the host application can render:
+## License
 
-```go
-component := plugin.UIComponent{
-    ID:          "my-widget",
-    Type:        plugin.UIComponentTypeWidget,
-    Name:        "My Widget",
-    Description: "A custom widget",
-    Props: map[string]interface{}{
-        "title": "Hello World",
-        "color": "blue",
-    },
-}
-
-host.RegisterUIComponent(component)
-```
-
-### Event System
-
-Plugins can listen to and handle application events:
-
-```go
-type MyEventHook struct{}
-
-func (h *MyEventHook) Handle(ctx context.Context, event plugin.Event) error {
-    // Process the event
-    return nil
-}
-
-func (h *MyEventHook) EventTypes() []string {
-    return []string{"user.login", "session.start"}
-}
-```
-
-## Registry
-
-The `Registry` type provides the central plugin management:
-
-- `LoadPlugin(plugin)` - Load and initialize a plugin
-- `UnloadPlugin(id)` - Unload a plugin
-- `GetPlugin(id)` - Retrieve a loaded plugin
-- `ListPlugins()` - List all loaded plugins
-- `EmitEvent(event)` - Dispatch events to hooks
-- `Shutdown()` - Gracefully shut down all plugins
-
-## Example
-
-See `example.go` for a complete plugin implementation demonstrating all interface capabilities.
-
-## Architecture
-
-This module implements the Component Autonomy & Plugin Contract architecture (ADR-029), enabling:
-
-- **Extensibility**: Add capabilities without core modifications
-- **Isolation**: Plugins run in controlled environments
-- **Composability**: Mix and match plugin functionality
-- **Consistency**: Standard interfaces across all applications
-
-## Integration
-
-Applications using this plugin system:
-
-- **Conduit**: Chat harness with plugin-based extensions
-- **Hadron**: Blueprint system with workflow plugins
-- **Volon**: Task management with agent plugins
-
-Each application implements the `Host` interface and manages a `Registry` to load relevant plugins.
+MIT License. See [`LICENSE`](./LICENSE).
