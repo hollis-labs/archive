@@ -1,0 +1,11 @@
+# Build artifacts
+/giphy
+/giphy.exe
+/dist/
+ui/dist/
+ui/node_modules/
+ui/package-lock.json
+
+# Local dev
+.DS_Store
+*.log
