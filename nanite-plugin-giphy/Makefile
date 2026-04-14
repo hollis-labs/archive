@@ -29,11 +29,13 @@ build-ui:
 	cd ui && npm install --no-audit --no-fund --silent && npm run build
 
 build-go:
+	@rm -rf $(STAGING_DIR)
 	@mkdir -p $(STAGING_DIR)
 	@for plat in $(PLATFORMS); do \
 		os=$${plat%-*}; arch=$${plat#*-}; \
 		if [ "$$os" = "windows" ]; then bin=$(PLUGIN_ID).exe; else bin=$(PLUGIN_ID); fi; \
 		echo ">> building $$os/$$arch"; \
+		mkdir -p $(STAGING_DIR)/$$plat; \
 		GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" \
 			-o $(STAGING_DIR)/$$plat/$$bin .; \
 	done
@@ -51,7 +53,14 @@ release: build-ui build-go
 		[ -f ui/dist/style.css ] && cp ui/dist/style.css $$stage/ui/style.css || true; \
 		archive=$(ARCHIVES_DIR)/$(PLUGIN_ID)-$(VERSION)-$$plat.tar.gz; \
 		tar -C $$stage -czf $$archive .; \
-		shasum -a 256 $$archive | awk '{print $$1}' > $$archive.sha256; \
+		if command -v sha256sum >/dev/null 2>&1; then \
+			sha256sum $$archive | awk '{print $$1}' > $$archive.sha256; \
+		elif command -v shasum >/dev/null 2>&1; then \
+			shasum -a 256 $$archive | awk '{print $$1}' > $$archive.sha256; \
+		else \
+			echo "error: neither sha256sum nor shasum is available" >&2; \
+			exit 1; \
+		fi; \
 	done
 	@if [ -n "$$GIPHY_SIGNING_KEY" ]; then \
 		echo ">> signing archives"; \
