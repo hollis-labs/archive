@@ -1,4 +1,4 @@
-package oembed
+package main
 
 import (
 	"context"
@@ -11,6 +11,9 @@ import (
 	"time"
 )
 
+var httpClient = http.DefaultClient
+var fetchCache = newOEmbedCache(10 * time.Minute)
+
 // OEmbedResult holds the fetched oEmbed metadata for the envelope.
 type OEmbedResult struct {
 	Title        string `json:"title"`
@@ -18,10 +21,10 @@ type OEmbedResult struct {
 	ThumbnailURL string `json:"thumbnail_url"`
 	ProviderName string `json:"provider_name"`
 	ProviderURL  string `json:"provider_url"`
-	Type         string `json:"type"`         // "video", "photo", "rich", "link"
-	URL          string `json:"url"`           // The original URL
+	Type         string `json:"type"` // "video", "photo", "rich", "link"
+	URL          string `json:"url"`  // The original URL
 	AuthorName   string `json:"author_name"`
-	HTML         string `json:"html"`          // Embed HTML (for video/rich types)
+	HTML         string `json:"html"` // Embed HTML (for video/rich types)
 }
 
 // oembedRawResponse mirrors the standard oEmbed JSON response.
@@ -44,6 +47,10 @@ type oembedRawResponse struct {
 
 // FetchOEmbed fetches oEmbed metadata from a provider's endpoint.
 func FetchOEmbed(ctx context.Context, provider *Provider, rawURL string) (*OEmbedResult, error) {
+	if cached, ok := fetchCache.get(rawURL); ok {
+		return cached, nil
+	}
+
 	endpoint := strings.Replace(provider.Endpoint, "{url}", url.QueryEscape(rawURL), 1)
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -55,7 +62,7 @@ func FetchOEmbed(ctx context.Context, provider *Provider, rawURL string) (*OEmbe
 	}
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("oEmbed fetch error: %w", err)
 	}
@@ -81,7 +88,7 @@ func FetchOEmbed(ctx context.Context, provider *Provider, rawURL string) (*OEmbe
 		thumbnailURL = raw.URL
 	}
 
-	return &OEmbedResult{
+	result := &OEmbedResult{
 		Title:        raw.Title,
 		Description:  raw.Description,
 		ThumbnailURL: thumbnailURL,
@@ -91,5 +98,7 @@ func FetchOEmbed(ctx context.Context, provider *Provider, rawURL string) (*OEmbe
 		URL:          rawURL,
 		AuthorName:   raw.AuthorName,
 		HTML:         raw.HTML,
-	}, nil
+	}
+	fetchCache.set(rawURL, result)
+	return result, nil
 }

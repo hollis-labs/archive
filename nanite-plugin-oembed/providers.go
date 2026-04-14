@@ -1,4 +1,4 @@
-package oembed
+package main
 
 import (
 	"regexp"
