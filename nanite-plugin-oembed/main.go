@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 
 	plugin "github.com/hollis-labs/plugin-sdk"
@@ -73,7 +74,7 @@ func (p *oembedPlugin) EventHandle(ctx context.Context, req subprocess.EventRequ
 	if content == "" {
 		return subprocess.EventResult{}, nil
 	}
-	if len(content) > 0 && content[0] == '!' {
+	if strings.HasPrefix(strings.TrimLeft(content, " \t"), "!") {
 		return subprocess.EventResult{}, nil
 	}
 
@@ -154,6 +155,7 @@ func matchProviderIn(providers []*Provider, rawURL string) *Provider {
 
 func main() {
 	if err := subprocess.Serve(&oembedPlugin{}); err != nil {
+		fmt.Fprintf(os.Stderr, "oembed: subprocess serve failed: %v\n", err)
 		os.Exit(1)
 	}
 }

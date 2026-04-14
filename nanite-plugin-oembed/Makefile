@@ -48,9 +48,9 @@ release: build-ui build-go
 		stage=$(STAGING_DIR)/$$plat; \
 		echo ">> assembling $$plat archive"; \
 		cp -r $(ARCHIVE_CONTENTS) $$stage/; \
-		mkdir -p $$stage/ui; \
-		cp ui/dist/index.js $$stage/ui/index.js; \
-		[ -f ui/dist/style.css ] && cp ui/dist/style.css $$stage/ui/style.css || true; \
+		mkdir -p $$stage/ui/dist; \
+		cp ui/dist/index.js $$stage/ui/dist/index.js; \
+		[ -f ui/dist/style.css ] && cp ui/dist/style.css $$stage/ui/dist/style.css || true; \
 		archive=$(ARCHIVES_DIR)/$(PLUGIN_ID)-$(VERSION)-$$plat.tar.gz; \
 		tar -C $$stage -czf $$archive .; \
 		if command -v sha256sum >/dev/null 2>&1; then \

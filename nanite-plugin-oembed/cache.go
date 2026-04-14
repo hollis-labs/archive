@@ -38,12 +38,22 @@ func (c *oEmbedCache) get(key string) (*OEmbedResult, bool) {
 	return entry.value, true
 }
 
+// set stores value under key with TTL. Expired entries are pruned
+// opportunistically on each write so the map never retains stale keys
+// indefinitely — important since callers have no out-of-band way to
+// invalidate per-URL cache entries.
 func (c *oEmbedCache) set(key string, value *OEmbedResult) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	now := time.Now()
+	for k, entry := range c.entries {
+		if now.After(entry.expiresAt) {
+			delete(c.entries, k)
+		}
+	}
 	c.entries[key] = oEmbedCacheEntry{
 		value:     value,
-		expiresAt: time.Now().Add(c.ttl),
+		expiresAt: now.Add(c.ttl),
 	}
 }
