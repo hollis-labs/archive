@@ -19,6 +19,8 @@ const (
 	KindMessageReplied    ActivityKind = "message.replied"
 	KindEnvelopeCreated   ActivityKind = "envelope.created"
 	KindEnvelopeReplied   ActivityKind = "envelope.replied"
+	KindDaemonStarted     ActivityKind = "daemon.started"
+	KindDaemonShutdown    ActivityKind = "daemon.shutdown"
 	KindUnknown           ActivityKind = "unknown"
 )
 

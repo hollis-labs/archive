@@ -24,6 +24,10 @@ func ProjectStreamEvent(ev agentmux.StreamEvent) activity.ActivityEvent {
 		out.Kind = activity.KindEnvelopeCreated
 	case "broker.envelope_replied":
 		out.Kind = activity.KindEnvelopeReplied
+	case "daemon.started":
+		out.Kind = activity.KindDaemonStarted
+	case "daemon.shutdown_started", "daemon.shutdown_completed":
+		out.Kind = activity.KindDaemonShutdown
 	default:
 		out.Kind = activity.KindUnknown
 		out.Facets["raw_type"] = ev.Event

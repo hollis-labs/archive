@@ -38,6 +38,8 @@ func TestActivityKind_Constants(t *testing.T) {
 		KindMessageReplied,
 		KindEnvelopeCreated,
 		KindEnvelopeReplied,
+		KindDaemonStarted,
+		KindDaemonShutdown,
 		KindUnknown,
 	}
 	seen := map[ActivityKind]bool{}

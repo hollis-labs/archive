@@ -47,3 +47,27 @@ func TestProjectStreamEvent_Unknown(t *testing.T) {
 		t.Errorf("raw_type not preserved: %+v", out.Facets)
 	}
 }
+
+func TestProjectStreamEvent_DaemonStarted(t *testing.T) {
+	in := agentmux.StreamEvent{Event: "daemon.started"}
+	out := ProjectStreamEvent(in)
+	if out.Kind != activity.KindDaemonStarted {
+		t.Errorf("kind: got %s, want %s", out.Kind, activity.KindDaemonStarted)
+	}
+}
+
+func TestProjectStreamEvent_DaemonShutdownStarted(t *testing.T) {
+	in := agentmux.StreamEvent{Event: "daemon.shutdown_started"}
+	out := ProjectStreamEvent(in)
+	if out.Kind != activity.KindDaemonShutdown {
+		t.Errorf("kind: got %s, want %s", out.Kind, activity.KindDaemonShutdown)
+	}
+}
+
+func TestProjectStreamEvent_DaemonShutdownCompleted(t *testing.T) {
+	in := agentmux.StreamEvent{Event: "daemon.shutdown_completed"}
+	out := ProjectStreamEvent(in)
+	if out.Kind != activity.KindDaemonShutdown {
+		t.Errorf("kind: got %s, want %s", out.Kind, activity.KindDaemonShutdown)
+	}
+}
