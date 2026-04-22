@@ -15,7 +15,6 @@ const (
 	StatusConnected            Status = "connected"
 	StatusDisconnectedRetrying Status = "disconnected-retrying"
 	StatusDaemonAbsent         Status = "daemon-absent"
-	StatusDegraded             Status = "degraded"
 )
 
 // Pinger is the minimum surface Wrapper depends on. Real callers pass
