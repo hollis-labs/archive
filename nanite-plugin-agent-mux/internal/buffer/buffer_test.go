@@ -1,20 +1,11 @@
 package buffer
 
 import (
-	"strconv"
 	"testing"
 	"time"
 
 	"github.com/hollis-labs/nanite-plugin-agent-mux/internal/activity"
 )
-
-func mkEvent(idNum int, ts time.Time) activity.ActivityEvent {
-	return activity.ActivityEvent{
-		ID:        strconv.Itoa(idNum),
-		Timestamp: ts,
-		Kind:      activity.KindSessionCreated,
-	}
-}
 
 func TestAppend_AssignsMonotonicID(t *testing.T) {
 	b := New(Options{MaxAge: time.Minute, Cap: 100})
@@ -109,5 +100,37 @@ func TestDrops_DoNotIncrementWhenEvictingObservedEvent(t *testing.T) {
 	_, _, drops := b.Since(cursor)
 	if drops != 0 {
 		t.Fatalf("drops: got %d, want 0 (evicted event was already observed)", drops)
+	}
+}
+
+func TestEviction_ByAge_AllStale(t *testing.T) {
+	// Use a fixed base time so we can control all timestamps explicitly.
+	base := time.Now()
+	// Clock is frozen at base+50ms — far past MaxAge of 10ms.
+	// All events in this test are appended with explicit stale timestamps so
+	// evictLocked sees every entry as older than MaxAge, exercising the
+	// "keep := 0 stays 0 when no fresh event is found" bug path.
+	frozenNow := base.Add(50 * time.Millisecond)
+	b := New(Options{MaxAge: 10 * time.Millisecond, Cap: 100, clock: func() time.Time { return frozenNow }})
+
+	// Append three events with explicit stale timestamps (age = 50ms > 10ms MaxAge).
+	staleTS := base
+	b.Append(activity.ActivityEvent{Kind: activity.KindSessionCreated, Timestamp: staleTS})
+	b.Append(activity.ActivityEvent{Kind: activity.KindSessionCreated, Timestamp: staleTS})
+	b.Append(activity.ActivityEvent{Kind: activity.KindSessionCreated, Timestamp: staleTS})
+
+	// A fourth append also carries a stale timestamp — evictLocked will see
+	// all four events as stale (no fresh event exists), hitting the bug.
+	b.Append(activity.ActivityEvent{Kind: activity.KindSessionCreated, Timestamp: staleTS})
+
+	got, _, drops := b.Since("")
+	// With the bug (keep := 0): b.events[0:] keeps all 4 events → len == 4.
+	// After the fix (keep := len(b.events)): b.events[4:] empties the buffer → len == 0.
+	if len(got) != 0 {
+		t.Fatalf("want 0 events after all-stale eviction, got %d", len(got))
+	}
+	// All four events were never observed → 4 drops.
+	if drops != 4 {
+		t.Errorf("drops: got %d, want 4", drops)
 	}
 }

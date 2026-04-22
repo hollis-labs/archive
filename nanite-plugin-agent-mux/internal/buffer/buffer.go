@@ -101,7 +101,7 @@ func (b *Buffer) Since(cursor string) ([]activity.ActivityEvent, string, int64) 
 func (b *Buffer) evictLocked() {
 	now := b.opts.clock()
 	// Age eviction.
-	keep := 0
+	keep := len(b.events) // default: evict everything
 	for i, ev := range b.events {
 		if now.Sub(ev.Timestamp) <= b.opts.MaxAge {
 			keep = i
