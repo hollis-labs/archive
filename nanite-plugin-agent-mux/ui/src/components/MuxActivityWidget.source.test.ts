@@ -16,18 +16,21 @@ describe('createPollingSource', () => {
     return vi.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => ({ events, cursor: events[events.length - 1]?.id ?? '', drops: 0 }),
-    }) as unknown as typeof fetch
+    })
+  }
+
+  function installFetch(mock: ReturnType<typeof vi.fn>) {
+    globalThis.fetch = mock as unknown as typeof fetch
   }
 
   it('delivers adapted widget events to the listener on poll', async () => {
-    const fetchMock = mockFetchOnce([
+    installFetch(mockFetchOnce([
       { id: '1', kind: 'session.created', timestamp: '2026-04-22T00:00:00Z' },
-    ])
-    globalThis.fetch = fetchMock
+    ]))
 
     const received: WidgetEvent[] = []
     const source = createPollingSource({ pollMs: 1000 })
-    const unsubscribe = source.subscribe((e) => received.push(e))
+    const unsubscribe = source.subscribe((e: WidgetEvent) => received.push(e))
 
     await vi.runOnlyPendingTimersAsync()
     await Promise.resolve() // flush microtasks from the fetch promise
@@ -38,14 +41,14 @@ describe('createPollingSource', () => {
   })
 
   it('drops unknown wire kinds silently', async () => {
-    globalThis.fetch = mockFetchOnce([
+    installFetch(mockFetchOnce([
       { id: '1', kind: 'unknown', timestamp: '2026-04-22T00:00:00Z' },
       { id: '2', kind: 'session.created', timestamp: '2026-04-22T00:00:01Z' },
-    ])
+    ]))
 
     const received: WidgetEvent[] = []
     const source = createPollingSource({ pollMs: 1000 })
-    source.subscribe((e) => received.push(e))
+    source.subscribe((e: WidgetEvent) => received.push(e))
 
     await vi.runOnlyPendingTimersAsync()
     await Promise.resolve()
@@ -57,8 +60,8 @@ describe('createPollingSource', () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ events: [], cursor: '', drops: 0 }),
-    }) as unknown as typeof fetch
-    globalThis.fetch = fetchMock
+    })
+    installFetch(fetchMock)
 
     const source = createPollingSource({ pollMs: 1000 })
     const unsubscribe = source.subscribe(() => {})
@@ -81,8 +84,8 @@ describe('createPollingSource', () => {
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ events: [], cursor: '42', drops: 0 }),
-      }) as unknown as typeof fetch
-    globalThis.fetch = fetchMock
+      })
+    installFetch(fetchMock)
 
     const source = createPollingSource({ pollMs: 1000 })
     source.subscribe(() => {})
