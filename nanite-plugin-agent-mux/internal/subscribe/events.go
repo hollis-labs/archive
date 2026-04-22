@@ -46,6 +46,7 @@ func (s *EventsSubscriber) Run(ctx context.Context) {
 		}
 		events, errs := s.streamer.StreamEvents(ctx, agentmux.StreamEventsOptions{})
 		s.client.SetStatus(client.StatusConnected, nil)
+		backoff = time.Second // reset so transient disconnects don't inflate future waits
 		disconnected := s.consume(ctx, events, errs)
 		if !disconnected {
 			return // ctx canceled, clean exit
