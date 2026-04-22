@@ -17,8 +17,8 @@ import (
 // can connect to a real muxd daemon and transition to StatusConnected.
 // Requires MUX_E2E_LISTEN_ADDR pointing at a running daemon.
 //
-// Run: MUX_E2E_LISTEN_ADDR=unix:~/.agent-mux/run/muxd.sock \
-//          go test -race -tags e2e_mux ./internal/subscribe/...
+//	Run: MUX_E2E_LISTEN_ADDR=unix:~/.agent-mux/run/muxd.sock \
+//	         go test -race -tags e2e_mux ./internal/subscribe/...
 func TestE2E_EventsStreamAppendsOnRealMuxd(t *testing.T) {
 	addr := os.Getenv("MUX_E2E_LISTEN_ADDR")
 	if addr == "" {
