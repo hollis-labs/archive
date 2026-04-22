@@ -131,3 +131,52 @@ describe('engine — decay', () => {
     expect(engine.snapshot().columns[0][0]).toBe(before)
   })
 })
+
+describe('engine — rate readout rollover', () => {
+  it('advance rolls eventsThisSecond into lastSecondCount at second boundaries', () => {
+    let nowMs = 1000
+    const engine = createEngine({ columns: 1, now: () => nowMs })
+    engine.push({ at: 0, layer: 0, meta: { label: 'a' } })
+    engine.push({ at: 0, layer: 0, meta: { label: 'b' } })
+    expect(engine.peekEventsThisSecond()).toBe(2)
+    expect(engine.snapshot().lastSecondCount).toBe(0)
+
+    nowMs = 2000 // cross the second boundary
+    engine.advance()
+
+    expect(engine.peekEventsThisSecond()).toBe(0)
+    expect(engine.snapshot().lastSecondCount).toBe(2)
+  })
+
+  it('advance does not roll over within the same second', () => {
+    let nowMs = 1000
+    const engine = createEngine({ columns: 1, now: () => nowMs })
+    engine.push({ at: 0, layer: 0 })
+    nowMs = 1500
+    engine.advance()
+    expect(engine.peekEventsThisSecond()).toBe(1)
+    expect(engine.snapshot().lastSecondCount).toBe(0)
+  })
+})
+
+describe('engine — reduced motion', () => {
+  it('when reducedMotion is true, a single advance lands all flying pixels', () => {
+    const engine = createEngine({ columns: 1, reducedMotion: true })
+    engine.push({ at: 0, layer: 0 })
+    engine.push({ at: 0, layer: 1 })
+    expect(engine.snapshot().flying).toHaveLength(2)
+
+    engine.advance()
+
+    expect(engine.snapshot().flying).toHaveLength(0)
+    expect(engine.snapshot().columns[0]).toEqual([1, 1, 0])
+  })
+
+  it('when reducedMotion is false, advance moves by riseSpeed', () => {
+    const engine = createEngine({ columns: 1, reducedMotion: false })
+    engine.push({ at: 0, layer: 0 })
+    const before = engine.snapshot().flying[0].y
+    engine.advance()
+    expect(engine.snapshot().flying[0].y).toBe(before - 3)
+  })
+})

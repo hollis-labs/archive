@@ -8,6 +8,8 @@ export interface EngineOptions {
   rng?: () => number
   /** For deterministic tests. Defaults to performance.now. */
   now?: () => number
+  /** When true, advance lands all flying pixels in one frame (prefers-reduced-motion). */
+  reducedMotion?: boolean
 }
 
 export interface Engine {
@@ -22,6 +24,7 @@ export function createEngine(opts: EngineOptions): Engine {
   const columns = opts.columns
   const rng = opts.rng ?? Math.random
   const now = opts.now ?? (() => performance.now())
+  const reducedMotion = opts.reducedMotion ?? false
 
   const settled: LayerCounts[] = Array.from({ length: columns }, () => [0, 0, 0])
   const flying: FlyingPixel[] = []
@@ -82,13 +85,16 @@ export function createEngine(opts: EngineOptions): Engine {
     advance() {
       for (let i = flying.length - 1; i >= 0; i--) {
         const f = flying[i]
-        f.y -= LAYOUT.riseSpeedPxPerFrame
+        if (reducedMotion) {
+          f.y = f.targetY
+        } else {
+          f.y -= LAYOUT.riseSpeedPxPerFrame
+        }
         if (f.y <= f.targetY) {
           settled[f.col][f.layer]++
           flying.splice(i, 1)
         }
       }
-      // Events/sec rollover is tested separately in Task 7.
       const currentSecond = Math.floor(now() / 1000)
       if (currentSecond !== lastSecondBoundary) {
         lastSecondCount = eventsThisSecond
