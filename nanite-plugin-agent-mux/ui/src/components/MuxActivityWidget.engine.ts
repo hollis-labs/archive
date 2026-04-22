@@ -13,6 +13,7 @@ export interface EngineOptions {
 export interface Engine {
   push(event: WidgetEvent): void
   advance(): void
+  decayTick(probability: number): void
   snapshot(): WidgetState
   peekEventsThisSecond(): number
 }
@@ -93,6 +94,17 @@ export function createEngine(opts: EngineOptions): Engine {
         lastSecondCount = eventsThisSecond
         eventsThisSecond = 0
         lastSecondBoundary = currentSecond
+      }
+    },
+
+    decayTick(probability) {
+      for (let c = 0; c < columns; c++) {
+        if (settled[c][0] + settled[c][1] + settled[c][2] === 0) continue
+        if (rng() < probability) {
+          if (settled[c][2] > 0) settled[c][2]--
+          else if (settled[c][1] > 0) settled[c][1]--
+          else if (settled[c][0] > 0) settled[c][0]--
+        }
       }
     },
 

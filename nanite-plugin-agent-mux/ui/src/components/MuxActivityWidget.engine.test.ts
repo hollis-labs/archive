@@ -79,3 +79,55 @@ describe('engine — ingress', () => {
     expect(landed).toBeDefined()
   })
 })
+
+describe('engine — decay', () => {
+  it('decayTick with probability 1 removes one pixel from every non-empty column', () => {
+    // Seed a deterministic rng that always returns 0 (so "< probability" always fires).
+    const rng = () => 0
+    const engine = createEngine({ columns: 3, rng })
+    // Manually seed settled counts by pushing events and landing them.
+    for (let i = 0; i < 6; i++) engine.push({ at: 0, layer: 0, meta: { label: `col-${i % 3}` } })
+    for (let i = 0; i < 60; i++) engine.advance() // land everything
+    const beforeTotal = engine.snapshot().columns.reduce((s, c) => s + c[0] + c[1] + c[2], 0)
+
+    engine.decayTick(1.0)
+
+    const afterTotal = engine.snapshot().columns.reduce((s, c) => s + c[0] + c[1] + c[2], 0)
+    const nonEmpty = engine.snapshot().columns.filter((c) => c[0] + c[1] + c[2] > 0).length
+    // Each non-empty column loses exactly one; empty columns lose zero.
+    expect(beforeTotal - afterTotal).toBe(nonEmpty > 0 ? nonEmpty : 0)
+  })
+
+  it('decayTick removes from the top layer first (L2 → L1 → L0)', () => {
+    const engine = createEngine({ columns: 1 })
+    // All events go to col 0 because columns=1.
+    engine.push({ at: 0, layer: 0 })
+    engine.push({ at: 0, layer: 1 })
+    engine.push({ at: 0, layer: 2 })
+    for (let i = 0; i < 60; i++) engine.advance()
+    expect(engine.snapshot().columns[0]).toEqual([1, 1, 1])
+
+    engine.decayTick(1.0)
+    expect(engine.snapshot().columns[0]).toEqual([1, 1, 0]) // L2 lost
+
+    engine.decayTick(1.0)
+    expect(engine.snapshot().columns[0]).toEqual([1, 0, 0]) // L1 lost
+
+    engine.decayTick(1.0)
+    expect(engine.snapshot().columns[0]).toEqual([0, 0, 0]) // L0 lost
+
+    engine.decayTick(1.0)
+    expect(engine.snapshot().columns[0]).toEqual([0, 0, 0]) // no-op on empty
+  })
+
+  it('decayTick with probability 0 removes nothing', () => {
+    const engine = createEngine({ columns: 1, rng: () => 0 })
+    engine.push({ at: 0, layer: 0 })
+    for (let i = 0; i < 60; i++) engine.advance()
+    const before = engine.snapshot().columns[0][0]
+
+    engine.decayTick(0)
+
+    expect(engine.snapshot().columns[0][0]).toBe(before)
+  })
+})
