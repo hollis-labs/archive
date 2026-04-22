@@ -3,3 +3,7 @@ ui/node_modules/
 ui/dist/
 *.log
 .DS_Store
+
+# Plugin binaries produced by `make dev` / `go build`
+/agent-mux
+/nanite-plugin-agent-mux
