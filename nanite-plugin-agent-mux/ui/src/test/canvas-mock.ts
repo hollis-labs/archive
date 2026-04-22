@@ -5,7 +5,11 @@ export interface RecordedCall {
   args: unknown[]
 }
 
+let installed = false
+
 export function installCanvasMock() {
+  if (installed) return
+  installed = true
   const originalGetContext = HTMLCanvasElement.prototype.getContext
 
   // @ts-expect-error — intentionally replacing the native signature.
