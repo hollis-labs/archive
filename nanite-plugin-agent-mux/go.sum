@@ -1,2 +1,8 @@
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/hollis-labs/go-agentmux-client v0.3.0 h1:9muNl7F8KBYFNc7saMMn5FBv05j+0ateuOw9kVICRUk=
+github.com/hollis-labs/go-agentmux-client v0.3.0/go.mod h1:RvcDycVXPSBd/MG5UKME/sGZ51ZWPqCDDfLXf4TiYDU=
+github.com/hollis-labs/go-messaging v0.2.0 h1:JypqjXMcgyFBbLmX+NlwTxJuwIAAjKd/3Qbm4+I84JE=
+github.com/hollis-labs/go-messaging v0.2.0/go.mod h1:tMiHRx7QHV1GWw5pZ1khnursbIQuzikScSRXWVdP8nk=
 github.com/hollis-labs/plugin-sdk v0.3.0 h1:xlFWssODdGkrInZv36ocSkDruYarMo2Rvvq6CrCujHY=
 github.com/hollis-labs/plugin-sdk v0.3.0/go.mod h1:+FcTow9tco3OoINjc5LSCkm8RZzWSLNG1tTCzLSQuHs=
