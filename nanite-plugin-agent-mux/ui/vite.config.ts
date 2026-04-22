@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -30,5 +31,9 @@ export default defineConfig({
     cssCodeSplit: false,
     sourcemap: true,
     emptyOutDir: true,
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
   },
 })
