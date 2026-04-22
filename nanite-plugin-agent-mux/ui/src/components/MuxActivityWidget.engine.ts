@@ -28,7 +28,7 @@ export function createEngine(opts: EngineOptions): Engine {
 
   let eventsThisSecond = 0
   let lastSecondCount = 0
-  let lastSecondBoundaryMs = Math.floor(now() / 1000)
+  let lastSecondBoundary = Math.floor(now() / 1000)
 
   function colFor(event: WidgetEvent): number {
     const label = event.meta?.label
@@ -89,10 +89,10 @@ export function createEngine(opts: EngineOptions): Engine {
       }
       // Events/sec rollover is tested separately in Task 7.
       const currentSecond = Math.floor(now() / 1000)
-      if (currentSecond !== lastSecondBoundaryMs) {
+      if (currentSecond !== lastSecondBoundary) {
         lastSecondCount = eventsThisSecond
         eventsThisSecond = 0
-        lastSecondBoundaryMs = currentSecond
+        lastSecondBoundary = currentSecond
       }
     },
 
