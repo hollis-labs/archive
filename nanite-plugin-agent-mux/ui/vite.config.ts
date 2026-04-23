@@ -16,6 +16,9 @@ const external = [
 export default defineConfig({
   plugins: [react()],
   build: {
+    // es2022 for string-named exports (needed to expose a hyphenated
+    // widget id the nanite plugin-loader looks up via mod[name]).
+    target: 'es2022',
     lib: {
       entry: 'src/index.tsx',
       formats: ['es'],

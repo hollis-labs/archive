@@ -38,10 +38,13 @@ config:
 
 registers:
   components:
-    # NOTE: nanite's plugin-loader uses `name` as the JS export lookup for
-    # widgets (plugin-loader.ts:360), so `name` must be a valid JS
-    # identifier matching the bundle's named export. See CW-20260423-0008.
-    - name: MuxActivityWidget
+    # Backend validates component id as kebab-case (lowercase alnum + hyphens).
+    # Frontend plugin-loader does `mod[widget.name]` for widget lookup, which
+    # forces the bundle to expose an export under the kebab-case name.
+    # We satisfy both by using kebab-case here AND adding an ES2022
+    # string-named export `"mux-activity-widget"` in ui/src/index.tsx.
+    # Tracked for cleanup: CW-20260423-0008 (add explicit `export:` field).
+    - name: mux-activity-widget
       type: widget
       description: Right-rail widget visualizing live muxd activity.
       export: MuxActivityWidget
