@@ -34,6 +34,11 @@ export function createMockContext() {
     beginPath: rec('beginPath'),
     arc: rec('arc'),
     fill: rec('fill'),
+    scale: rec('scale'),
+    save: rec('save'),
+    restore: rec('restore'),
+    translate: rec('translate'),
+    setTransform: rec('setTransform'),
     // Accessors so tests can read back the calls
     __calls: calls,
     __clear: () => { calls.length = 0 },
