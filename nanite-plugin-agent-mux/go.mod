@@ -1,6 +1,6 @@
 module github.com/hollis-labs/nanite-plugin-agent-mux
 
-go 1.25
+go 1.26.1
 
 require (
 	github.com/hollis-labs/go-agentmux-client v0.3.0
