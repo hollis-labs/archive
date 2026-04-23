@@ -7,3 +7,6 @@ ui/dist/
 # Plugin binaries produced by `make dev` / `go build`
 /agent-mux
 /nanite-plugin-agent-mux
+
+# Visual dev harness — local only
+ui/dev-harness.html
