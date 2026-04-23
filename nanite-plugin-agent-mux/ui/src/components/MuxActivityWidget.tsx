@@ -55,10 +55,11 @@ export function MuxActivityWidget(props: MuxActivityWidgetProps = {}) {
     let lastRatePublish = 0
     const frame = (now: number) => {
       engine.advance()
-      drawFrame(ctx, engine.snapshot())
+      const state = engine.snapshot()
+      drawFrame(ctx, state)
       // Publish rate at most every ~200ms to avoid React churn every frame.
       if (now - lastRatePublish > 200) {
-        setRate(engine.snapshot().lastSecondCount)
+        setRate(state.lastSecondCount)
         lastRatePublish = now
       }
       rafId = requestAnimationFrame(frame)
