@@ -40,7 +40,7 @@ registers:
   components:
     # NOTE: nanite's plugin-loader uses `name` as the JS export lookup for
     # widgets (plugin-loader.ts:360), so `name` must be a valid JS
-    # identifier matching the bundle's named export. See CW-20260423-0006.
+    # identifier matching the bundle's named export. See CW-20260423-0008.
     - name: MuxActivityWidget
       type: widget
       description: Right-rail widget visualizing live muxd activity.
