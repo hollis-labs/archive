@@ -11,3 +11,5 @@ ui/dist/
 
 # Visual dev harness — local only
 ui/dev-harness.html
+demo/node_modules/
+demo/dist/
