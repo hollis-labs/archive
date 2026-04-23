@@ -32,6 +32,9 @@ export function createPollingSource(opts: PollingSourceOptions = {}): ActivityEv
           if (!res.ok) return
           const snap = (await res.json()) as Snapshot
           if (cancelled) return
+          // v1 deferred: spec §"Batched arrival" calls for ≤20ms per-event stagger
+          // so large bursts rise as a wave rather than a teleport. At v0.1 event
+          // volumes this isn't visible; revisit if batch sizes grow.
           for (const wire of snap.events) {
             const adapted = adaptWireEvent(wire)
             if (adapted) listener(adapted)
