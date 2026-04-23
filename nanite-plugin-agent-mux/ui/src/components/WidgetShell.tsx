@@ -31,6 +31,7 @@ export function WidgetShell({ id, title, icon: Icon, children }: WidgetShellProp
     <div className="rounded-lg border border-zinc-800 bg-zinc-900/40">
       <button
         onClick={() => setMinimized((m) => !m)}
+        aria-expanded={!minimized}
         className="flex items-center gap-2 w-full px-3 py-2.5 hover:bg-zinc-800/30 transition-colors rounded-t-lg"
       >
         <Icon className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
