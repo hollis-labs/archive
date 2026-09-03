@@ -50,6 +50,22 @@ include one to dispatch and subscribe in the same call.
 **Never poll.** No `ListAgents` loop, no "are you done yet?" A poll costs the
 other session a turn and tells you nothing its idle notice will not.
 
+## Staying subscribed
+
+Subscribing isn't only for a session you're waiting to finish. The moment one
+becomes something you depend on — just dispatched, or already running when you
+pick up a scope that leans on it — subscribe then, the same
+`notify_when_idle: true` from **Waiting**. The dependency existing is the
+reason; there is no better one to wait for.
+
+It's still one shot. Still depending on that session once the notice fires —
+idle and back to work, or another checkpoint further out — re-subscribe.
+That's not overhead. That's the habit.
+
+Default for a director or conductor: every session you depend on carries a
+live subscription, always — not a tool reached for occasionally, the normal
+thing that happens the instant a dependency starts existing.
+
 ## Answering one
 
 An incoming message arrives wrapped as `<cross-session-message from="...">`.
