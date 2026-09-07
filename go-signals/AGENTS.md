@@ -1,9 +1,8 @@
 # go-signals
 
-Deliberately empty. This repository is parked as of 2026-05-12: there is no Go
-module, no code and no scaffold, and none is planned until a real consumer
-drives the design. It exists to reserve the name and to make the deferral
-discoverable.
+Deliberately empty. This repository is parked: there is no Go module, no code
+and no scaffold, and none is planned until a real consumer drives the design.
+It exists to reserve the name and to make the deferral discoverable.
 
 ## Start Here
 
