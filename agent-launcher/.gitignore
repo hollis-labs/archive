@@ -1,0 +1,8 @@
+/tachyon
+/build/
+frontend/node_modules/
+
+# Machine-local agent state and internal planning material, not tracked
+.claude/
+.agentrc/
+*.cerberus.yaml
