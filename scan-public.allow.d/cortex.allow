@@ -1,0 +1,20 @@
+# cortex: findings reviewed by the owner 2026-10-15 (path, host and home-directory references only).
+agent-box-host (commit-message)@19942071a1c8 Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+credentials-in-url cortex/internal/embedding/pgvector.go Placeholder connection string in a test or doc; reviewed by the owner 2026-10-15, no live credential.
+home-path-linux (commit-message)@03de537c5fbe Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cortex/.agentrc/commands Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cortex/.agentrc/roles Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cortex/.agentrc/skills Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cortex/.mcp.json Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cortex/.volon/agent-boot.md Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cortex/.volon/boot/architect.md Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cortex/.volon/boot/orchestrator.md Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cortex/.volon/boot/reviewer.md Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cortex/.volon/boot/worker.md Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cortex/docs/superpowers/plans/2026-04-04-memory-domain-d-core.md Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos (commit-message)@424cec7012a2 Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cortex/outbox/logs/audit.jsonl Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+secret-assignment cortex/internal/contextapi/server_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cortex/scripts/contextd-smoke.sh Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cortex/tests/integration/api_error_contract_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cortex/tests/integration/service_auth_modes_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.

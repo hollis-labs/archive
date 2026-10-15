@@ -1,0 +1,26 @@
+# cerberus-plugins-archive: findings reviewed by the owner 2026-10-15 (path, host and home-directory references only).
+agent-box-host (commit-message)@19942071a1c8 Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+home-path-linux cerberus-plugins-archive/forge/internal/forgeplugin/client_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-linux cerberus-plugins-archive/forge/internal/forgeplugin/plugin_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-linux (commit-message)@03de537c5fbe Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cerberus-plugins-archive/contextforge/go.mod Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos (commit-message)@424cec7012a2 Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+internal-ip cerberus-plugins-archive/digitalocean/internal/digitaloceanplugin/dto_test.go Private-range sample address in a test or doc; reviewed by the owner 2026-10-15.
+internal-ip cerberus-plugins-archive/digitalocean/internal/digitaloceanplugin/sdk_backend_test.go Private-range sample address in a test or doc; reviewed by the owner 2026-10-15.
+internal-ip cerberus-plugins-archive/forge/internal/forgeplugin/dto_test.go Private-range sample address in a test or doc; reviewed by the owner 2026-10-15.
+internal-ip cerberus-plugins-archive/kubernetes/internal/k8splugin/clientgo_reads_test.go Private-range sample address in a test or doc; reviewed by the owner 2026-10-15.
+internal-ip cerberus-plugins-archive/kubernetes/internal/k8splugin/codes_test.go Private-range sample address in a test or doc; reviewed by the owner 2026-10-15.
+secret-assignment cerberus-plugins-archive/azure/internal/azplugin/backend.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cerberus-plugins-archive/azure/internal/azplugin/plugin_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cerberus-plugins-archive/cloudflare/internal/cloudflareplugin/plugin_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cerberus-plugins-archive/cloudflare/internal/cloudflareplugin/scrub_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cerberus-plugins-archive/contextforge/internal/cfplugin/backend_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cerberus-plugins-archive/contextforge/internal/cfplugin/dto_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cerberus-plugins-archive/contextforge/internal/cfplugin/plugin_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cerberus-plugins-archive/digitalocean/internal/digitaloceanplugin/plugin_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cerberus-plugins-archive/digitalocean/internal/digitaloceanplugin/scrub_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cerberus-plugins-archive/forge/internal/forgeplugin/scrub_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cerberus-plugins-archive/keeper/internal/keeperplugin/nocache_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cerberus-plugins-archive/keeper/internal/keeperplugin/plugin_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cerberus-plugins-archive/namecheap/internal/namecheapplugin/plugin_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cerberus-plugins-archive/onepassword/internal/opplugin/connector.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.

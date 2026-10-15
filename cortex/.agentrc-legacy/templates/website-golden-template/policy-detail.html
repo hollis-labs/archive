@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Policy Detail</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 antialiased">
+  <div class="min-h-screen">
+    <div class="flex min-h-screen">
+      <aside class="w-72 shrink-0 border-r border-zinc-800/80 bg-zinc-950">
+        <div class="flex h-14 items-center justify-between px-4 border-b border-zinc-800/80">
+          <a href="index.html" class="flex items-center gap-3">
+            <div class="h-8 w-8 rounded-md border border-zinc-800/80 bg-zinc-900"></div>
+            <div class="leading-tight">
+              <div class="text-sm font-semibold tracking-[.12em]">CONTEXT</div>
+              <div class="text-[10px] tracking-[.22em] text-zinc-500 uppercase">Memory Service</div>
+            </div>
+          </a>
+          <button class="h-8 w-8 rounded-md border border-zinc-800/80 bg-zinc-950 hover:bg-zinc-900/60">
+            <span class="sr-only">Collapse</span>
+            <div class="mx-auto h-3 w-3 border border-zinc-600 rotate-45"></div>
+          </button>
+        </div>
+
+        <nav class="px-3 py-3 space-y-6">
+          <div>
+            <div class="px-2 text-[10px] uppercase tracking-[.22em] text-zinc-500">Explore</div>
+            <div class="mt-2 space-y-1">
+    <a href="context-explorer.html" class="flex items-center justify-between rounded-md px-3 py-2 text-[13px] leading-4 text-zinc-300 hover:bg-zinc-900/30">
+      <div class="flex items-center gap-3">
+        <span class="h-2 w-2 rounded-full bg-zinc-600"></span>
+        <span class="tracking-[.04em]">Context Explorer</span>
+      </div>
+      
+    </a>
+    
+
+    <a href="view-builder.html" class="flex items-center justify-between rounded-md px-3 py-2 text-[13px] leading-4 text-zinc-300 hover:bg-zinc-900/30">
+      <div class="flex items-center gap-3">
+        <span class="h-2 w-2 rounded-full bg-zinc-600"></span>
+        <span class="tracking-[.04em]">View Builder</span>
+      </div>
+      
+    </a>
+    
+
+    <a href="write-promote.html" class="flex items-center justify-between rounded-md px-3 py-2 text-[13px] leading-4 text-zinc-300 hover:bg-zinc-900/30">
+      <div class="flex items-center gap-3">
+        <span class="h-2 w-2 rounded-full bg-zinc-600"></span>
+        <span class="tracking-[.04em]">Write / Promote</span>
+      </div>
+      
+    </a>
+    </div>
+          </div>
+          <div>
+            <div class="px-2 text-[10px] uppercase tracking-[.22em] text-zinc-500">Governance</div>
+            <div class="mt-2 space-y-1">
+    <a href="policy-manager.html" class="flex items-center justify-between rounded-md border border-zinc-800/80 bg-zinc-900/40 px-3 py-2 text-[13px] leading-4">
+      <div class="flex items-center gap-3">
+        <span class="h-2 w-2 rounded-full bg-zinc-200"></span>
+        <span class="tracking-[.04em]">Policy Manager</span>
+      </div>
+      
+    </a>
+    
+
+    <a href="audit-ops.html" class="flex items-center justify-between rounded-md px-3 py-2 text-[13px] leading-4 text-zinc-300 hover:bg-zinc-900/30">
+      <div class="flex items-center gap-3">
+        <span class="h-2 w-2 rounded-full bg-zinc-600"></span>
+        <span class="tracking-[.04em]">Audit & Ops</span>
+      </div>
+      
+    </a>
+    </div>
+          </div>
+          <div>
+            <div class="px-2 text-[10px] uppercase tracking-[.22em] text-zinc-500">System</div>
+            <div class="mt-2 space-y-1">
+    <a href="environment-auth.html" class="flex items-center justify-between rounded-md px-3 py-2 text-[13px] leading-4 text-zinc-300 hover:bg-zinc-900/30">
+      <div class="flex items-center gap-3">
+        <span class="h-2 w-2 rounded-full bg-zinc-600"></span>
+        <span class="tracking-[.04em]">Environment & Auth</span>
+      </div>
+      
+    </a>
+    
+
+    <a href="docs.html" class="flex items-center justify-between rounded-md px-3 py-2 text-[13px] leading-4 text-zinc-300 hover:bg-zinc-900/30">
+      <div class="flex items-center gap-3">
+        <span class="h-2 w-2 rounded-full bg-zinc-600"></span>
+        <span class="tracking-[.04em]">Docs</span>
+      </div>
+      
+    </a>
+    </div>
+          </div>
+        </nav>
+
+        <div class="mt-auto border-t border-zinc-800/80 px-4 py-3">
+          <div class="flex items-center justify-between text-[10px] uppercase tracking-[.22em] text-zinc-500">
+            <span>Auth Mode</span><span>Status</span>
+          </div>
+          <div class="mt-2 flex items-center justify-between text-[11px] text-zinc-300">
+            <span class="font-mono">mvp-open-read</span>
+            <span class="inline-flex items-center gap-2">
+              <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+              <span class="tracking-[.04em]">Online</span>
+            </span>
+          </div>
+          <div class="mt-2 text-[10px] uppercase tracking-[.22em] text-zinc-600">
+            Base URL <span class="font-mono text-zinc-400">http://localhost:7077</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="flex-1">
+        <header class="sticky top-0 z-20 border-b border-zinc-800/80 bg-zinc-950/85 backdrop-blur">
+          <div class="flex h-14 items-center justify-between px-5">
+            <div class="flex items-center gap-3">
+              <div class="text-[13px] font-semibold tracking-[.10em] uppercase">Policy Detail</div>
+              <div class="text-[10px] uppercase tracking-[.22em] text-zinc-500">Governance / Policy</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="inline-flex items-center gap-2 rounded-md border border-zinc-800/80 bg-zinc-950 px-3 py-2">
+                <div class="text-[10px] uppercase tracking-[.28em] text-zinc-500">Actor</div>
+                <div class="font-mono text-[12px] text-zinc-200">human:chrispian</div>
+                <div class="h-3 w-px bg-zinc-800/80"></div>
+                <div class="text-[10px] uppercase tracking-[.28em] text-zinc-500">Client</div>
+                <div class="font-mono text-[12px] text-zinc-200">app:cms-ui</div>
+              </div>
+              <button class="rounded-md border border-zinc-800/80 bg-zinc-950 px-3 py-2 text-[13px] leading-4 hover:bg-zinc-900/50">Refresh</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="px-5 py-5 space-y-4">
+          
+<section class="grid grid-cols-12 gap-4">
+  <div class="col-span-7 rounded-md border border-zinc-800/80 bg-zinc-950">
+    <div class="px-4 py-3 border-b border-zinc-800/80 flex items-center justify-between">
+      <div>
+        <div class="text-[10px] uppercase tracking-[.28em] text-zinc-500">Policy Detail</div>
+        <div class="mt-1 font-mono text-[12px] text-zinc-200">user/*</div>
+      </div>
+      <a href="policy-edit.html" class="rounded border border-zinc-800/80 bg-zinc-950 px-2.5 py-1.5 text-[11px] uppercase tracking-[.22em] hover:bg-zinc-900/50">Edit</a>
+    </div>
+    <div class="p-4 space-y-3">
+      <div class="rounded border border-zinc-800/80 bg-zinc-950 px-3 py-2">
+        <div class="text-[10px] uppercase tracking-[.28em] text-zinc-600">ownership</div>
+        <div class="mt-1 text-[12px] text-zinc-200">human</div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="rounded border border-zinc-800/80 bg-zinc-950 p-3">
+          <div class="text-[10px] uppercase tracking-[.28em] text-zinc-500">writes</div>
+          <div class="mt-2"><span class="inline-flex items-center gap-2 rounded border border-zinc-800/80 bg-zinc-950 px-2 py-1 text-[11px] uppercase tracking-[.22em]">
+      <span class="h-2 w-2 rounded-full bg-zinc-500"></span>deny
+    </span></div>
+        </div>
+        <div class="rounded border border-zinc-800/80 bg-zinc-950 p-3">
+          <div class="text-[10px] uppercase tracking-[.28em] text-zinc-500">promote</div>
+          <div class="mt-2"><span class="inline-flex items-center gap-2 rounded border border-zinc-800/80 bg-zinc-950 px-2 py-1 text-[11px] uppercase tracking-[.22em]">
+      <span class="h-2 w-2 rounded-full bg-emerald-400"></span>allow
+    </span></div>
+        </div>
+      </div>
+      <div class="rounded border border-zinc-800/80 bg-zinc-950 p-3">
+        <div class="text-[10px] uppercase tracking-[.28em] text-zinc-500">notes</div>
+        <div class="mt-2 text-[12px] text-zinc-200">User namespaces are protected. Agents must submit promote requests.</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-span-5 rounded-md border border-zinc-800/80 bg-zinc-950">
+    <div class="px-4 py-3 border-b border-zinc-800/80">
+      <div class="text-[10px] uppercase tracking-[.28em] text-zinc-500">Schema Contracts</div>
+    </div>
+    <div class="p-4 space-y-2">
+      <div class="rounded border border-zinc-800/80 bg-zinc-950 px-3 py-2">
+        <div class="flex items-center justify-between">
+          <span class="font-mono text-[12px] text-zinc-200">user/profile</span><span class="inline-flex items-center gap-2 rounded border border-zinc-800/80 bg-zinc-950 px-2 py-1 text-[11px] uppercase tracking-[.22em]">
+      <span class="h-2 w-2 rounded-full bg-emerald-400"></span>enforced
+    </span>
+        </div>
+        <div class="mt-1 text-[11px] text-zinc-500">required_keys: identity, constraints</div>
+      </div>
+      <div class="rounded border border-zinc-800/80 bg-zinc-950 px-3 py-2">
+        <div class="flex items-center justify-between">
+          <span class="font-mono text-[12px] text-zinc-200">user/projects</span><span class="inline-flex items-center gap-2 rounded border border-zinc-800/80 bg-zinc-950 px-2 py-1 text-[11px] uppercase tracking-[.22em]">
+      <span class="h-2 w-2 rounded-full bg-zinc-500"></span>optional
+    </span>
+        </div>
+        <div class="mt-1 text-[11px] text-zinc-600">max_payload_kb: 256</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+        </div>
+
+        <footer class="sticky bottom-0 z-10 border-t border-zinc-800/80 bg-zinc-950/85 backdrop-blur">
+          <div class="flex items-center justify-between px-5 py-2">
+            <div class="flex items-center gap-4 text-[10px] uppercase tracking-[.28em] text-zinc-500">
+              <span class="inline-flex items-center gap-2">
+                <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                Writes <span class="text-zinc-200 font-mono tabular-nums">2</span>
+              </span>
+              <span>Reads <span class="text-zinc-200 font-mono tabular-nums">38</span></span>
+              <span>Views <span class="text-zinc-200 font-mono tabular-nums">9</span></span>
+              <span>Errors <span class="text-zinc-200 font-mono tabular-nums">0</span></span>
+            </div>
+            <div class="flex items-center gap-4 text-[10px] uppercase tracking-[.28em] text-zinc-500">
+              <span>Determinism <span class="text-zinc-200 font-mono tabular-nums">ON</span></span>
+              <span>Build <span class="text-zinc-200 font-mono tabular-nums">v0.1.0</span></span>
+            </div>
+          </div>
+        </footer>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
