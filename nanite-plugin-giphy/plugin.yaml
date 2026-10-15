@@ -1,0 +1,64 @@
+schema_version: 1
+id: giphy
+name: Giphy
+version: 0.1.0
+description: Giphy GIF search — /giphy <query> for inline GIFs and a giphy.search MCP tool.
+author: Hollis Labs
+license: Apache-2.0
+homepage: https://github.com/hollis-labs/nanite-plugin-giphy
+repository: https://github.com/hollis-labs/nanite-plugin-giphy
+protocol: 1
+runtime: subprocess
+entrypoint: ./giphy
+load_type: auto
+
+nanite_compat:
+  min: 0.1.0
+
+config:
+  giphy_api_key:
+    type: string
+    required: false
+    env_var: GIPHY_API_KEY
+    description: Giphy API key (get one at developers.giphy.com). When unset, the plugin runs in demo mode with a small built-in GIF set.
+  giphy_rating:
+    type: string
+    required: false
+    default: g
+    description: Maximum content rating (g, pg, pg-13, r).
+
+registers:
+  envelopes:
+    - type: giphy-modal
+      component: GiphyModalCard
+      version: 1
+      schema: envelopes/giphy-modal.schema.json
+
+  commands:
+    - name: giphy
+      description: Search Giphy for a GIF and render it inline.
+      args:
+        - name: query
+          type: string
+          required: true
+          description: Search query (e.g. "cats", "celebration").
+
+  mcp_servers:
+    - name: giphy
+      description: Giphy GIF search tools.
+      tools:
+        - search
+
+ui:
+  bundle_dir: ui/dist
+  entry: index.js
+  stylesheet: style.css
+  react_version: ^18.0.0
+
+release:
+  platforms:
+    - darwin-arm64
+    - darwin-amd64
+    - linux-amd64
+    - linux-arm64
+    - windows-amd64
