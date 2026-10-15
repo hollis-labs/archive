@@ -1,0 +1,87 @@
+{
+  "awaySummaryEnabled": false,
+  "effortLevel": "xhigh",
+  "enabledPlugins": {
+    "code-review@claude-plugins-official": false,
+    "frontend-design@claude-plugins-official": false,
+    "github@claude-plugins-official": false,
+    "gopls-lsp@claude-plugins-official": false,
+    "typescript-lsp@claude-plugins-official": false
+  },
+  "env": {
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
+    "CLAUDE_CODE_DISABLE_BUNDLED_SKILLS": "1"
+  },
+  "hooks": {
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "command": "~/dev/projects/agent-setup/hooks/post-compact.sh",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "~/dev/projects/agent-setup/hooks/report-nudge.sh",
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash"
+      },
+      {
+        "hooks": [
+          {
+            "command": "~/dev/projects/agent-setup/hooks/report-nudge.sh",
+            "type": "command"
+          }
+        ],
+        "matcher": "mcp__.*torque_task_transition"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "~/dev/projects/agent-setup/hooks/torque-author-tag.sh",
+            "type": "command"
+          }
+        ],
+        "matcher": "mcp__.*(torque_comment_add|torque_comment_bulk_add|torque_task_transition)"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "~/dev/projects/agent-setup/hooks/session-start.sh",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "~/dev/projects/agent-setup/hooks/stop-disposition.sh",
+            "type": "command"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "additionalDirectories": [
+      "@FIXTURE@/scope"
+    ],
+    "defaultMode": "auto"
+  },
+  "skipAutoPermissionPrompt": true,
+  "skipDangerousModePermissionPrompt": true,
+  "tui": "fullscreen"
+}

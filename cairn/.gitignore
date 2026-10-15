@@ -1,0 +1,39 @@
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.out
+coverage.html
+/dist/
+/bin/
+
+# Editor scratch
+.idea/
+.vscode/
+*.swp
+*~
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Local env
+*.local
+.env
+.env.*
+
+# Claude client runtime state, written into the repo by the harness
+/.claude/worktrees/
+/.claude/settings.local.json
+
+# Bare `go build ./...` output for cmd/cairn
+/cairn
+
+# Machine-local agent state and internal planning material, not tracked
+/.claude/
+/.agentrc/
+/docs/plan.md
