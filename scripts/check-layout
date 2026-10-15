@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Repository layout guard (archive). Exits non-zero when:
+#   - the tree breaks the flat layout: a loose file at the root, a submodule, an LFS filter,
+#     a file over 10 MiB, a directory name that is not lower case [a-z0-9._-];
+#   - an archived repository <name>/ has no <name>/ARCHIVED.md;
+#   - a go.mod or go.work sits at the repository root;
+#   - a workflow builds, tests or vets anything (archived code is never built here);
+#   - a scan-public allowlist line has no reason, or a reason that quotes an address or value.
+# Archived content is verbatim: nothing inside <name>/ is checked beyond size, submodule and
+# LFS rules (a go.mod inside keeps its old module line, and a go.work there is inert history).
+#
+# Usage: scripts/check-layout
+set -euo pipefail
+# shellcheck source-path=SCRIPTDIR
+# shellcheck source=_common.sh
+. "$(cd "$(dirname "$0")" && pwd)/_common.sh"
+# shellcheck source-path=SCRIPTDIR
+# shellcheck source=check-common.sh
+. "$SCRIPT_DIR/check-common.sh"
+
+fail=0
+bad() {
+  echo "FAIL: $*" >&2
+  fail=1
+}
+
+check_common
+
+for f in go.mod go.work go.work.sum; do
+  if repo_files | grep -qxF -- "$f"; then bad "$f at the repository root; archived code is not built"; fi
+done
+
+for d in $(project_dirs); do
+  repo_files | grep -qxF -- "$d/ARCHIVED.md" || bad "$d/: no $d/ARCHIVED.md (added by scripts/import-repo)"
+done
+
+if [ -d "$REPO_ROOT/.github/workflows" ]; then
+  if grep -nE '(^|[^A-Za-z-])(go (build|test|vet|run|install)|make|npm (ci|install|test|run)|cargo|gradle|mvn|pip install)([^A-Za-z-]|$)|setup-(go|node|python|java)' \
+    "$REPO_ROOT"/.github/workflows/*.yml >/dev/null 2>&1; then
+    bad ".github/workflows: a workflow builds or sets up a toolchain; CI must not build archived code"
+  fi
+fi
+
+[ "$fail" -eq 0 ] || exit 1
+echo "ok: layout (flat; $(project_dirs | wc -l | tr -d ' ') archived repositories: $(project_dirs | tr '\n' ' '))"
