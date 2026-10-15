@@ -1,0 +1,4 @@
+# nanite-plugin-debug-widgets: findings reviewed by the owner 2026-10-15 (path, host and home-directory references only).
+agent-box-host (commit-message)@19942071a1c8 Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+home-path-linux (commit-message)@03de537c5fbe Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos (commit-message)@424cec7012a2 Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.

@@ -1,0 +1,58 @@
+schema_version: 1
+id: oembed
+name: oEmbed Rich Previews
+version: 0.1.0
+description: Automatic rich previews for YouTube, Spotify, Vimeo, SoundCloud, Flickr, and user-configured oEmbed providers.
+author: Hollis Labs
+license: Apache-2.0
+homepage: https://github.com/hollis-labs/nanite-plugin-oembed
+repository: https://github.com/hollis-labs/nanite-plugin-oembed
+protocol: 1
+runtime: subprocess
+entrypoint: ./oembed
+load_type: auto
+
+nanite_compat:
+  min: 0.1.0
+
+config:
+  oembed_extra_providers:
+    type: string
+    required: false
+    default: ""
+    description: |
+      YAML list of additional oEmbed providers to match at runtime. Each
+      entry is a name/pattern/endpoint triple. `pattern` is a Go regexp
+      applied to the raw URL; `endpoint` is the provider's oEmbed URL
+      with `{url}` as the substitution placeholder.
+
+      Example:
+        - name: Example
+          pattern: "https?://example\\.com/posts/"
+          endpoint: "https://example.com/oembed?url={url}&format=json"
+
+registers:
+  envelopes:
+    - type: oembed-card
+      component: OEmbedCard
+      version: 1
+      schema: envelopes/oembed-card.schema.json
+
+  events:
+    - types: [message.sent]
+      handler: onMessageSent
+      priority: 0
+
+ui:
+  bundle_dir: ui/dist
+  entry: index.js
+  stylesheet: style.css
+  react_version: ^18.0.0
+
+release:
+  platforms:
+    - darwin-arm64
+    - darwin-amd64
+    - linux-amd64
+    - linux-arm64
+    - windows-amd64

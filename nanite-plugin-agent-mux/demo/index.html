@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Mux Activity Widget — Demo</title>
+  <style>
+    body {
+      background: #18181b;
+      color: #e4e4e7;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      margin: 0;
+      padding: 48px;
+      min-height: 100vh;
+    }
+    .wrap {
+      max-width: 260px;
+    }
+    .header {
+      margin-bottom: 24px;
+      font-family: ui-monospace, monospace;
+      color: #71717a;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+    }
+    .footer {
+      margin-top: 24px;
+      font-family: ui-monospace, monospace;
+      color: #52525b;
+      font-size: 10px;
+      max-width: 260px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">[ MUX ACTIVITY — LIVE DEMO ]</div>
+    <div id="root"></div>
+    <div class="footer">
+      Subscribing to <code>http://127.0.0.1:9380/events/stream</code> (proxied via vite dev).<br/>
+      Trigger activity by running mux commands, sessions, or messages.
+    </div>
+  </div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>
