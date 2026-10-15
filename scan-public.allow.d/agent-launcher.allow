@@ -1,0 +1,16 @@
+# agent-launcher: findings reviewed by the owner 2026-10-15 (path, host and home-directory references only).
+agent-box-host agent-launcher/cmd/tachyon/doc.go Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host agent-launcher/cmd/tachyon/main.go Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host agent-launcher/internal/compose/compose_test.go Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host agent-launcher/internal/compose/doc.go Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host agent-launcher/internal/state/doc.go Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host agent-launcher/internal/state/state_test.go Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+home-path-macos agent-launcher/internal/boot/env_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos agent-launcher/internal/boot/invoke_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos agent-launcher/internal/boot/sessionkey_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos agent-launcher/internal/boot/spawn_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos agent-launcher/internal/boot/sweep_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos agent-launcher/internal/compose/compose_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos agent-launcher/internal/launch/launch_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos agent-launcher/internal/state/adopt_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos agent-launcher/tachyon.cerberus.yaml Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.

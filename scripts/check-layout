@@ -25,13 +25,14 @@ bad() {
 }
 
 check_common
+all_repo_files="$(repo_files)"
 
 for f in go.mod go.work go.work.sum; do
-  if repo_files | grep -qxF -- "$f"; then bad "$f at the repository root; archived code is not built"; fi
+  if grep -qxF -- "$f" <<<"$all_repo_files"; then bad "$f at the repository root; archived code is not built"; fi
 done
 
 for d in $(project_dirs); do
-  repo_files | grep -qxF -- "$d/ARCHIVED.md" || bad "$d/: no $d/ARCHIVED.md (added by scripts/import-repo)"
+  grep -qxF -- "$d/ARCHIVED.md" <<<"$all_repo_files" || bad "$d/: no $d/ARCHIVED.md (added by scripts/import-repo)"
 done
 
 if [ -d "$REPO_ROOT/.github/workflows" ]; then
