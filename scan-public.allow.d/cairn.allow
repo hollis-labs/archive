@@ -1,0 +1,39 @@
+# cairn: findings reviewed by the owner 2026-10-15 (path, host and home-directory references only).
+agent-box-host cairn/bootdir/location.go Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/cmd/cairn/show_test.go Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/docs/plan.md Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/examples/README.md Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host (commit-message)@19942071a1c8 Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/testdata/goldens/trees/boot/architect/golden/.claude/skills/adr/SKILL.md Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/testdata/goldens/trees/boot/architect/golden/AGENTS.md Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/testdata/goldens/trees/boot/conductor/golden/AGENTS.md Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/testdata/goldens/trees/boot/director/golden/.claude/skills/adr/SKILL.md Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/testdata/goldens/trees/boot/director/golden/AGENTS.md Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/testdata/goldens/trees/boot/engineer/golden/AGENTS.md Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/testdata/goldens/trees/boot/orchestrator/golden/AGENTS.md Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/testdata/goldens/trees/boot/planner/golden/.claude/skills/adr/SKILL.md Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/testdata/goldens/trees/boot/planner/golden/AGENTS.md Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/testdata/goldens/trees/boot/reviewer/golden/AGENTS.md Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/testdata/goldens/trees/boot/writer/golden/AGENTS.md Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/testdata/goldens/trees/install/base/.claude/AGENTS.md Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/testdata/goldens/trees/install/base/.claude/skills/capture-investigation/SKILL.md Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+agent-box-host cairn/testdata/goldens/trees/install/base/.claude/skills/end-of-session/SKILL.md Internal build machine name used as a label or example; reviewed by the owner 2026-10-15, not an access path.
+home-path-linux cairn/bootdir/location_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-linux cairn/catalog/catalog_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-linux cairn/examples/README.md Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-linux cairn/install/report_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-linux cairn/install/root_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-linux (commit-message)@03de537c5fbe Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-linux cairn/store/store_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-linux cairn/testdata/goldens/capture.sh Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cairn/bootdir/agents_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cairn/bootdir/renderers_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cairn/bootdir/template_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cairn/examples/README.md Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cairn/examples/README.md Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos cairn/install/check_impl_test.go Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+home-path-macos (commit-message)@424cec7012a2 Developer home directory path in a test, doc or local config; reviewed by the owner 2026-10-15, no credential.
+secret-assignment cairn/bootdir/secrets_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cairn/bootdir/template_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cairn/cmd/cairn/boot_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
+secret-assignment cairn/slots/expand_test.go Test, fixture, documentation sample or design-token name; a high-entropy literal check found no live credential; reviewed by the owner 2026-10-15.
