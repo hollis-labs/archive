@@ -1,0 +1,71 @@
+schema_version: 1
+id: agent-mux
+name: Agent Mux
+version: 0.1.0
+description: Live activity visualization for a local Agent Mux daemon.
+author: Hollis Labs
+license: MIT
+homepage: https://github.com/hollis-labs/nanite-plugin-agent-mux
+repository: https://github.com/hollis-labs/nanite-plugin-agent-mux
+protocol: 1
+runtime: subprocess
+entrypoint: ./agent-mux
+load_type: auto
+
+nanite_compat:
+  min: 0.1.0
+
+config:
+  muxd_listen_addr:
+    type: string
+    required: false
+    description: UDS path or TCP URL for muxd. Empty = client default (~/.agent-mux/run/muxd.sock).
+  buffer_seconds:
+    type: int
+    required: false
+    default: 60
+    description: Activity ring buffer time window in seconds.
+  buffer_cap:
+    type: int
+    required: false
+    default: 500
+    description: Activity ring buffer event cap (whichever bound hits first).
+  auto_start:
+    type: bool
+    required: false
+    default: true
+    description: Start SSE subscribers on plugin load.
+
+registers:
+  components:
+    # Backend validates component id as kebab-case (lowercase alnum + hyphens).
+    # Frontend plugin-loader does `mod[widget.name]` for widget lookup, which
+    # forces the bundle to expose an export under the kebab-case name.
+    # We satisfy both by using kebab-case here AND adding an ES2022
+    # string-named export `"mux-activity-widget"` in ui/src/index.tsx.
+    # Tracked for cleanup: CW-20260423-0008 (add explicit `export:` field).
+    - name: mux-activity-widget
+      type: widget
+      description: Right-rail widget visualizing live muxd activity.
+      export: MuxActivityWidget
+
+  http_routes:
+    - pattern: /api/plugins/agent-mux/activity/snapshot
+      method: GET
+      handler: snapshot
+    - pattern: /api/plugins/agent-mux/activity/health
+      method: GET
+      handler: health
+
+ui:
+  bundle_dir: ui/dist
+  entry: index.js
+  stylesheet: style.css
+  react_version: ^18.0.0
+
+release:
+  platforms:
+    - darwin-arm64
+    - darwin-amd64
+    - linux-amd64
+    - linux-arm64
